@@ -12,6 +12,9 @@ static const char FORMAT_DESCRIPTION[] = "<i>%s</i>";
 static const char JUMANJI_DIR[]   = ".config/jumanji";
 static const char JUMANJI_RC[]    = "zathurarc";
 
+/* browser specific settings */
+char* home_page = "http://www.pwmt.org";
+
 /* look */
 char* font                   = "monospace normal 9";
 char* default_bgcolor        = "#000000";
@@ -76,6 +79,7 @@ SpecialCommand special_commands[] = {
 /* settings */
 Setting settings[] = {
   /* name,                   variable,                           type, re-init, description */
+  {"home_page",              &(home_page),                       's',  FALSE,   "Home page"},
   {"scrollbars",             &(show_scrollbars),                 'b',  TRUE,    "Show scrollbars"},
 };
 

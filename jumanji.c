@@ -10,6 +10,8 @@
 #include <gtk/gtk.h>
 #include <gdk/gdkkeysyms.h>
 
+#include <webkit/webkit.h>
+
 /* macros */
 #define LENGTH(x) sizeof(x)/sizeof((x)[0])
 #define CLEAN(m) (m & ~(GDK_MOD2_MASK) & ~(GDK_BUTTON1_MASK) & ~(GDK_BUTTON2_MASK) & ~(GDK_BUTTON3_MASK) & ~(GDK_BUTTON4_MASK) & ~(GDK_BUTTON5_MASK))
@@ -221,7 +223,7 @@ struct
 /* function declarations */
 void add_marker(int);
 void change_mode(int);
-void create_page(char*);
+void create_tab(char*, int);
 void eval_marker(int);
 void init_directories();
 void init_jumanji();
@@ -230,6 +232,7 @@ void init_look();
 void init_settings();
 void notify(int, char*);
 void out_of_memory();
+void open_uri(WebKitWebView*, char*);
 void read_configuration();
 void set_completion_row_color(GtkBox*, int, int);
 void switch_view(GtkWidget*);
@@ -303,9 +306,21 @@ change_mode(int mode)
 }
 
 void
-create_page(char* uri)
+create_tab(char* uri, int position)
 {
+  GtkWidget *tab = gtk_scrolled_window_new(NULL, NULL);
+  GtkWidget *wv  = webkit_web_view_new();
 
+  if(show_scrollbars)
+    gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(tab), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+  else
+    gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(tab), GTK_POLICY_NEVER, GTK_POLICY_NEVER);
+
+  open_uri(WEBKIT_WEB_VIEW(wv), uri);
+
+  gtk_container_add(GTK_CONTAINER(tab), wv);
+  gtk_widget_show_all(tab);
+  gtk_notebook_insert_page(Jumanji.UI.view, tab, NULL, position);
 }
 
 
@@ -444,16 +459,30 @@ init_jumanji()
   gtk_notebook_set_show_tabs(Jumanji.UI.view,   FALSE);
   gtk_notebook_set_show_border(Jumanji.UI.view, FALSE); 
 
+  g_signal_connect(G_OBJECT(Jumanji.UI.view), "key-press-event", G_CALLBACK(cb_view_kb_pressed), NULL);
+
   /* packing */
   gtk_box_pack_start(Jumanji.UI.box, GTK_WIDGET(Jumanji.UI.view),       TRUE,  TRUE, 0);
   gtk_box_pack_start(Jumanji.UI.box, GTK_WIDGET(Jumanji.UI.statusbar), FALSE, FALSE, 0);
   gtk_box_pack_end(  Jumanji.UI.box, GTK_WIDGET(Jumanji.UI.inputbar),  FALSE, FALSE, 0);
 }
 
-void out_of_memory()
+void
+out_of_memory()
 {
   printf("error: out of memory\n");
   exit(-1);
+}
+
+void
+open_uri(WebKitWebView* web_view, char* uri)
+{
+  while (*uri == ' ')
+    uri++;
+
+  gchar *new_uri = g_strrstr(uri, ":") ? g_strdup(uri) : g_strconcat("http://", uri, NULL);
+  webkit_web_view_load_uri(web_view, new_uri);
+  g_free(new_uri);
 }
 
 void
@@ -1418,6 +1447,10 @@ int main(int argc, char* argv[])
   read_configuration();
   init_settings();
   init_look();
+
+  /* create tab */
+  create_tab(home_page, -1);
+  gtk_notebook_set_current_page(Jumanji.UI.view, -1);
 
   gtk_widget_show_all(GTK_WIDGET(Jumanji.UI.window));
   gtk_widget_grab_focus(GTK_WIDGET(Jumanji.UI.view));
