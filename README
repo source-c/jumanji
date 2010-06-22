@@ -1,0 +1,32 @@
+jumanji - a web browser
+=======================
+jumanji is a web browser based on the libwebkit web
+content engine
+
+Requirements
+------------
+gtk2 (2.18.6)
+glib2 (2.22.4)
+
+Configuration
+-------------
+You can modify some parts of jumanji by editing the config.h file
+
+Installation
+------------
+Customise config.h according to your wishes and run the following
+command to build and install jumanji:
+
+  make install
+
+Uninstall:
+----------
+To delete jumaji from your system, just type:
+
+  make uninstall
+
+Use jumanji
+-----------
+Just run:
+
+  zathura <file>
