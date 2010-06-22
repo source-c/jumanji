@@ -40,6 +40,18 @@ gboolean show_scrollbars = FALSE;
 /* shortcuts */
 Shortcut shortcuts[] = {
   /* mask,             key,               function,             mode,                argument */
+  {0,                  GDK_h,             sc_scroll,            NORMAL,              { LEFT } },
+  {0,                  GDK_j,             sc_scroll,            NORMAL,              { DOWN } },
+  {0,                  GDK_k,             sc_scroll,            NORMAL,              { UP } },
+  {0,                  GDK_l,             sc_scroll,            NORMAL,              { RIGHT } },
+  {0,                  GDK_Left,          sc_scroll,            NORMAL,              { LEFT } },
+  {0,                  GDK_Up,            sc_scroll,            NORMAL,              { UP } },
+  {0,                  GDK_Down,          sc_scroll,            NORMAL,              { DOWN } },
+  {0,                  GDK_Right,         sc_scroll,            NORMAL,              { RIGHT } },
+  {GDK_CONTROL_MASK,   GDK_d,             sc_scroll,            NORMAL,              { HALF_DOWN } },
+  {GDK_CONTROL_MASK,   GDK_u,             sc_scroll,            NORMAL,              { HALF_UP } },
+  {GDK_CONTROL_MASK,   GDK_f,             sc_scroll,            NORMAL,              { FULL_DOWN } },
+  {GDK_CONTROL_MASK,   GDK_b,             sc_scroll,            NORMAL,              { FULL_UP } },
   {GDK_CONTROL_MASK,   GDK_q,             sc_quit,              ALL,                 {0} },
 };
 

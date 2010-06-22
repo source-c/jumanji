@@ -15,6 +15,9 @@
 /* macros */
 #define LENGTH(x) sizeof(x)/sizeof((x)[0])
 #define CLEAN(m) (m & ~(GDK_MOD2_MASK) & ~(GDK_BUTTON1_MASK) & ~(GDK_BUTTON2_MASK) & ~(GDK_BUTTON3_MASK) & ~(GDK_BUTTON4_MASK) & ~(GDK_BUTTON5_MASK))
+#define GET_CURRENT_TAB() GET_NTH_TAB(gtk_notebook_get_current_page(Jumanji.UI.view))
+#define GET_NTH_TAB(n) GET_WEBVIEW(gtk_notebook_get_nth_page(Jumanji.UI.view, n))
+#define GET_WEBVIEW(x) WEBKIT_WEB_VIEW(gtk_bin_get_child(GTK_BIN(x)))
 
 /* enums */
 enum {
@@ -24,13 +27,19 @@ enum {
   DOWN,
   ERROR,
   EVAL_MARKER,
+  FULL_DOWN,
+  FULL_UP,
+  HALF_DOWN,
+  HALF_UP,
   HIDE,
   HIGHLIGHT,
+  LEFT,
   NEXT,
   NEXT_GROUP,
   NORMAL,
   PREVIOUS,
   PREVIOUS_GROUP,
+  RIGHT,
   TOP,
   UP,
   WARNING
@@ -240,6 +249,7 @@ void update_status();
 GtkEventBox* create_completion_row(GtkBox*, char*, char*, gboolean);
 
 /* shortcut declarations */
+void sc_scroll(Argument*);
 void sc_quit(Argument*);
 
 /* inputbar shortcut declarations */
@@ -310,6 +320,9 @@ create_tab(char* uri, int position)
 {
   GtkWidget *tab = gtk_scrolled_window_new(NULL, NULL);
   GtkWidget *wv  = webkit_web_view_new();
+
+  if(!tab || !wv)
+    return;
 
   if(show_scrollbars)
     gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(tab), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
@@ -623,6 +636,42 @@ create_completion_row(GtkBox* results, char* command, char* description, gboolea
 }
 
 /* shortcut implementation */
+void
+sc_scroll(Argument* argument)
+{
+  int current_tab = gtk_notebook_get_current_page(Jumanji.UI.view);
+
+  GtkAdjustment* adjustment;
+
+  if( (argument->n == LEFT) || (argument->n == RIGHT) )
+    adjustment = gtk_scrolled_window_get_hadjustment(GTK_SCROLLED_WINDOW(gtk_notebook_get_nth_page(Jumanji.UI.view, current_tab)));
+  else
+    adjustment = gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(gtk_notebook_get_nth_page(Jumanji.UI.view, current_tab)));
+
+  gdouble view_size  = gtk_adjustment_get_page_size(adjustment);
+  gdouble value      = gtk_adjustment_get_value(adjustment);
+  gdouble max        = gtk_adjustment_get_upper(adjustment) - view_size;
+
+  if(argument->n == FULL_UP)
+    gtk_adjustment_set_value(adjustment, (value - view_size) < 0 ? 0 : (value - view_size));
+  else if(argument->n == FULL_DOWN)
+    gtk_adjustment_set_value(adjustment, (value + view_size) > max ? max : (value + view_size));
+  else if(argument->n == HALF_UP)
+    gtk_adjustment_set_value(adjustment, (value - (view_size / 2)) < 0 ? 0 : (value - (view_size / 2)));
+  else if(argument->n == HALF_DOWN)
+    gtk_adjustment_set_value(adjustment, (value + (view_size / 2)) > max ? max : (value + (view_size / 2)));
+  else if((argument->n == LEFT) || (argument->n == UP))
+    gtk_adjustment_set_value(adjustment, (value - scroll_step) < 0 ? 0 : (value - scroll_step));
+  else if(argument->n == TOP)
+    gtk_adjustment_set_value(adjustment, 0);
+  else if(argument->n == BOTTOM)
+    gtk_adjustment_set_value(adjustment, max);
+  else
+    gtk_adjustment_set_value(adjustment, (value + scroll_step) > max ? max : (value + scroll_step));
+
+  update_status();
+}
+
 void
 sc_quit(Argument* argument)
 {
