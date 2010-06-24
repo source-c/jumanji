@@ -40,6 +40,11 @@ gboolean show_scrollbars = FALSE;
 /* shortcuts */
 Shortcut shortcuts[] = {
   /* mask,             key,               function,             mode,                argument */
+  {0,                  GDK_slash,         sc_focus_inputbar,    NORMAL,              { .data = "/" } },
+  {GDK_SHIFT_MASK,     GDK_slash,         sc_focus_inputbar,    NORMAL,              { .data = "/" } },
+  {GDK_SHIFT_MASK,     GDK_question,      sc_focus_inputbar,    NORMAL,              { .data = "?" } },
+  {0,                  GDK_colon,         sc_focus_inputbar,    NORMAL,              { .data = ":" } },
+  {0,                  GDK_o,             sc_focus_inputbar,    NORMAL,              { .data = ":open " } },
   {0,                  GDK_h,             sc_scroll,            NORMAL,              { LEFT } },
   {0,                  GDK_j,             sc_scroll,            NORMAL,              { DOWN } },
   {0,                  GDK_k,             sc_scroll,            NORMAL,              { UP } },
@@ -70,6 +75,7 @@ InputbarShortcut inputbar_shortcuts[] = {
 Command commands[] = {
   /* command,   abbreviation,   function,            completion,   description  */
   {"map",       "m",            cmd_map,             0,            "Map keybinding to a function" },
+  {"open",      "o",            cmd_open,            0,            "Open URI" },
   {"quit",      "q",            cmd_quit,            0,            "Quit jumanji" },
   {"set",       "s",            cmd_set,             cc_set,       "Set an option" },
 };

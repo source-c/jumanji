@@ -15,6 +15,8 @@
 /* macros */
 #define LENGTH(x) sizeof(x)/sizeof((x)[0])
 #define CLEAN(m) (m & ~(GDK_MOD2_MASK) & ~(GDK_BUTTON1_MASK) & ~(GDK_BUTTON2_MASK) & ~(GDK_BUTTON3_MASK) & ~(GDK_BUTTON4_MASK) & ~(GDK_BUTTON5_MASK))
+#define GET_CURRENT_TAB_WIDGET() GET_NTH_TAB_WIDGET(gtk_notebook_get_current_page(Jumanji.UI.view))
+#define GET_NTH_TAB_WIDGET(n) GTK_SCROLLED_WINDOW(gtk_notebook_get_nth_page(Jumanji.UI.view, n))
 #define GET_CURRENT_TAB() GET_NTH_TAB(gtk_notebook_get_current_page(Jumanji.UI.view))
 #define GET_NTH_TAB(n) GET_WEBVIEW(gtk_notebook_get_nth_page(Jumanji.UI.view, n))
 #define GET_WEBVIEW(x) WEBKIT_WEB_VIEW(gtk_bin_get_child(GTK_BIN(x)))
@@ -249,6 +251,7 @@ void update_status();
 GtkEventBox* create_completion_row(GtkBox*, char*, char*, gboolean);
 
 /* shortcut declarations */
+void sc_focus_inputbar(Argument*);
 void sc_scroll(Argument*);
 void sc_quit(Argument*);
 
@@ -258,6 +261,7 @@ void isc_completion(Argument*);
 
 /* command declarations */
 gboolean cmd_map(int, char**);
+gboolean cmd_open(int, char**);
 gboolean cmd_quit(int, char**);
 gboolean cmd_set(int, char**);
 
@@ -637,16 +641,25 @@ create_completion_row(GtkBox* results, char* command, char* description, gboolea
 
 /* shortcut implementation */
 void
+sc_focus_inputbar(Argument* argument)
+{
+  if(argument->data)
+  {
+    notify(DEFAULT, argument->data);
+    gtk_widget_grab_focus(GTK_WIDGET(Jumanji.UI.inputbar));
+    gtk_editable_set_position(GTK_EDITABLE(Jumanji.UI.inputbar), -1);
+  }
+}
+
+void
 sc_scroll(Argument* argument)
 {
-  int current_tab = gtk_notebook_get_current_page(Jumanji.UI.view);
-
   GtkAdjustment* adjustment;
 
   if( (argument->n == LEFT) || (argument->n == RIGHT) )
-    adjustment = gtk_scrolled_window_get_hadjustment(GTK_SCROLLED_WINDOW(gtk_notebook_get_nth_page(Jumanji.UI.view, current_tab)));
+    adjustment = gtk_scrolled_window_get_hadjustment(GET_CURRENT_TAB_WIDGET());
   else
-    adjustment = gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(gtk_notebook_get_nth_page(Jumanji.UI.view, current_tab)));
+    adjustment = gtk_scrolled_window_get_vadjustment(GET_CURRENT_TAB_WIDGET());
 
   gdouble view_size  = gtk_adjustment_get_page_size(adjustment);
   gdouble value      = gtk_adjustment_get_value(adjustment);
@@ -682,7 +695,11 @@ sc_quit(Argument* argument)
 void
 isc_abort(Argument* argument)
 {
-  gtk_widget_grab_focus(GTK_WIDGET(Jumanji.UI.view));
+  Argument arg = { HIDE };
+  isc_completion(&arg);
+
+  notify(DEFAULT, "");
+  gtk_widget_grab_focus(GTK_WIDGET(GET_CURRENT_TAB_WIDGET()));
 }
 
 void
@@ -1121,6 +1138,17 @@ cmd_map(int argc, char** argv)
 }
 
 gboolean
+cmd_open(int argc, char** argv)
+{
+  if(argc <= 0)
+    return TRUE;
+
+  open_uri(GET_CURRENT_TAB(), argv[0]);
+
+  return TRUE;
+}
+
+gboolean
 cmd_quit(int argc, char** argv)
 {
   cb_destroy(NULL, NULL);
@@ -1131,7 +1159,7 @@ gboolean
 cmd_set(int argc, char** argv)
 {
   if(argc <= 0)
-    return FALSE;
+    return TRUE;
 
   int i;
   for(i = 0; i < LENGTH(settings); i++)
@@ -1155,7 +1183,7 @@ cmd_set(int argc, char** argv)
       else if(settings[i].type == 'i')
       {
         if(argc != 2)
-          return FALSE;
+          return TRUE;
 
         int *x = (int*) (settings[i].variable);
 
@@ -1178,7 +1206,7 @@ cmd_set(int argc, char** argv)
       else if(settings[i].type == 'f')
       {
         if(argc != 2)
-          return FALSE;
+          return TRUE;
 
         float *x = (float*) (settings[i].variable);
         if(argv[1])
@@ -1187,7 +1215,7 @@ cmd_set(int argc, char** argv)
       else if(settings[i].type == 's')
       {
         if(argc < 2)
-          return FALSE;
+          return TRUE;
 
         /* assembly the arguments back to one string */
         int j;
@@ -1206,7 +1234,7 @@ cmd_set(int argc, char** argv)
       else if(settings[i].type == 'c')
       {
         if(argc != 2)
-          return FALSE;
+          return TRUE;
 
         char *x = (char*) (settings[i].variable);
         if(argv[1])
@@ -1376,7 +1404,7 @@ cb_inputbar_activate(GtkEntry* entry, gpointer data)
 
       retv = special_commands[i].function(input, &(special_commands[i].argument));
       if(retv) isc_abort(NULL);
-      gtk_widget_grab_focus(GTK_WIDGET(Jumanji.UI.view));
+      gtk_widget_grab_focus(GTK_WIDGET(GET_CURRENT_TAB_WIDGET()));
       return TRUE;
     }
   }
@@ -1502,7 +1530,7 @@ int main(int argc, char* argv[])
   gtk_notebook_set_current_page(Jumanji.UI.view, -1);
 
   gtk_widget_show_all(GTK_WIDGET(Jumanji.UI.window));
-  gtk_widget_grab_focus(GTK_WIDGET(Jumanji.UI.view));
+  gtk_widget_grab_focus(GTK_WIDGET(GET_CURRENT_TAB_WIDGET()));
 
   gdk_threads_enter();
   gtk_main();
