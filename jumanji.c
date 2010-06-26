@@ -257,6 +257,7 @@ void sc_close_tab(Argument*);
 void sc_focus_inputbar(Argument*);
 void sc_reload(Argument*);
 void sc_scroll(Argument*);
+void sc_toggle_statusbar(Argument*);
 void sc_quit(Argument*);
 
 /* inputbar shortcut declarations */
@@ -395,6 +396,11 @@ init_look()
   gtk_widget_modify_font(GTK_WIDGET(Jumanji.Statusbar.buffer), Jumanji.Style.font);
   gtk_widget_modify_font(GTK_WIDGET(Jumanji.Statusbar.uri),    Jumanji.Style.font);
 
+  if(show_statusbar)
+    gtk_widget_show(GTK_WIDGET(Jumanji.UI.statusbar));
+  else
+    gtk_widget_hide(GTK_WIDGET(Jumanji.UI.statusbar));
+
   /* inputbar */
   gtk_widget_modify_base(GTK_WIDGET(Jumanji.UI.inputbar), GTK_STATE_NORMAL, &(Jumanji.Style.inputbar_bg));
   gtk_widget_modify_text(GTK_WIDGET(Jumanji.UI.inputbar), GTK_STATE_NORMAL, &(Jumanji.Style.inputbar_fg));
@@ -402,6 +408,7 @@ init_look()
 
   g_signal_connect(G_OBJECT(Jumanji.UI.inputbar), "key-press-event", G_CALLBACK(cb_inputbar_kb_pressed), NULL);
   g_signal_connect(G_OBJECT(Jumanji.UI.inputbar), "activate",        G_CALLBACK(cb_inputbar_activate),   NULL);
+
 }
 
 void
@@ -544,15 +551,17 @@ open_uri(WebKitWebView* web_view, char* uri)
 void
 update_status()
 {
+  if(!gtk_notebook_get_n_pages(Jumanji.UI.view))
+    return;
+
   /* update uri */
   gchar* title = (gchar*) webkit_web_view_get_title(GET_CURRENT_TAB());
   int progress = (int) g_object_get_data(G_OBJECT(GET_CURRENT_TAB()), "progress");
   gchar* ptext = (progress != 100) ? g_strdup_printf(" (%d%%)", progress) : g_strdup("");
   gchar* uri   = g_strdup_printf("%s%s", title, ptext);
+  g_free(ptext);
 
   gtk_label_set_markup((GtkLabel*) Jumanji.Statusbar.uri, uri ? uri : "");
-
-  g_free(ptext);
   g_free(uri);
 }
 
@@ -769,6 +778,15 @@ sc_scroll(Argument* argument)
     gtk_adjustment_set_value(adjustment, (value + scroll_step) > max ? max : (value + scroll_step));
 
   update_status();
+}
+
+void
+sc_toggle_statusbar(Argument* argument)
+{
+  if(GTK_WIDGET_VISIBLE(GTK_WIDGET(Jumanji.UI.statusbar)))
+    gtk_widget_hide(GTK_WIDGET(Jumanji.UI.statusbar));
+  else
+    gtk_widget_show(GTK_WIDGET(Jumanji.UI.statusbar));
 }
 
 void
@@ -1685,6 +1703,9 @@ int main(int argc, char* argv[])
   gtk_widget_show_all(GTK_WIDGET(Jumanji.UI.window));
   gtk_widget_grab_focus(GTK_WIDGET(GET_CURRENT_TAB_WIDGET()));
   gtk_widget_hide(GTK_WIDGET(Jumanji.UI.inputbar));
+
+  if(!show_statusbar)
+    gtk_widget_hide(GTK_WIDGET(Jumanji.UI.statusbar));
 
   gdk_threads_enter();
   gtk_main();

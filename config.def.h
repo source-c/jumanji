@@ -10,7 +10,7 @@ static const char FORMAT_DESCRIPTION[] = "<i>%s</i>";
 
 /* directories and files */
 static const char JUMANJI_DIR[]   = ".config/jumanji";
-static const char JUMANJI_RC[]    = "zathurarc";
+static const char JUMANJI_RC[]    = "jumanjirc";
 
 /* browser specific settings */
 char* home_page = "http://www.pwmt.org";
@@ -36,6 +36,7 @@ char* notification_w_fgcolor = "#000000";
 
 /* additional settings */
 gboolean show_scrollbars = FALSE;
+gboolean show_statusbar  = TRUE;
 
 /* shortcuts */
 Shortcut shortcuts[] = {
@@ -62,6 +63,7 @@ Shortcut shortcuts[] = {
   {GDK_CONTROL_MASK,   GDK_u,             sc_scroll,            NORMAL,              { HALF_UP } },
   {GDK_CONTROL_MASK,   GDK_f,             sc_scroll,            NORMAL,              { FULL_DOWN } },
   {GDK_CONTROL_MASK,   GDK_b,             sc_scroll,            NORMAL,              { FULL_UP } },
+  {GDK_CONTROL_MASK,   GDK_m,             sc_toggle_statusbar,  NORMAL,              {0} },
   {GDK_CONTROL_MASK,   GDK_q,             sc_quit,              ALL,                 {0} },
 };
 
@@ -106,7 +108,12 @@ SpecialCommand special_commands[] = {
 Setting settings[] = {
   /* name,                   variable,                           type, re-init, description */
   {"home_page",              &(home_page),                       's',  FALSE,   "Home page"},
+  {"height",                 &(default_height),                  'i',  FALSE,   "Default window height"},
   {"scrollbars",             &(show_scrollbars),                 'b',  TRUE,    "Show scrollbars"},
+  {"scroll_step",            &(scroll_step),                     'f',  TRUE,    "Scroll step"},
+  {"show_statusbar",         &(show_statusbar),                  'b',  TRUE,    "Show statusbar"},
+  {"width",                  &(default_height),                  'i',  FALSE,   "Default window width"},
+  {"zoom_step",              &(zoom_step),                       'f',  TRUE,    "Zoom step"},
 };
 
 /* shortcut names */
