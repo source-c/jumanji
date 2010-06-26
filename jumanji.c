@@ -252,6 +252,7 @@ void update_status();
 GtkEventBox* create_completion_row(GtkBox*, char*, char*, gboolean);
 
 /* shortcut declarations */
+void sc_abort(Argument*);
 void sc_focus_inputbar(Argument*);
 void sc_scroll(Argument*);
 void sc_quit(Argument*);
@@ -378,6 +379,12 @@ init_look()
 
   /* statusbar */
   gtk_widget_modify_bg(GTK_WIDGET(Jumanji.UI.statusbar), GTK_STATE_NORMAL, &(Jumanji.Style.statusbar_bg));
+
+  gtk_widget_modify_fg(GTK_WIDGET(Jumanji.Statusbar.buffer), GTK_STATE_NORMAL, &(Jumanji.Style.statusbar_fg));
+  gtk_widget_modify_fg(GTK_WIDGET(Jumanji.Statusbar.uri),    GTK_STATE_NORMAL, &(Jumanji.Style.statusbar_fg));
+
+  gtk_widget_modify_font(GTK_WIDGET(Jumanji.Statusbar.buffer), Jumanji.Style.font);
+  gtk_widget_modify_font(GTK_WIDGET(Jumanji.Statusbar.uri),    Jumanji.Style.font);
 
   /* inputbar */
   gtk_widget_modify_base(GTK_WIDGET(Jumanji.UI.inputbar), GTK_STATE_NORMAL, &(Jumanji.Style.inputbar_bg));
@@ -666,6 +673,21 @@ create_completion_row(GtkBox* results, char* command, char* description, gboolea
 }
 
 /* shortcut implementation */
+void
+sc_abort(Argument* argument)
+{
+  /* Clear buffer */
+  if(Jumanji.Global.buffer)
+  {
+    g_string_free(Jumanji.Global.buffer, TRUE);
+    Jumanji.Global.buffer = NULL;
+    gtk_label_set_markup((GtkLabel*) Jumanji.Statusbar.buffer, "");
+  }
+
+  /* Set back to normal mode */
+  change_mode(NORMAL);
+}
+
 void
 sc_focus_inputbar(Argument* argument)
 {
@@ -1529,7 +1551,6 @@ cb_view_kb_pressed(GtkWidget *widget, GdkEventKey *event, gpointer data)
       Jumanji.Global.buffer = g_string_new("");
 
     Jumanji.Global.buffer = g_string_append_c(Jumanji.Global.buffer, event->keyval);
-    printf("%s\n", Jumanji.Global.buffer->str);
     gtk_label_set_markup((GtkLabel*) Jumanji.Statusbar.buffer, Jumanji.Global.buffer->str);
   }
 
