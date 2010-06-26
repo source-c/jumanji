@@ -24,6 +24,7 @@
 /* enums */
 enum {
   ADD_MARKER,
+  APPEND_URL,
   BOTTOM,
   DEFAULT,
   DOWN,
@@ -734,7 +735,16 @@ sc_focus_inputbar(Argument* argument)
 
   if(argument->data)
   {
-    notify(DEFAULT, argument->data);
+    char* data = argument->data;
+
+    if(argument->n == APPEND_URL)
+      data = g_strdup_printf("%s%s", data, webkit_web_view_get_uri(GET_CURRENT_TAB()));
+    else
+      data = g_strdup(data);
+
+    notify(DEFAULT, data);
+    g_free(data);
+
     gtk_widget_grab_focus(GTK_WIDGET(Jumanji.UI.inputbar));
     gtk_editable_set_position(GTK_EDITABLE(Jumanji.UI.inputbar), -1);
   }
