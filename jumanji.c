@@ -27,6 +27,8 @@ enum {
   APPEND_URL,
   BOTTOM,
   DEFAULT,
+  DELETE_LAST_CHAR,
+  DELETE_LAST_WORD,
   DOWN,
   ERROR,
   EVAL_MARKER,
@@ -38,9 +40,11 @@ enum {
   HIGHLIGHT,
   LEFT,
   NEXT,
+  NEXT_CHAR,
   NEXT_GROUP,
   NORMAL,
   PREVIOUS,
+  PREVIOUS_CHAR,
   PREVIOUS_GROUP,
   RIGHT,
   TOP,
@@ -270,6 +274,8 @@ void sc_zoom(Argument*);
 /* inputbar shortcut declarations */
 void isc_abort(Argument*);
 void isc_completion(Argument*);
+void isc_command_history(Argument*);
+void isc_string_manipulation(Argument*);
 
 /* command declarations */
 gboolean cmd_map(int, char**);
@@ -456,7 +462,7 @@ init_keylist()
 void
 init_settings()
 {
-
+  gtk_window_set_default_size(GTK_WINDOW(Jumanji.UI.window), default_width, default_height);
 }
 
 void notify(int level, char* message)
@@ -568,7 +574,7 @@ update_status()
   /* update uri */
   gchar* link = (gchar*) webkit_web_view_get_uri(GET_CURRENT_TAB());
   int progress = (int) g_object_get_data(G_OBJECT(GET_CURRENT_TAB()), "progress");
-  gchar* ptext = (progress != 100) ? g_strdup_printf(" (%d%%)", progress) : g_strdup("");
+  gchar* ptext = (progress != 100 && progress != 0) ? g_strdup_printf(" (%d%%)", progress) : g_strdup("");
   gchar* uri   = g_strdup_printf("%s%s", link, ptext);
   g_free(ptext);
 
@@ -1111,6 +1117,64 @@ isc_completion(Argument* argument)
   }
 }
 
+void
+isc_command_history(Argument* argument)
+{
+  static int current = 0;
+  int        length  = g_list_length(Jumanji.Global.history);
+
+  if(length > 0)
+  {
+    if(argument->n == NEXT)
+      current = (length + current + 1) % length;
+    else
+      current = (length + current - 1) % length;
+
+    gchar* command = (gchar*) g_list_nth_data(Jumanji.Global.history, current);
+    notify(DEFAULT, command);
+    gtk_widget_grab_focus(GTK_WIDGET(Jumanji.UI.inputbar));
+    gtk_editable_set_position(GTK_EDITABLE(Jumanji.UI.inputbar), -1);
+  }
+}
+
+void
+isc_string_manipulation(Argument* argument)
+{
+  gchar *input  = gtk_editable_get_chars(GTK_EDITABLE(Jumanji.UI.inputbar), 0, -1);
+  int    length = strlen(input);
+  int pos       = gtk_editable_get_position(GTK_EDITABLE(Jumanji.UI.inputbar));
+
+  if(argument->n == DELETE_LAST_WORD)
+  {
+    int i = pos - 1;
+
+    if(!pos)
+      return;
+
+    /* remove trailing spaces */
+    for(; i >= 0 && input[i] == ' '; i--);
+
+    /* find the beginning of the word */
+    while((i == (pos - 1)) || (((i) > 0) && (input[i] != ' ') 
+          && (input[i] != '/') && (input[i] != '.')))
+      i--;
+
+    gtk_editable_delete_text(GTK_EDITABLE(Jumanji.UI.inputbar),  i+1, pos);
+    gtk_editable_set_position(GTK_EDITABLE(Jumanji.UI.inputbar), i+1);
+  }
+  else if(argument->n == DELETE_LAST_CHAR)
+  {
+    if((length - 1) <= 0)
+      isc_abort(NULL);
+
+    gtk_editable_delete_text(GTK_EDITABLE(Jumanji.UI.inputbar), pos - 1, pos);
+  }
+  else if(argument->n == NEXT_CHAR)
+    gtk_editable_set_position(GTK_EDITABLE(Jumanji.UI.inputbar), pos+1);
+  else if(argument->n == PREVIOUS_CHAR)
+    gtk_editable_set_position(GTK_EDITABLE(Jumanji.UI.inputbar), (pos == 0) ? 0 : pos - 1);
+}
+
 /* command implementation */
 gboolean
 cmd_map(int argc, char** argv)
@@ -1472,6 +1536,7 @@ bcmd_nav_tabs(char* buffer, Argument* argument)
   int step = (argument->n == NEXT) ? 1 : -1;
 
   gtk_notebook_set_current_page(Jumanji.UI.view, (current_tab + step) % number_of_tabs);
+  update_status();
 }
 
 void
@@ -1745,7 +1810,6 @@ cb_wv_nav_policy_decision(WebKitWebView* wv, WebKitWebFrame* frame, WebKitNetwor
 int main(int argc, char* argv[])
 {
   g_thread_init(NULL);
-  gdk_threads_init();
 
   gtk_init(&argc, &argv);
 
@@ -1767,9 +1831,7 @@ int main(int argc, char* argv[])
   if(!show_statusbar)
     gtk_widget_hide(GTK_WIDGET(Jumanji.UI.statusbar));
 
-  gdk_threads_enter();
   gtk_main();
-  gdk_threads_leave();
 
   return 0;
 }

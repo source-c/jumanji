@@ -13,7 +13,8 @@ static const char JUMANJI_DIR[]   = ".config/jumanji";
 static const char JUMANJI_RC[]    = "jumanjirc";
 
 /* browser specific settings */
-char* home_page = "http://www.pwmt.org";
+char* home_page  = "http://www.pwmt.org";
+char* user_agent = "jumanji";
 
 /* look */
 char* font                   = "monospace normal 9";
@@ -77,10 +78,17 @@ InputbarShortcut inputbar_shortcuts[] = {
   /* mask,             key,               function,                  argument */
   {0,                  GDK_Escape,        isc_abort,                 {0} },
   {GDK_CONTROL_MASK,   GDK_c,             isc_abort,                 {0} },
+  {0,                  GDK_Up,            isc_command_history,       { PREVIOUS } },
+  {0,                  GDK_Down,          isc_command_history,       { NEXT } },
   {0,                  GDK_Tab,           isc_completion,            { NEXT } },
   {GDK_CONTROL_MASK,   GDK_Tab,           isc_completion,            { NEXT_GROUP } },
   {0,                  GDK_ISO_Left_Tab,  isc_completion,            { PREVIOUS } },
   {GDK_CONTROL_MASK,   GDK_ISO_Left_Tab,  isc_completion,            { PREVIOUS_GROUP } },
+  {0,                  GDK_BackSpace,     isc_string_manipulation,   { DELETE_LAST_CHAR } },
+  {GDK_CONTROL_MASK,   GDK_h,             isc_string_manipulation,   { DELETE_LAST_CHAR } },
+  {GDK_CONTROL_MASK,   GDK_w,             isc_string_manipulation,   { DELETE_LAST_WORD } },
+  {GDK_CONTROL_MASK,   GDK_f,             isc_string_manipulation,   { NEXT_CHAR } },
+  {GDK_CONTROL_MASK,   GDK_b,             isc_string_manipulation,   { PREVIOUS_CHAR } },
 };
 
 /* commands */
@@ -121,6 +129,7 @@ Setting settings[] = {
   {"scrollbars",             &(show_scrollbars),                 'b',  TRUE,    "Show scrollbars"},
   {"scroll_step",            &(scroll_step),                     'f',  TRUE,    "Scroll step"},
   {"show_statusbar",         &(show_statusbar),                  'b',  TRUE,    "Show statusbar"},
+  {"user_agent",             &(user_agent),                      's',  TRUE,    "User agent"},
   {"width",                  &(default_height),                  'i',  FALSE,   "Default window width"},
   {"zoom_step",              &(zoom_step),                       'f',  TRUE,    "Zoom step"},
 };
