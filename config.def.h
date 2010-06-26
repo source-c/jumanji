@@ -49,6 +49,7 @@ Shortcut shortcuts[] = {
   {0,                  GDK_colon,         sc_focus_inputbar,    NORMAL,              { .data = ":" } },
   {0,                  GDK_o,             sc_focus_inputbar,    NORMAL,              { .data = ":open " } },
   {0,                  GDK_t,             sc_focus_inputbar,    NORMAL,              { .data = ":tabopen " } },
+  {0,                  GDK_r,             sc_reload,            NORMAL,              {0} },
   {0,                  GDK_h,             sc_scroll,            NORMAL,              { LEFT } },
   {0,                  GDK_j,             sc_scroll,            NORMAL,              { DOWN } },
   {0,                  GDK_k,             sc_scroll,            NORMAL,              { UP } },

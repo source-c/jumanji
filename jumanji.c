@@ -255,6 +255,7 @@ GtkEventBox* create_completion_row(GtkBox*, char*, char*, gboolean);
 void sc_abort(Argument*);
 void sc_close_tab(Argument*);
 void sc_focus_inputbar(Argument*);
+void sc_reload(Argument*);
 void sc_scroll(Argument*);
 void sc_quit(Argument*);
 
@@ -285,6 +286,7 @@ gboolean cb_inputbar_kb_pressed(GtkWidget*, GdkEventKey*, gpointer);
 gboolean cb_inputbar_activate(GtkEntry*, gpointer);
 gboolean cb_tab_kb_pressed(GtkWidget*, GdkEventKey*, gpointer);
 gboolean cb_wv_load_finished(WebKitWebView*, WebKitWebFrame*, gpointer);
+gboolean cb_wv_load_progress_changed(WebKitWebView*, int, gpointer);
 gboolean cb_wv_nav_policy_decision(WebKitWebView*, WebKitWebFrame*, WebKitNetworkRequest*, WebKitWebNavigationAction*, WebKitWebPolicyDecision*, gpointer);
 
 /* configuration */
@@ -340,9 +342,10 @@ create_tab(char* uri, int position)
   else
     gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(tab), GTK_POLICY_NEVER, GTK_POLICY_NEVER);
 
-  g_signal_connect(G_OBJECT(wv), "load-finished",                        G_CALLBACK(cb_wv_load_finished),       NULL);
-  g_signal_connect(G_OBJECT(wv), "navigation-policy-decision-requested", G_CALLBACK(cb_wv_nav_policy_decision), NULL);
-  /*g_signal_connect(G_OBJECT(wv), "new-window-policy-decision-requested", G_CALLBACK(cb_wv_nav_policy_decision), NULL);*/
+  g_signal_connect(G_OBJECT(wv), "load-finished",                        G_CALLBACK(cb_wv_load_finished),         NULL);
+  g_signal_connect(G_OBJECT(wv), "load-progress-changed",                G_CALLBACK(cb_wv_load_progress_changed), NULL);
+  g_signal_connect(G_OBJECT(wv), "navigation-policy-decision-requested", G_CALLBACK(cb_wv_nav_policy_decision),   NULL);
+  g_signal_connect(G_OBJECT(wv), "new-window-policy-decision-requested", G_CALLBACK(cb_wv_nav_policy_decision),   NULL);
 
   g_signal_connect(G_OBJECT(tab), "key-press-event", G_CALLBACK(cb_tab_kb_pressed), NULL);
   open_uri(WEBKIT_WEB_VIEW(wv), uri);
@@ -707,12 +710,21 @@ sc_close_tab(Argument* argument)
 void
 sc_focus_inputbar(Argument* argument)
 {
+  if(!(GTK_WIDGET_VISIBLE(GTK_WIDGET(Jumanji.UI.inputbar))))
+    gtk_widget_show(GTK_WIDGET(Jumanji.UI.inputbar));
+
   if(argument->data)
   {
     notify(DEFAULT, argument->data);
     gtk_widget_grab_focus(GTK_WIDGET(Jumanji.UI.inputbar));
     gtk_editable_set_position(GTK_EDITABLE(Jumanji.UI.inputbar), -1);
   }
+}
+
+void
+sc_reload(Argument* argument)
+{
+  webkit_web_view_reload(GET_CURRENT_TAB());
 }
 
 void
@@ -764,6 +776,7 @@ isc_abort(Argument* argument)
 
   notify(DEFAULT, "");
   gtk_widget_grab_focus(GTK_WIDGET(GET_CURRENT_TAB_WIDGET()));
+  gtk_widget_hide(GTK_WIDGET(Jumanji.UI.inputbar));
 }
 
 void
@@ -1608,6 +1621,15 @@ cb_wv_load_finished(WebKitWebView* wv, WebKitWebFrame* frame, gpointer data)
 }
 
 gboolean
+cb_wv_load_progress_changed(WebKitWebView* wv, int progress, gpointer data)
+{
+  if(wv == GET_CURRENT_TAB())
+    gtk_entry_set_progress_fraction(GTK_ENTRY(Jumanji.UI.inputbar), (progress == 100) ? 0 : ((float)progress)/100);
+
+  return TRUE;
+}
+
+gboolean
 cb_wv_nav_policy_decision(WebKitWebView* wv, WebKitWebFrame* frame, WebKitNetworkRequest* request,
     WebKitWebNavigationAction* action, WebKitWebPolicyDecision* decision, gpointer data)
 {
@@ -1649,6 +1671,7 @@ int main(int argc, char* argv[])
 
   gtk_widget_show_all(GTK_WIDGET(Jumanji.UI.window));
   gtk_widget_grab_focus(GTK_WIDGET(GET_CURRENT_TAB_WIDGET()));
+  gtk_widget_hide(GTK_WIDGET(Jumanji.UI.inputbar));
 
   gdk_threads_enter();
   gtk_main();
