@@ -284,6 +284,8 @@ gboolean cb_destroy(GtkWidget*, gpointer);
 gboolean cb_inputbar_kb_pressed(GtkWidget*, GdkEventKey*, gpointer);
 gboolean cb_inputbar_activate(GtkEntry*, gpointer);
 gboolean cb_tab_kb_pressed(GtkWidget*, GdkEventKey*, gpointer);
+gboolean cb_wv_load_finished(WebKitWebView*, WebKitWebFrame*, gpointer);
+gboolean cb_wv_nav_policy_decision(WebKitWebView*, WebKitWebFrame*, WebKitNetworkRequest*, WebKitWebNavigationAction*, WebKitWebPolicyDecision*, gpointer);
 
 /* configuration */
 #include "config.h"
@@ -338,8 +340,11 @@ create_tab(char* uri, int position)
   else
     gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(tab), GTK_POLICY_NEVER, GTK_POLICY_NEVER);
 
-  g_signal_connect(G_OBJECT(tab), "key-press-event", G_CALLBACK(cb_tab_kb_pressed), NULL);
+  g_signal_connect(G_OBJECT(wv), "load-finished",                        G_CALLBACK(cb_wv_load_finished),       NULL);
+  g_signal_connect(G_OBJECT(wv), "navigation-policy-decision-requested", G_CALLBACK(cb_wv_nav_policy_decision), NULL);
+  /*g_signal_connect(G_OBJECT(wv), "new-window-policy-decision-requested", G_CALLBACK(cb_wv_nav_policy_decision), NULL);*/
 
+  g_signal_connect(G_OBJECT(tab), "key-press-event", G_CALLBACK(cb_tab_kb_pressed), NULL);
   open_uri(WEBKIT_WEB_VIEW(wv), uri);
 
   gtk_container_add(GTK_CONTAINER(tab), wv);
@@ -1591,6 +1596,36 @@ cb_tab_kb_pressed(GtkWidget *widget, GdkEventKey *event, gpointer data)
   }
 
   return FALSE;
+}
+
+gboolean
+cb_wv_load_finished(WebKitWebView* wv, WebKitWebFrame* frame, gpointer data)
+{
+  if(wv == GET_CURRENT_TAB())
+    update_status();
+
+  return TRUE;
+}
+
+gboolean
+cb_wv_nav_policy_decision(WebKitWebView* wv, WebKitWebFrame* frame, WebKitNetworkRequest* request,
+    WebKitWebNavigationAction* action, WebKitWebPolicyDecision* decision, gpointer data)
+{
+  switch(webkit_web_navigation_action_get_button(action))
+  {
+    case 1: /* left mouse button */
+      open_uri(GET_CURRENT_TAB(), (char*) webkit_network_request_get_uri(request));
+      webkit_web_policy_decision_ignore(decision);
+      return TRUE;
+    case 2: /* middle mouse button */
+      create_tab((char*) webkit_network_request_get_uri(request), -1);
+      webkit_web_policy_decision_ignore(decision);
+      return TRUE;
+    case 3: /* right mouse button */
+      return FALSE;
+    default:
+      return FALSE;;
+  }
 }
 
 /* main function */
