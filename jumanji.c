@@ -253,6 +253,7 @@ GtkEventBox* create_completion_row(GtkBox*, char*, char*, gboolean);
 
 /* shortcut declarations */
 void sc_abort(Argument*);
+void sc_close_tab(Argument*);
 void sc_focus_inputbar(Argument*);
 void sc_scroll(Argument*);
 void sc_quit(Argument*);
@@ -282,7 +283,7 @@ gboolean scmd_search(char*, Argument*);
 gboolean cb_destroy(GtkWidget*, gpointer);
 gboolean cb_inputbar_kb_pressed(GtkWidget*, GdkEventKey*, gpointer);
 gboolean cb_inputbar_activate(GtkEntry*, gpointer);
-gboolean cb_view_kb_pressed(GtkWidget*, GdkEventKey*, gpointer);
+gboolean cb_tab_kb_pressed(GtkWidget*, GdkEventKey*, gpointer);
 
 /* configuration */
 #include "config.h"
@@ -337,7 +338,7 @@ create_tab(char* uri, int position)
   else
     gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(tab), GTK_POLICY_NEVER, GTK_POLICY_NEVER);
 
-  g_signal_connect(G_OBJECT(tab), "key-press-event", G_CALLBACK(cb_view_kb_pressed), NULL);
+  g_signal_connect(G_OBJECT(tab), "key-press-event", G_CALLBACK(cb_tab_kb_pressed), NULL);
 
   open_uri(WEBKIT_WEB_VIEW(wv), uri);
 
@@ -538,7 +539,6 @@ update_status()
   /* update uri */
   GString *title = g_string_new(webkit_web_view_get_title(GET_CURRENT_TAB()));
   gtk_label_set_markup((GtkLabel*) Jumanji.Statusbar.uri, title ? title->str : " : """);
-
 }
 
 void
@@ -686,6 +686,17 @@ sc_abort(Argument* argument)
 
   /* Set back to normal mode */
   change_mode(NORMAL);
+}
+
+void
+sc_close_tab(Argument* argument)
+{
+  int current_tab = gtk_notebook_get_current_page(Jumanji.UI.view);
+
+  if(gtk_notebook_get_n_pages(Jumanji.UI.view) > 1)
+    gtk_notebook_remove_page(Jumanji.UI.view, current_tab);
+  else
+    open_uri(GET_CURRENT_TAB(), home_page);
 }
 
 void
@@ -1506,7 +1517,7 @@ cb_inputbar_activate(GtkEntry* entry, gpointer data)
 }
 
 gboolean
-cb_view_kb_pressed(GtkWidget *widget, GdkEventKey *event, gpointer data)
+cb_tab_kb_pressed(GtkWidget *widget, GdkEventKey *event, gpointer data)
 {
   ShortcutList* sc = Jumanji.Bindings.sclist;
   while(sc)
