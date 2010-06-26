@@ -545,8 +545,15 @@ void
 update_status()
 {
   /* update uri */
-  GString *title = g_string_new(webkit_web_view_get_title(GET_CURRENT_TAB()));
-  gtk_label_set_markup((GtkLabel*) Jumanji.Statusbar.uri, title ? title->str : " : """);
+  gchar* title = (gchar*) webkit_web_view_get_title(GET_CURRENT_TAB());
+  int progress = (int) g_object_get_data(G_OBJECT(GET_CURRENT_TAB()), "progress");
+  gchar* ptext = (progress != 100) ? g_strdup_printf(" (%d%%)", progress) : g_strdup("");
+  gchar* uri   = g_strdup_printf("%s%s", title, ptext);
+
+  gtk_label_set_markup((GtkLabel*) Jumanji.Statusbar.uri, uri ? uri : "");
+
+  g_free(ptext);
+  g_free(uri);
 }
 
 void
@@ -694,6 +701,9 @@ sc_abort(Argument* argument)
 
   /* Set back to normal mode */
   change_mode(NORMAL);
+
+  /* Hide inputbar */
+  gtk_widget_hide(GTK_WIDGET(Jumanji.UI.inputbar));
 }
 
 void
@@ -1624,7 +1634,10 @@ gboolean
 cb_wv_load_progress_changed(WebKitWebView* wv, int progress, gpointer data)
 {
   if(wv == GET_CURRENT_TAB())
-    gtk_entry_set_progress_fraction(GTK_ENTRY(Jumanji.UI.inputbar), (progress == 100) ? 0 : ((float)progress)/100);
+  {
+    g_object_set_data(G_OBJECT(wv), "progress", (gpointer) progress);
+    update_status();
+  }
 
   return TRUE;
 }
