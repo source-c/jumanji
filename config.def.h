@@ -67,6 +67,7 @@ Shortcut shortcuts[] = {
   {GDK_CONTROL_MASK,   GDK_b,             sc_scroll,            NORMAL,              { FULL_UP } },
   {GDK_CONTROL_MASK,   GDK_m,             sc_toggle_statusbar,  NORMAL,              {0} },
   {GDK_CONTROL_MASK,   GDK_q,             sc_quit,              ALL,                 {0} },
+  {0,                  GDK_y,             sc_yank,              NORMAL,              {0} },
   {0,                  GDK_plus,          sc_zoom,              NORMAL,              { ZOOM_IN } },
   {0,                  GDK_minus,         sc_zoom,              NORMAL,              { ZOOM_OUT } },
 };
@@ -127,6 +128,7 @@ Setting settings[] = {
 /* shortcut names */
 ShortcutName shortcut_names[] = {
   {"quit", sc_quit},
+  {"yank", sc_yank},
   {"zoom", sc_zoom},
 };
 

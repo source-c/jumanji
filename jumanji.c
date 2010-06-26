@@ -264,6 +264,7 @@ void sc_reload(Argument*);
 void sc_scroll(Argument*);
 void sc_toggle_statusbar(Argument*);
 void sc_quit(Argument*);
+void sc_yank(Argument*);
 void sc_zoom(Argument*);
 
 /* inputbar shortcut declarations */
@@ -460,6 +461,9 @@ init_settings()
 
 void notify(int level, char* message)
 {
+  if(!(GTK_WIDGET_VISIBLE(GTK_WIDGET(Jumanji.UI.inputbar))))
+    gtk_widget_show(GTK_WIDGET(Jumanji.UI.inputbar));
+
   switch(level)
   {
     case ERROR:
@@ -562,11 +566,15 @@ update_status()
     return;
 
   /* update uri */
-  gchar* title = (gchar*) webkit_web_view_get_title(GET_CURRENT_TAB());
+  gchar* link = (gchar*) webkit_web_view_get_uri(GET_CURRENT_TAB());
   int progress = (int) g_object_get_data(G_OBJECT(GET_CURRENT_TAB()), "progress");
   gchar* ptext = (progress != 100) ? g_strdup_printf(" (%d%%)", progress) : g_strdup("");
-  gchar* uri   = g_strdup_printf("%s%s", title, ptext);
+  gchar* uri   = g_strdup_printf("%s%s", link, ptext);
   g_free(ptext);
+
+  /* update title */
+  const gchar* title = webkit_web_view_get_title(GET_CURRENT_TAB());
+  gtk_window_set_title(GTK_WINDOW(Jumanji.UI.window), title);
 
   gtk_label_set_markup((GtkLabel*) Jumanji.Statusbar.uri, uri ? uri : "");
   g_free(uri);
@@ -811,6 +819,16 @@ sc_quit(Argument* argument)
   cb_destroy(NULL, NULL);
 }
 
+void
+sc_yank(Argument* argument)
+{
+  gchar* uri = (gchar*) webkit_web_view_get_uri(GET_CURRENT_TAB());
+  gtk_clipboard_set_text(gtk_clipboard_get(GDK_SELECTION_PRIMARY), uri, -1);
+
+  gchar* message = g_strdup_printf("Yanked %s", uri);
+  notify(DEFAULT, message);
+  g_free(message);
+}
 
 void
 sc_zoom(Argument* argument)
