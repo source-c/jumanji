@@ -45,7 +45,11 @@ enum {
   RIGHT,
   TOP,
   UP,
-  WARNING
+  WARNING,
+  ZOOM_IN,
+  ZOOM_ORIGINAL,
+  ZOOM_OUT,
+  ZOOM_SPECIFIC
 };
 
 /* define modes */
@@ -260,6 +264,7 @@ void sc_reload(Argument*);
 void sc_scroll(Argument*);
 void sc_toggle_statusbar(Argument*);
 void sc_quit(Argument*);
+void sc_zoom(Argument*);
 
 /* inputbar shortcut declarations */
 void isc_abort(Argument*);
@@ -278,6 +283,7 @@ Completion* cc_set(char*);
 /* buffer command declarations */
 void bcmd_goto(char*, Argument*);
 void bcmd_nav_tabs(char*, Argument*);
+void bcmd_zoom(char*, Argument*);
 
 /* special command delcarations */
 gboolean scmd_search(char*, Argument*);
@@ -803,6 +809,13 @@ void
 sc_quit(Argument* argument)
 {
   cb_destroy(NULL, NULL);
+}
+
+
+void
+sc_zoom(Argument* argument)
+{
+  bcmd_zoom(NULL, argument);
 }
 
 /* inputbar shortcut declarations */
@@ -1441,6 +1454,25 @@ bcmd_nav_tabs(char* buffer, Argument* argument)
   int step = (argument->n == NEXT) ? 1 : -1;
 
   gtk_notebook_set_current_page(Jumanji.UI.view, (current_tab + step) % number_of_tabs);
+}
+
+void
+bcmd_zoom(char* buffer, Argument* argument)
+{
+  float zoom_level = webkit_web_view_get_zoom_level(GET_CURRENT_TAB());
+
+  if(argument->n == ZOOM_IN)
+    webkit_web_view_set_zoom_level(GET_CURRENT_TAB(), zoom_level + (float) (zoom_step / 100));
+  else if(argument->n == ZOOM_OUT)
+    webkit_web_view_set_zoom_level(GET_CURRENT_TAB(), zoom_level - (float) (zoom_step / 100));
+  else if(argument->n == ZOOM_ORIGINAL)
+    webkit_web_view_set_zoom_level(GET_CURRENT_TAB(), 100.0f);
+  else if(argument->n == ZOOM_SPECIFIC)
+  {
+    char* number = g_strndup(buffer, strlen(buffer) - 1);
+    webkit_web_view_set_zoom_level(GET_CURRENT_TAB(), (float) (atoi(number) / 100));
+    g_free(number);
+  }
 }
 
 /* special command implementation */
