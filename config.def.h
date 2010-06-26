@@ -45,6 +45,7 @@ Shortcut shortcuts[] = {
   {GDK_SHIFT_MASK,     GDK_question,      sc_focus_inputbar,    NORMAL,              { .data = "?" } },
   {0,                  GDK_colon,         sc_focus_inputbar,    NORMAL,              { .data = ":" } },
   {0,                  GDK_o,             sc_focus_inputbar,    NORMAL,              { .data = ":open " } },
+  {0,                  GDK_t,             sc_focus_inputbar,    NORMAL,              { .data = ":tabopen " } },
   {0,                  GDK_h,             sc_scroll,            NORMAL,              { LEFT } },
   {0,                  GDK_j,             sc_scroll,            NORMAL,              { DOWN } },
   {0,                  GDK_k,             sc_scroll,            NORMAL,              { UP } },
@@ -78,6 +79,7 @@ Command commands[] = {
   {"open",      "o",            cmd_open,            0,            "Open URI" },
   {"quit",      "q",            cmd_quit,            0,            "Quit jumanji" },
   {"set",       "s",            cmd_set,             cc_set,       "Set an option" },
+  {"tabopen",   "t",            cmd_tabopen,         0,            "Open URI in new tab" },
 };
 
 /* buffer commands */
@@ -85,6 +87,8 @@ BufferCommand buffer_commands[] = {
   /* regex,        function,       argument */
   {"^gg$",         bcmd_goto,      { TOP } },
   {"^G$",          bcmd_goto,      { BOTTOM } },
+  {"^gt$",         bcmd_nav_tabs,  { NEXT } },
+  {"^gT$",         bcmd_nav_tabs,  { PREVIOUS } },
 };
 
 /* special commands */

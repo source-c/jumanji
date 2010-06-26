@@ -221,6 +221,7 @@ struct
 
   struct
   {
+    GtkLabel *uri;
     GtkLabel *buffer;
   } Statusbar;
 
@@ -264,12 +265,14 @@ gboolean cmd_map(int, char**);
 gboolean cmd_open(int, char**);
 gboolean cmd_quit(int, char**);
 gboolean cmd_set(int, char**);
+gboolean cmd_tabopen(int, char**);
 
 /* completion commands */
 Completion* cc_set(char*);
 
 /* buffer command declarations */
 void bcmd_goto(char*, Argument*);
+void bcmd_nav_tabs(char*, Argument*);
 
 /* special command delcarations */
 gboolean scmd_search(char*, Argument*);
@@ -333,11 +336,15 @@ create_tab(char* uri, int position)
   else
     gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(tab), GTK_POLICY_NEVER, GTK_POLICY_NEVER);
 
+  g_signal_connect(G_OBJECT(tab), "key-press-event", G_CALLBACK(cb_view_kb_pressed), NULL);
+
   open_uri(WEBKIT_WEB_VIEW(wv), uri);
 
   gtk_container_add(GTK_CONTAINER(tab), wv);
   gtk_widget_show_all(tab);
   gtk_notebook_insert_page(Jumanji.UI.view, tab, NULL, position);
+  gtk_notebook_set_current_page(Jumanji.UI.view, -1);
+  gtk_widget_grab_focus(GTK_WIDGET(GET_CURRENT_TAB_WIDGET()));
 }
 
 
@@ -446,6 +453,9 @@ void notify(int level, char* message)
 void
 init_jumanji()
 {
+  /* other */
+  Jumanji.Global.mode = NORMAL;
+
   /* UI */
   Jumanji.UI.window            = gtk_window_new(GTK_WINDOW_TOPLEVEL);
   Jumanji.UI.box               = GTK_BOX(gtk_vbox_new(FALSE, 0));
@@ -465,6 +475,21 @@ init_jumanji()
   gtk_container_add(GTK_CONTAINER(Jumanji.UI.window), GTK_WIDGET(Jumanji.UI.box));
 
   /* statusbar */
+  Jumanji.Statusbar.uri    = GTK_LABEL(gtk_label_new(NULL));
+  Jumanji.Statusbar.buffer = GTK_LABEL(gtk_label_new(NULL));
+
+  gtk_misc_set_alignment(GTK_MISC(Jumanji.Statusbar.uri),    0.0, 0.0);
+  gtk_misc_set_alignment(GTK_MISC(Jumanji.Statusbar.buffer), 1.0, 0.0);
+
+  gtk_misc_set_padding(GTK_MISC(Jumanji.Statusbar.uri),    2.0, 4.0);
+  gtk_misc_set_padding(GTK_MISC(Jumanji.Statusbar.buffer), 2.0, 4.0);
+
+  gtk_label_set_use_markup(Jumanji.Statusbar.uri,    TRUE);
+  gtk_label_set_use_markup(Jumanji.Statusbar.buffer, TRUE);
+
+  gtk_box_pack_start(Jumanji.UI.statusbar_entries, GTK_WIDGET(Jumanji.Statusbar.uri),    TRUE,   TRUE, 2);
+  gtk_box_pack_start(Jumanji.UI.statusbar_entries, GTK_WIDGET(Jumanji.Statusbar.buffer), FALSE, FALSE, 2);
+
   gtk_container_add(GTK_CONTAINER(Jumanji.UI.statusbar), GTK_WIDGET(Jumanji.UI.statusbar_entries));
 
   /* inputbar */
@@ -474,9 +499,7 @@ init_jumanji()
 
   /* view */
   gtk_notebook_set_show_tabs(Jumanji.UI.view,   FALSE);
-  gtk_notebook_set_show_border(Jumanji.UI.view, FALSE); 
-
-  g_signal_connect(G_OBJECT(Jumanji.UI.view), "key-press-event", G_CALLBACK(cb_view_kb_pressed), NULL);
+  gtk_notebook_set_show_border(Jumanji.UI.view, FALSE);
 
   /* packing */
   gtk_box_pack_start(Jumanji.UI.box, GTK_WIDGET(Jumanji.UI.view),       TRUE,  TRUE, 0);
@@ -505,6 +528,9 @@ open_uri(WebKitWebView* web_view, char* uri)
 void
 update_status()
 {
+  /* update uri */
+  GString *title = g_string_new(webkit_web_view_get_title(GET_CURRENT_TAB()));
+  gtk_label_set_markup((GtkLabel*) Jumanji.Statusbar.uri, title ? title->str : " : """);
 
 }
 
@@ -1251,6 +1277,17 @@ cmd_set(int argc, char** argv)
   return TRUE;
 }
 
+gboolean
+cmd_tabopen(int argc, char** argv)
+{
+  if(argc <= 0)
+    return TRUE;
+
+  create_tab(argv[0], -1);
+
+  return TRUE;
+}
+
 /* completion command implementation */
 Completion*
 cc_set(char* input)
@@ -1304,6 +1341,17 @@ void
 bcmd_goto(char* buffer, Argument* argument)
 {
 
+}
+
+void
+bcmd_nav_tabs(char* buffer, Argument* argument)
+{
+  int current_tab     = gtk_notebook_get_current_page(Jumanji.UI.view);
+  int number_of_tabs  = gtk_notebook_get_n_pages(Jumanji.UI.view);
+
+  int step = (argument->n == NEXT) ? 1 : -1;
+
+  gtk_notebook_set_current_page(Jumanji.UI.view, (current_tab + step) % number_of_tabs);
 }
 
 /* special command implementation */
@@ -1430,6 +1478,8 @@ cb_inputbar_activate(GtkEntry* entry, gpointer data)
   Argument arg = { HIDE };
   isc_completion(&arg);
 
+  gtk_widget_grab_focus(GTK_WIDGET(GET_CURRENT_TAB_WIDGET()));
+
   return TRUE;
 }
 
@@ -1479,6 +1529,8 @@ cb_view_kb_pressed(GtkWidget *widget, GdkEventKey *event, gpointer data)
       Jumanji.Global.buffer = g_string_new("");
 
     Jumanji.Global.buffer = g_string_append_c(Jumanji.Global.buffer, event->keyval);
+    printf("%s\n", Jumanji.Global.buffer->str);
+    gtk_label_set_markup((GtkLabel*) Jumanji.Statusbar.buffer, Jumanji.Global.buffer->str);
   }
 
   /* search buffer commands */
@@ -1527,7 +1579,6 @@ int main(int argc, char* argv[])
 
   /* create tab */
   create_tab(home_page, -1);
-  gtk_notebook_set_current_page(Jumanji.UI.view, -1);
 
   gtk_widget_show_all(GTK_WIDGET(Jumanji.UI.window));
   gtk_widget_grab_focus(GTK_WIDGET(GET_CURRENT_TAB_WIDGET()));
