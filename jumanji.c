@@ -182,6 +182,15 @@ typedef struct
   char* description;
 } Setting;
 
+struct SEList
+{
+  char* name;
+  char* uri;
+  struct SEList *next;
+};
+
+typedef struct SEList SearchEngineList;
+
 typedef struct
 {
   GtkScrolledWindow *view;
@@ -226,6 +235,7 @@ struct
     GString *buffer;
     GList   *history;
     int      mode;
+    SearchEngineList *search_engines;
   } Global;
 
   struct
@@ -281,6 +291,7 @@ void isc_string_manipulation(Argument*);
 gboolean cmd_map(int, char**);
 gboolean cmd_open(int, char**);
 gboolean cmd_quit(int, char**);
+gboolean cmd_search_engine(int, char**);
 gboolean cmd_set(int, char**);
 gboolean cmd_tabopen(int, char**);
 
@@ -494,7 +505,8 @@ void
 init_jumanji()
 {
   /* other */
-  Jumanji.Global.mode = NORMAL;
+  Jumanji.Global.mode           = NORMAL;
+  Jumanji.Global.search_engines = NULL;
 
   /* UI */
   Jumanji.UI.window            = gtk_window_new(GTK_WINDOW_TOPLEVEL);
@@ -560,7 +572,29 @@ open_uri(WebKitWebView* web_view, char* uri)
   while (*uri == ' ')
     uri++;
 
-  gchar *new_uri = g_strrstr(uri, ":") ? g_strdup(uri) : g_strconcat("http://", uri, NULL);
+  gchar **tokens = g_strsplit(uri, " ", -1);
+  int     length = g_strv_length(tokens);
+  gchar* new_uri = "";
+
+  /* check search engine */
+  if(length > 1)
+  {
+    SearchEngineList* se = Jumanji.Global.search_engines;
+    while(se)
+    {
+      if(!strcmp(tokens[0], se->name))
+      {
+        char* searchitem = uri + strlen(tokens[0]) + 1;
+        new_uri   = g_strdup_printf(se->uri, searchitem);
+        break;
+      }
+
+      se = se->next;
+    }
+  }
+  else
+    new_uri = g_strrstr(uri, ":") ? g_strdup(uri) : g_strconcat("http://", uri, NULL);
+
   webkit_web_view_load_uri(web_view, new_uri);
   g_free(new_uri);
 }
@@ -616,6 +650,8 @@ read_configuration()
           cmd_set(length - 1, tokens + 1);
         else if(!strcmp(tokens[0], "map"))
           cmd_map(length - 1, tokens + 1);
+        else if(!strcmp(tokens[0], "searchengine"))
+          cmd_search_engine(length - 1, tokens + 1);
       }
     }
   }
@@ -1155,7 +1191,7 @@ isc_string_manipulation(Argument* argument)
     for(; i >= 0 && input[i] == ' '; i--);
 
     /* find the beginning of the word */
-    while((i == (pos - 1)) || (((i) > 0) && (input[i] != ' ') 
+    while((i == (pos - 1)) || (((i) > 0) && (input[i] != ' ')
           && (input[i] != '/') && (input[i] != '.')))
       i--;
 
@@ -1353,7 +1389,19 @@ cmd_open(int argc, char** argv)
   if(argc <= 0)
     return TRUE;
 
-  open_uri(GET_CURRENT_TAB(), argv[0]);
+  int i;
+  GString *uri = g_string_new("");
+
+  for(i = 0; i < argc; i++)
+  {
+    if(i != 0)
+      uri = g_string_append_c(uri, ' ');
+
+    uri = g_string_append(uri, argv[i]);
+  }
+
+  open_uri(GET_CURRENT_TAB(), uri->str);
+  g_string_free(uri, FALSE);
 
   return TRUE;
 }
@@ -1362,6 +1410,46 @@ gboolean
 cmd_quit(int argc, char** argv)
 {
   cb_destroy(NULL, NULL);
+  return TRUE;
+}
+
+gboolean
+cmd_search_engine(int argc, char** argv)
+{
+  if(argc < 2)
+    return TRUE;
+
+  char* name = argv[0];
+  char* uri  = argv[1];
+
+  /* search for existing search engine to overwrite it */
+  SearchEngineList* se = Jumanji.Global.search_engines;
+  while(se && se->next != NULL)
+  {
+    if(!strcmp(se->name, name))
+    {
+      se->uri = uri;
+      return TRUE;
+    }
+
+    se = se->next;
+  }
+
+  /* create new engine */
+  SearchEngineList* entry = malloc(sizeof(SearchEngineList));
+  if(!entry)
+    out_of_memory();
+
+  entry->name = name;
+  entry->uri  = uri;
+
+  /* append to list */
+  if(!Jumanji.Global.search_engines)
+    Jumanji.Global.search_engines = entry;
+
+  if(se)
+    se->next = entry;
+
   return TRUE;
 }
 
@@ -1467,7 +1555,19 @@ cmd_tabopen(int argc, char** argv)
   if(argc <= 0)
     return TRUE;
 
-  create_tab(argv[0], -1);
+  int i;
+  GString *uri = g_string_new("");
+
+  for(i = 0; i < argc; i++)
+  {
+    if(i != 0)
+      uri = g_string_append_c(uri, ' ');
+
+    uri = g_string_append(uri, argv[i]);
+  }
+
+  create_tab(uri->str, -1);
+  g_string_free(uri, FALSE);
 
   return TRUE;
 }
