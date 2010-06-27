@@ -1654,7 +1654,22 @@ cmd_tabopen(int argc, char** argv)
 Completion*
 cc_open(char* input)
 {
+  Completion* completion = completion_init();
 
+  /* search engines */
+  CompletionGroup* search_engines = completion_group_create("Search engines");
+  SearchEngineList* se = Jumanji.Global.search_engines;
+
+  if(se)
+    completion_add_group(completion, search_engines);
+
+  while(se)
+  {
+    completion_group_add_element(search_engines, se->name, NULL);
+    se = se->next;
+  }
+
+  return completion;
 }
 
 Completion*

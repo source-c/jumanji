@@ -95,10 +95,10 @@ InputbarShortcut inputbar_shortcuts[] = {
 Command commands[] = {
   /* command,   abbreviation,   function,            completion,   description  */
   {"map",       "m",            cmd_map,             0,            "Map keybinding to a function" },
-  {"open",      "o",            cmd_open,            0,            "Open URI" },
+  {"open",      "o",            cmd_open,            cc_open,      "Open URI" },
   {"quit",      "q",            cmd_quit,            0,            "Quit jumanji" },
   {"set",       "s",            cmd_set,             cc_set,       "Set an option" },
-  {"tabopen",   "t",            cmd_tabopen,         0,            "Open URI in new tab" },
+  {"tabopen",   "t",            cmd_tabopen,         cc_open,      "Open URI in new tab" },
 };
 
 /* buffer commands */
