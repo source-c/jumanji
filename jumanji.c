@@ -270,6 +270,12 @@ void switch_view(GtkWidget*);
 void update_status();
 GtkEventBox* create_completion_row(GtkBox*, char*, char*, gboolean);
 
+Completion* completion_init();
+CompletionGroup* completion_group_create(char*);
+void completion_add_group(Completion*, CompletionGroup*);
+void completion_free(Completion*);
+void completion_group_add_element(CompletionGroup*, char*, char*);
+
 /* shortcut declarations */
 void sc_abort(Argument*);
 void sc_close_tab(Argument*);
@@ -296,6 +302,7 @@ gboolean cmd_set(int, char**);
 gboolean cmd_tabopen(int, char**);
 
 /* completion commands */
+Completion* cc_open(char*);
 Completion* cc_set(char*);
 
 /* buffer command declarations */
@@ -753,6 +760,88 @@ create_completion_row(GtkBox* results, char* command, char* description, gboolea
   return row;
 }
 
+Completion*
+completion_init()
+{
+  Completion *completion = malloc(sizeof(Completion));
+  if(!completion)
+    out_of_memory();
+
+  completion->groups = NULL;
+
+  return completion;
+}
+
+CompletionGroup*
+completion_group_create(char* name)
+{
+  CompletionGroup* group = malloc(sizeof(CompletionGroup));
+  if(!group)
+    out_of_memory();
+
+  group->value    = name;
+  group->elements = NULL;
+  group->next     = NULL;
+
+  return group;
+}
+
+void
+completion_add_group(Completion* completion, CompletionGroup* group)
+{
+  CompletionGroup* cg = completion->groups;
+
+  while(cg && cg->next)
+    cg = cg->next;
+
+  if(cg)
+    cg->next = group;
+  else
+    completion->groups = group;
+}
+
+void completion_free(Completion* completion)
+{
+  CompletionGroup* group = completion->groups;
+  CompletionElement *element;
+
+  while(group)
+  {
+    element = group->elements;
+    while(element)
+    {
+      CompletionElement* ne = element->next;
+      free(element);
+      element = ne;
+    }
+
+    CompletionGroup *ng = group->next;
+    free(group);
+    group = ng;
+  }
+}
+
+void completion_group_add_element(CompletionGroup* group, char* name, char* description)
+{
+  CompletionElement* el = group->elements;
+
+  while(el && el->next)
+    el = el->next;
+
+  CompletionElement* new_element = malloc(sizeof(CompletionElement));
+  if(!new_element)
+    out_of_memory();
+
+  new_element->value       = name;
+  new_element->description = description;
+  new_element->next        = NULL;
+
+  if(el)
+    el->next = new_element;
+  else
+    group->elements = new_element;
+}
+
 /* shortcut implementation */
 void
 sc_abort(Argument* argument)
@@ -1043,22 +1132,7 @@ isc_completion(Argument* argument)
       }
 
       /* clean up */
-      group = result->groups;
-
-      while(group)
-      {
-        element = group->elements;
-        while(element)
-        {
-          CompletionElement* ne = element->next;
-          free(element);
-          element = ne;
-        }
-
-        CompletionGroup *ng = group->next;
-        free(group);
-        group = ng;
-      }
+      completion_free(result);
     }
     /* create list based on commands */
     else
@@ -1195,7 +1269,7 @@ isc_string_manipulation(Argument* argument)
           && (input[i] != '/') && (input[i] != '.')
           && (input[i] != '-') && (input[i] != '=')
           && (input[i] != '&') && (input[i] != '#')
-          && (input[i] != '?') 
+          && (input[i] != '?')
           ))
       i--;
 
@@ -1578,24 +1652,19 @@ cmd_tabopen(int argc, char** argv)
 
 /* completion command implementation */
 Completion*
+cc_open(char* input)
+{
+
+}
+
+Completion*
 cc_set(char* input)
 {
-  /* init completion group */
-  Completion *completion = malloc(sizeof(Completion));
-  if(!completion)
-    out_of_memory();
+  Completion* completion = completion_init();
+  CompletionGroup* group = completion_group_create(NULL);
 
-  CompletionGroup* group = malloc(sizeof(CompletionGroup));
-  if(!group)
-    out_of_memory();
+  completion_add_group(completion, group);
 
-  group->value    = NULL;
-  group->next     = NULL;
-  group->elements = NULL;
-
-  completion->groups = group;
-  CompletionElement *last_element = NULL;
-  int element_counter = 0;
   int i = 0;
   int input_length = input ? strlen(input) : 0;
 
@@ -1604,20 +1673,7 @@ cc_set(char* input)
     if( (input_length <= strlen(settings[i].name)) &&
           !strncmp(input, settings[i].name, input_length) )
     {
-      CompletionElement* el = malloc(sizeof(CompletionElement));
-      if(!el)
-        out_of_memory();
-
-      el->value = settings[i].name;
-      el->description = settings[i].description;
-      el->next = NULL;
-
-      if(element_counter++ != 0)
-        last_element->next = el;
-      else
-        group->elements = el;
-
-      last_element = el;
+      completion_group_add_element(group, settings[i].name, settings[i].description);
     }
   }
 
