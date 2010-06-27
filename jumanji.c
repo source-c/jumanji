@@ -1192,7 +1192,11 @@ isc_string_manipulation(Argument* argument)
 
     /* find the beginning of the word */
     while((i == (pos - 1)) || (((i) > 0) && (input[i] != ' ')
-          && (input[i] != '/') && (input[i] != '.')))
+          && (input[i] != '/') && (input[i] != '.')
+          && (input[i] != '-') && (input[i] != '=')
+          && (input[i] != '&') && (input[i] != '#')
+          && (input[i] != '?') 
+          ))
       i--;
 
     gtk_editable_delete_text(GTK_EDITABLE(Jumanji.UI.inputbar),  i+1, pos);
