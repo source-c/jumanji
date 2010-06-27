@@ -39,6 +39,8 @@ char* notification_w_fgcolor = "#000000";
 gboolean show_scrollbars = FALSE;
 gboolean show_statusbar  = TRUE;
 
+#define GDK_COSHIFT_MASK GDK_CONTROL_MASK | GDK_SHIFT_MASK
+
 /* shortcuts */
 Shortcut shortcuts[] = {
   /* mask,             key,               function,             mode,                argument */
@@ -53,6 +55,8 @@ Shortcut shortcuts[] = {
   {0,                  GDK_O,             sc_focus_inputbar,    NORMAL,              { .data = ":open ", .n = APPEND_URL } },
   {0,                  GDK_t,             sc_focus_inputbar,    NORMAL,              { .data = ":tabopen " } },
   {0,                  GDK_T,             sc_focus_inputbar,    NORMAL,              { .data = ":tabopen ", .n = APPEND_URL } },
+  {GDK_CONTROL_MASK,   GDK_Tab,           sc_nav_tabs,          NORMAL,              { NEXT } },
+  {GDK_COSHIFT_MASK,   GDK_ISO_Left_Tab,  sc_nav_tabs,          NORMAL,              { PREVIOUS } },
   {0,                  GDK_r,             sc_reload,            NORMAL,              {0} },
   {0,                  GDK_h,             sc_scroll,            NORMAL,              { LEFT } },
   {0,                  GDK_j,             sc_scroll,            NORMAL,              { DOWN } },
@@ -108,10 +112,13 @@ BufferCommand buffer_commands[] = {
   {"^G$",          bcmd_goto,      { BOTTOM } },
   {"^gt$",         bcmd_nav_tabs,  { NEXT } },
   {"^gT$",         bcmd_nav_tabs,  { PREVIOUS } },
-  {"^zI$",         bcmd_zoom,       { ZOOM_IN } },
-  {"^zO$",         bcmd_zoom,       { ZOOM_OUT } },
-  {"^z0$",         bcmd_zoom,       { ZOOM_ORIGINAL } },
-  {"^[0-9]+Z$",    bcmd_zoom,       { ZOOM_SPECIFIC } },
+  {"^[0-9]+gt$",   bcmd_nav_tabs,  { SPECIFIC } },
+  {"^[0-9]+gT$",   bcmd_nav_tabs,  { SPECIFIC } },
+  {"^[0-9]+%$",    bcmd_scroll,    {0} },
+  {"^zI$",         bcmd_zoom,      { ZOOM_IN } },
+  {"^zO$",         bcmd_zoom,      { ZOOM_OUT } },
+  {"^z0$",         bcmd_zoom,      { ZOOM_ORIGINAL } },
+  {"^[0-9]+Z$",    bcmd_zoom,      { SPECIFIC } },
 };
 
 /* special commands */

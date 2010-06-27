@@ -47,13 +47,13 @@ enum {
   PREVIOUS_CHAR,
   PREVIOUS_GROUP,
   RIGHT,
+  SPECIFIC,
   TOP,
   UP,
   WARNING,
   ZOOM_IN,
   ZOOM_ORIGINAL,
-  ZOOM_OUT,
-  ZOOM_SPECIFIC
+  ZOOM_OUT
 };
 
 /* define modes */
@@ -280,6 +280,7 @@ void completion_group_add_element(CompletionGroup*, char*, char*);
 void sc_abort(Argument*);
 void sc_close_tab(Argument*);
 void sc_focus_inputbar(Argument*);
+void sc_nav_tabs(Argument*);
 void sc_reload(Argument*);
 void sc_scroll(Argument*);
 void sc_toggle_statusbar(Argument*);
@@ -308,6 +309,7 @@ Completion* cc_set(char*);
 /* buffer command declarations */
 void bcmd_goto(char*, Argument*);
 void bcmd_nav_tabs(char*, Argument*);
+void bcmd_scroll(char*, Argument*);
 void bcmd_zoom(char*, Argument*);
 
 /* special command delcarations */
@@ -893,6 +895,12 @@ sc_focus_inputbar(Argument* argument)
     gtk_widget_grab_focus(GTK_WIDGET(Jumanji.UI.inputbar));
     gtk_editable_set_position(GTK_EDITABLE(Jumanji.UI.inputbar), -1);
   }
+}
+
+void
+sc_nav_tabs(Argument* argument)
+{
+  bcmd_nav_tabs(NULL, argument);
 }
 
 void
@@ -1699,7 +1707,7 @@ cc_set(char* input)
 void
 bcmd_goto(char* buffer, Argument* argument)
 {
-
+  sc_scroll(argument);
 }
 
 void
@@ -1707,11 +1715,33 @@ bcmd_nav_tabs(char* buffer, Argument* argument)
 {
   int current_tab     = gtk_notebook_get_current_page(Jumanji.UI.view);
   int number_of_tabs  = gtk_notebook_get_n_pages(Jumanji.UI.view);
+  int step            = 1;
 
-  int step = (argument->n == NEXT) ? 1 : -1;
+  if(argument->n == PREVIOUS)
+    step = -1;
+  else if(argument->n == SPECIFIC)
+  {
+    char* number = g_strndup(buffer, strlen(buffer) - 2);
+    step         = atoi(number) * ((buffer[strlen(buffer)-1] == 't') ? 1 : -1);
+  }
 
   gtk_notebook_set_current_page(Jumanji.UI.view, (current_tab + step) % number_of_tabs);
   update_status();
+}
+
+void
+bcmd_scroll(char* buffer, Argument* argument)
+{
+  GtkAdjustment* adjustment = gtk_scrolled_window_get_vadjustment(GET_CURRENT_TAB_WIDGET());
+
+  gdouble view_size = gtk_adjustment_get_page_size(adjustment);
+  gdouble max       = gtk_adjustment_get_upper(adjustment) - view_size;
+
+  int number     = atoi(g_strndup(buffer, strlen(buffer) - 1));
+  int percentage = (number < 0) ? 0 : (number > 100) ? 100 : number;
+  gdouble value  = (max / 100.0f) * (float) percentage;
+
+  gtk_adjustment_set_value(adjustment, value);
 }
 
 void
@@ -1725,7 +1755,7 @@ bcmd_zoom(char* buffer, Argument* argument)
     webkit_web_view_set_zoom_level(GET_CURRENT_TAB(), zoom_level - (float) (zoom_step / 100));
   else if(argument->n == ZOOM_ORIGINAL)
     webkit_web_view_set_zoom_level(GET_CURRENT_TAB(), 100.0f);
-  else if(argument->n == ZOOM_SPECIFIC)
+  else if(argument->n == SPECIFIC)
   {
     char* number = g_strndup(buffer, strlen(buffer) - 1);
     webkit_web_view_set_zoom_level(GET_CURRENT_TAB(), (float) (atoi(number) / 100));
