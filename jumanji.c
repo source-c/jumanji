@@ -280,6 +280,7 @@ void completion_group_add_element(CompletionGroup*, char*, char*);
 void sc_abort(Argument*);
 void sc_close_tab(Argument*);
 void sc_focus_inputbar(Argument*);
+void sc_nav_history(Argument*);
 void sc_nav_tabs(Argument*);
 void sc_reload(Argument*);
 void sc_scroll(Argument*);
@@ -295,9 +296,12 @@ void isc_command_history(Argument*);
 void isc_string_manipulation(Argument*);
 
 /* command declarations */
+gboolean cmd_back(int, char**);
+gboolean cmd_forward(int, char**);
 gboolean cmd_map(int, char**);
 gboolean cmd_open(int, char**);
 gboolean cmd_quit(int, char**);
+gboolean cmd_quitall(int, char**);
 gboolean cmd_search_engine(int, char**);
 gboolean cmd_set(int, char**);
 gboolean cmd_tabopen(int, char**);
@@ -623,7 +627,10 @@ update_status()
 
   /* update title */
   const gchar* title = webkit_web_view_get_title(GET_CURRENT_TAB());
-  gtk_window_set_title(GTK_WINDOW(Jumanji.UI.window), title);
+  if(title)
+    gtk_window_set_title(GTK_WINDOW(Jumanji.UI.window), title);
+  else
+    gtk_window_set_title(GTK_WINDOW(Jumanji.UI.window), "jumanji");
 
   gtk_label_set_markup((GtkLabel*) Jumanji.Statusbar.uri, uri ? uri : "");
   g_free(uri);
@@ -895,6 +902,15 @@ sc_focus_inputbar(Argument* argument)
     gtk_widget_grab_focus(GTK_WIDGET(Jumanji.UI.inputbar));
     gtk_editable_set_position(GTK_EDITABLE(Jumanji.UI.inputbar), -1);
   }
+}
+
+void
+sc_nav_history(Argument* argument)
+{
+  if(argument->n == NEXT)
+    webkit_web_view_go_forward(GET_CURRENT_TAB());
+  else if(argument->n == PREVIOUS)
+    webkit_web_view_go_back(GET_CURRENT_TAB());
 }
 
 void
@@ -1299,6 +1315,26 @@ isc_string_manipulation(Argument* argument)
 
 /* command implementation */
 gboolean
+cmd_back(int argc, char** argv)
+{
+  Argument argument;
+  argument.n = PREVIOUS;
+  sc_nav_history(&argument);
+
+  return TRUE;
+}
+
+gboolean
+cmd_forward(int argc, char** argv)
+{
+  Argument argument;
+  argument.n = NEXT;
+  sc_nav_history(&argument);
+
+  return TRUE;
+}
+
+gboolean
 cmd_map(int argc, char** argv)
 {
   if(argc < 2)
@@ -1494,6 +1530,13 @@ cmd_open(int argc, char** argv)
 
 gboolean
 cmd_quit(int argc, char** argv)
+{
+  sc_close_tab(NULL);
+  return TRUE;
+}
+
+gboolean
+cmd_quitall(int argc, char** argv)
 {
   cb_destroy(NULL, NULL);
   return TRUE;
