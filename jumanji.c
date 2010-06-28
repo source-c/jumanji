@@ -242,6 +242,7 @@ struct
   {
     GtkLabel *uri;
     GtkLabel *buffer;
+    GtkLabel *tabs;
   } Statusbar;
 
   struct
@@ -394,6 +395,8 @@ create_tab(char* uri, int position)
   gtk_notebook_insert_page(Jumanji.UI.view, tab, NULL, position);
   gtk_notebook_set_current_page(Jumanji.UI.view, -1);
   gtk_widget_grab_focus(GTK_WIDGET(GET_CURRENT_TAB_WIDGET()));
+
+  update_status();
 }
 
 
@@ -428,11 +431,13 @@ init_look()
   /* statusbar */
   gtk_widget_modify_bg(GTK_WIDGET(Jumanji.UI.statusbar), GTK_STATE_NORMAL, &(Jumanji.Style.statusbar_bg));
 
-  gtk_widget_modify_fg(GTK_WIDGET(Jumanji.Statusbar.buffer), GTK_STATE_NORMAL, &(Jumanji.Style.statusbar_fg));
   gtk_widget_modify_fg(GTK_WIDGET(Jumanji.Statusbar.uri),    GTK_STATE_NORMAL, &(Jumanji.Style.statusbar_fg));
+  gtk_widget_modify_fg(GTK_WIDGET(Jumanji.Statusbar.buffer), GTK_STATE_NORMAL, &(Jumanji.Style.statusbar_fg));
+  gtk_widget_modify_fg(GTK_WIDGET(Jumanji.Statusbar.tabs),   GTK_STATE_NORMAL, &(Jumanji.Style.statusbar_fg));
 
-  gtk_widget_modify_font(GTK_WIDGET(Jumanji.Statusbar.buffer), Jumanji.Style.font);
   gtk_widget_modify_font(GTK_WIDGET(Jumanji.Statusbar.uri),    Jumanji.Style.font);
+  gtk_widget_modify_font(GTK_WIDGET(Jumanji.Statusbar.buffer), Jumanji.Style.font);
+  gtk_widget_modify_font(GTK_WIDGET(Jumanji.Statusbar.tabs),   Jumanji.Style.font);
 
   if(show_statusbar)
     gtk_widget_show(GTK_WIDGET(Jumanji.UI.statusbar));
@@ -542,18 +547,23 @@ init_jumanji()
   /* statusbar */
   Jumanji.Statusbar.uri    = GTK_LABEL(gtk_label_new(NULL));
   Jumanji.Statusbar.buffer = GTK_LABEL(gtk_label_new(NULL));
+  Jumanji.Statusbar.tabs   = GTK_LABEL(gtk_label_new(NULL));
 
   gtk_misc_set_alignment(GTK_MISC(Jumanji.Statusbar.uri),    0.0, 0.0);
   gtk_misc_set_alignment(GTK_MISC(Jumanji.Statusbar.buffer), 1.0, 0.0);
+  gtk_misc_set_alignment(GTK_MISC(Jumanji.Statusbar.tabs),   1.0, 0.0);
 
   gtk_misc_set_padding(GTK_MISC(Jumanji.Statusbar.uri),    2.0, 4.0);
   gtk_misc_set_padding(GTK_MISC(Jumanji.Statusbar.buffer), 2.0, 4.0);
+  gtk_misc_set_padding(GTK_MISC(Jumanji.Statusbar.tabs),   2.0, 4.0);
 
   gtk_label_set_use_markup(Jumanji.Statusbar.uri,    TRUE);
   gtk_label_set_use_markup(Jumanji.Statusbar.buffer, TRUE);
+  gtk_label_set_use_markup(Jumanji.Statusbar.tabs,   TRUE);
 
   gtk_box_pack_start(Jumanji.UI.statusbar_entries, GTK_WIDGET(Jumanji.Statusbar.uri),    TRUE,   TRUE, 2);
   gtk_box_pack_start(Jumanji.UI.statusbar_entries, GTK_WIDGET(Jumanji.Statusbar.buffer), FALSE, FALSE, 2);
+  gtk_box_pack_start(Jumanji.UI.statusbar_entries, GTK_WIDGET(Jumanji.Statusbar.tabs),   FALSE, FALSE, 2);
 
   gtk_container_add(GTK_CONTAINER(Jumanji.UI.statusbar), GTK_WIDGET(Jumanji.UI.statusbar_entries));
 
@@ -622,8 +632,11 @@ update_status()
   gchar* link = (gchar*) webkit_web_view_get_uri(GET_CURRENT_TAB());
   int progress = (int) g_object_get_data(G_OBJECT(GET_CURRENT_TAB()), "progress");
   gchar* ptext = (progress != 100 && progress != 0) ? g_strdup_printf(" (%d%%)", progress) : g_strdup("");
-  gchar* uri   = g_strdup_printf("%s%s", link, ptext);
+  gchar* uri   = g_strdup_printf("%s%s", link ? link : "[No name]", ptext);
   g_free(ptext);
+
+  gtk_label_set_markup((GtkLabel*) Jumanji.Statusbar.uri, uri ? uri : "");
+  g_free(uri);
 
   /* update title */
   const gchar* title = webkit_web_view_get_title(GET_CURRENT_TAB());
@@ -632,8 +645,13 @@ update_status()
   else
     gtk_window_set_title(GTK_WINDOW(Jumanji.UI.window), "jumanji");
 
-  gtk_label_set_markup((GtkLabel*) Jumanji.Statusbar.uri, uri ? uri : "");
-  g_free(uri);
+  /* update tab position */
+  int current_tab     = gtk_notebook_get_current_page(Jumanji.UI.view);
+  int number_of_tabs  = gtk_notebook_get_n_pages(Jumanji.UI.view);
+
+  gchar* tabs = g_strdup_printf("[%d/%d]", current_tab + 1, number_of_tabs);
+  gtk_label_set_markup((GtkLabel*) Jumanji.Statusbar.tabs, tabs);
+  g_free(tabs);
 }
 
 void
