@@ -28,6 +28,7 @@ char* tabbar_bgcolor         = "#000000";
 char* tabbar_fgcolor         = "#FFFFFF";
 char* tabbar_focus_bgcolor   = "#000000";
 char* tabbar_focus_fgcolor   = "#9FBC00";
+char* tabbar_separator_color = "#575757";
 char* completion_fgcolor     = "#DDDDDD";
 char* completion_bgcolor     = "#232323";
 char* completion_g_fgcolor   = "#DEDEDE";

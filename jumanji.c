@@ -226,6 +226,7 @@ struct
     GdkColor tabbar_bg;
     GdkColor tabbar_focus_fg;
     GdkColor tabbar_focus_bg;
+    GdkColor tabbar_separator;
     GdkColor completion_fg;
     GdkColor completion_bg;
     GdkColor completion_g_bg;
@@ -421,8 +422,7 @@ create_tab(char* uri, int position)
 
   /* tab style */
   gtk_widget_modify_font(tab_label, Jumanji.Style.font);
-  gtk_widget_modify_fg(tab_sep,  GTK_STATE_NORMAL, &(Jumanji.Style.completion_fg));
-  gtk_widget_modify_fg(tab_sep, GTK_STATE_NORMAL, &(Jumanji.Style.completion_fg));
+  gtk_widget_modify_bg(tab_sep,  GTK_STATE_NORMAL, &(Jumanji.Style.tabbar_separator));
 
   /* build tab */
   gtk_box_pack_start(GTK_BOX(tab_box), tab_label,  TRUE,  TRUE, 0);
@@ -463,6 +463,7 @@ init_look()
   gdk_color_parse(tabbar_bgcolor,         &(Jumanji.Style.tabbar_bg));
   gdk_color_parse(tabbar_focus_fgcolor,   &(Jumanji.Style.tabbar_focus_fg));
   gdk_color_parse(tabbar_focus_bgcolor,   &(Jumanji.Style.tabbar_focus_bg));
+  gdk_color_parse(tabbar_separator_color, &(Jumanji.Style.tabbar_separator));
   gdk_color_parse(completion_fgcolor,     &(Jumanji.Style.completion_fg));
   gdk_color_parse(completion_bgcolor,     &(Jumanji.Style.completion_bg));
   gdk_color_parse(completion_g_fgcolor,   &(Jumanji.Style.completion_g_fg));
