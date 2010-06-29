@@ -121,6 +121,7 @@ Command commands[] = {
   {"quit",      "q",            cmd_quit,            0,            "Quit current tab" },
   {"quitall",   0,              cmd_quitall,         0,            "Quit jumanji" },
   {"set",       "s",            cmd_set,             cc_set,       "Set an option" },
+  {"script",    0,              cmd_script,          0,            "Load a javascript file" },
   {"tabopen",   "t",            cmd_tabopen,         cc_open,      "Open URI in a new tab" },
   {"winopen",   "w",            cmd_winopen,         cc_open,      "Open URI in a new window" },
 };

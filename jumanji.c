@@ -1,5 +1,7 @@
 /* See LICENSE file for license and copyright information */
 
+#define _BSD_SOURCE || _XOPEN_SOURCE >= 500
+
 #include <regex.h>
 #include <limits.h>
 #include <stdlib.h>
@@ -193,6 +195,15 @@ struct SEList
 
 typedef struct SEList SearchEngineList;
 
+struct SScript
+{
+  char* path;
+  char* content;
+  struct SScript *next;
+};
+
+typedef struct SScript ScriptList;
+
 typedef struct
 {
   GtkScrolledWindow *view;
@@ -246,6 +257,7 @@ struct
     GList   *history;
     int      mode;
     SearchEngineList *search_engines;
+    ScriptList *scripts;
     char   **arguments;
   } Global;
 
@@ -277,6 +289,7 @@ void notify(int, char*);
 void out_of_memory();
 void open_uri(WebKitWebView*, char*);
 void read_configuration();
+char* read_file(const char*);
 void set_completion_row_color(GtkBox*, int, int);
 void switch_view(GtkWidget*);
 void update_status();
@@ -316,6 +329,7 @@ gboolean cmd_map(int, char**);
 gboolean cmd_open(int, char**);
 gboolean cmd_quit(int, char**);
 gboolean cmd_quitall(int, char**);
+gboolean cmd_script(int, char**);
 gboolean cmd_search_engine(int, char**);
 gboolean cmd_set(int, char**);
 gboolean cmd_tabopen(int, char**);
@@ -573,6 +587,7 @@ init_jumanji()
   /* other */
   Jumanji.Global.mode            = NORMAL;
   Jumanji.Global.search_engines  = NULL;
+  Jumanji.Global.scripts         = NULL;
 
   /* window */
   if(Jumanji.UI.embed)
@@ -771,11 +786,55 @@ read_configuration()
           cmd_map(length - 1, tokens + 1);
         else if(!strcmp(tokens[0], "searchengine"))
           cmd_search_engine(length - 1, tokens + 1);
+        else if(!strcmp(tokens[0], "script"))
+          cmd_script(length - 1, tokens + 1);
       }
     }
   }
 
   g_free(jumanjirc);
+}
+
+char*
+read_file(const char* path)
+{
+  char* content = NULL;
+
+  /* specify path max */
+  size_t pm;
+#ifdef PATH_MAX
+  pm = PATH_MAX;
+#else
+  pm = pathconf(path,_PC_PATH_MAX);
+  if(pm <= 0)
+    pm = 4096;
+#endif
+
+  /* get filename */
+  char* npath;
+
+  if(path[0] == '~')
+    npath = g_strdup_printf("%s%s", getenv("HOME"), path + 1);
+  else
+    npath = g_strdup(path);
+
+  char* file = (char*) calloc(sizeof(char), pm);
+  if(!file || !realpath(npath, file))
+  {
+    if(file)
+      free(file);
+    g_free(npath);
+    return NULL;
+  }
+
+  g_free(npath);
+
+  /* check if file exists */
+  if(g_file_test(file, G_FILE_TEST_IS_REGULAR))
+    if(g_file_get_contents(file, &content, NULL, NULL))
+      return content;
+
+  return NULL;
 }
 
 void
@@ -1682,6 +1741,56 @@ cmd_quitall(int argc, char** argv)
 }
 
 gboolean
+cmd_script(int argc, char** argv)
+{
+  if(argc < 1)
+    return TRUE;
+
+  char* path    = argv[0];
+  char* content = read_file(path);
+
+  if(!content)
+  {
+    gchar* message = g_strdup_printf("Could not open or read file '%s'", path);
+    notify(ERROR, message);
+    g_free(message);
+    return FALSE;
+  }
+
+  /* search for existing script to overwrite or reread it */
+  ScriptList* sl = Jumanji.Global.scripts;
+  while(sl && sl->next != NULL)
+  {
+    if(!strcmp(sl->path, path))
+    {
+      sl->path    = path;
+      sl->content = content;
+      return TRUE;
+    }
+
+    sl = sl->next;
+  }
+
+  /* load new script */
+  ScriptList* entry = malloc(sizeof(ScriptList));
+  if(!entry)
+    out_of_memory();
+
+  entry->path    = path;
+  entry->content = content;
+  entry->next    = NULL;
+
+  /* append to list */
+  if(!Jumanji.Global.scripts)
+    Jumanji.Global.scripts = entry;
+
+  if(sl)
+    sl->next = entry;
+
+  return TRUE;
+}
+
+gboolean
 cmd_search_engine(int argc, char** argv)
 {
   if(argc < 2)
@@ -2017,6 +2126,28 @@ cb_destroy(GtkWidget* widget, gpointer data)
     ShortcutList* ne = sc->next;
     free(sc);
     sc = ne;
+  }
+
+  /* clean loaded scripts */
+  SearchEngineList* se = Jumanji.Global.search_engines;
+
+  while(se)
+  {
+    SearchEngineList* ne = se->next;
+    free(se);
+    se = ne;
+  }
+
+  /* clean loaded scripts */
+  ScriptList* sl = Jumanji.Global.scripts;
+
+  while(sl)
+  {
+    ScriptList* ne = sl->next;
+    if(sl->content)
+      free(sl->content);
+    free(sl);
+    sl = ne;
   }
 
   gtk_main_quit();
