@@ -13,6 +13,7 @@
 #include <gdk/gdkkeysyms.h>
 
 #include <webkit/webkit.h>
+#include <JavaScriptCore/JavaScript.h>
 
 /* macros */
 #define LENGTH(x) sizeof(x)/sizeof((x)[0])
@@ -290,6 +291,8 @@ void out_of_memory();
 void open_uri(WebKitWebView*, char*);
 void read_configuration();
 char* read_file(const char*);
+char* reference_to_string(JSContextRef, JSValueRef);
+void run_script(char*, char**, char**);
 void set_completion_row_color(GtkBox*, int, int);
 void switch_view(GtkWidget*);
 void update_status();
@@ -356,6 +359,7 @@ gboolean cb_tab_kb_pressed(GtkWidget*, GdkEventKey*, gpointer);
 gboolean cb_wv_load_finished(WebKitWebView*, WebKitWebFrame*, gpointer);
 gboolean cb_wv_load_progress_changed(WebKitWebView*, int, gpointer);
 gboolean cb_wv_nav_policy_decision(WebKitWebView*, WebKitWebFrame*, WebKitNetworkRequest*, WebKitWebNavigationAction*, WebKitWebPolicyDecision*, gpointer);
+gboolean cb_wv_window_object_cleared(WebKitWebView*, WebKitWebFrame*, gpointer, gpointer, gpointer);
 
 /* configuration */
 #include "config.h"
@@ -414,6 +418,7 @@ create_tab(char* uri, int position)
   g_signal_connect(G_OBJECT(wv), "load-progress-changed",                G_CALLBACK(cb_wv_load_progress_changed), NULL);
   g_signal_connect(G_OBJECT(wv), "navigation-policy-decision-requested", G_CALLBACK(cb_wv_nav_policy_decision),   NULL);
   g_signal_connect(G_OBJECT(wv), "new-window-policy-decision-requested", G_CALLBACK(cb_wv_nav_policy_decision),   NULL);
+  g_signal_connect(G_OBJECT(wv), "window-object-cleared",                G_CALLBACK(cb_wv_window_object_cleared), NULL);
 
   g_signal_connect(G_OBJECT(tab), "key-press-event", G_CALLBACK(cb_tab_kb_pressed), NULL);
   open_uri(WEBKIT_WEB_VIEW(wv), uri);
@@ -835,6 +840,35 @@ read_file(const char* path)
       return content;
 
   return NULL;
+}
+
+char*
+reference_to_string(JSContextRef context, JSValueRef reference)
+{
+  JSStringRef ref_st = JSValueToStringCopy(context, reference, NULL);
+  size_t      length = JSStringGetMaximumUTF8CStringSize(ref_st);
+  gchar*      string = g_new(gchar, length);
+  JSStringGetUTF8CString(ref_st, string, length);
+  JSStringRelease(ref_st);
+
+  return string;
+}
+
+void
+run_script(char* script, char** value, char** error)
+{
+  WebKitWebFrame *frame = webkit_web_view_get_main_frame(GET_CURRENT_TAB());
+  JSContextRef context  = webkit_web_frame_get_global_context(frame);
+
+  JSValueRef exception;
+  JSStringRef sc = JSStringCreateWithUTF8CString(script);
+  JSValueRef va   = JSEvaluateScript(context, sc, JSContextGetGlobalObject(context), NULL, 0, &exception);
+  JSStringRelease(sc);
+
+  if(!va && error)
+    *error = reference_to_string(context, exception);
+  else if(value)
+    *value = reference_to_string(context, va);
 }
 
 void
@@ -2373,6 +2407,21 @@ cb_wv_nav_policy_decision(WebKitWebView* wv, WebKitWebFrame* frame, WebKitNetwor
     default:
       return FALSE;;
   }
+}
+
+gboolean
+cb_wv_window_object_cleared(WebKitWebView* wv, WebKitWebFrame* frame, gpointer context, 
+    gpointer window_object, gpointer user_data)
+{
+  /* load all added scripts */
+  ScriptList* sl = Jumanji.Global.scripts;
+  while(sl)
+  {
+    run_script(sl->content, NULL, NULL);
+    sl = sl->next;
+  }
+
+  return TRUE;
 }
 
 /* main function */
