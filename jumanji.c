@@ -201,12 +201,14 @@ struct
 {
   struct
   {
-    GtkWidget   *window;
-    GtkBox      *box;
-    GtkWidget   *statusbar;
-    GtkBox      *statusbar_entries;
-    GtkEntry    *inputbar;
-    GtkNotebook *view;
+    GtkWidget       *window;
+    GtkBox          *box;
+    GtkWidget       *statusbar;
+    GtkBox          *statusbar_entries;
+    GtkEntry        *inputbar;
+    GtkNotebook     *view;
+    GdkNativeWindow  embed;
+    char            *winid;
   } UI;
 
   struct
@@ -528,8 +530,13 @@ init_jumanji()
   Jumanji.Global.mode           = NORMAL;
   Jumanji.Global.search_engines = NULL;
 
+  /* window */
+  if(Jumanji.UI.embed)
+    Jumanji.UI.window = gtk_plug_new(Jumanji.UI.embed);
+  else
+    Jumanji.UI.window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+
   /* UI */
-  Jumanji.UI.window            = gtk_window_new(GTK_WINDOW_TOPLEVEL);
   Jumanji.UI.box               = GTK_BOX(gtk_vbox_new(FALSE, 0));
   Jumanji.UI.statusbar         = gtk_event_box_new();
   Jumanji.UI.statusbar_entries = GTK_BOX(gtk_hbox_new(FALSE, 0));
@@ -594,6 +601,9 @@ out_of_memory()
 void
 open_uri(WebKitWebView* web_view, char* uri)
 {
+  if(!uri)
+    return;
+
   while (*uri == ' ')
     uri++;
 
@@ -1591,6 +1601,7 @@ cmd_search_engine(int argc, char** argv)
 
   entry->name = name;
   entry->uri  = uri;
+  entry->next = NULL;
 
   /* append to list */
   if(!Jumanji.Global.search_engines)
@@ -1738,10 +1749,21 @@ cmd_winopen(int argc, char** argv)
     uri = g_string_append(uri, argv[i]);
   }
 
-  char* nargv[3];
-  nargv[0] = *(Jumanji.Global.arguments);
-  nargv[1] = uri->str;
-  nargv[2] = NULL;
+  char* nargv[6];
+  if(Jumanji.UI.embed)
+  {
+    nargv[0] = *(Jumanji.Global.arguments);
+    nargv[1] = "-e";
+    nargv[2] = Jumanji.UI.winid;
+    nargv[3] = uri->str;
+    nargv[4] = NULL;
+  }
+  else
+  {
+    nargv[0] = *(Jumanji.Global.arguments);
+    nargv[1] = uri->str;
+    nargv[2] = NULL;
+  }
 
   g_spawn_async(NULL, nargv, NULL, G_SPAWN_SEARCH_PATH, NULL, NULL, NULL, NULL);
 
@@ -2110,7 +2132,25 @@ int main(int argc, char* argv[])
 
   gtk_init(&argc, &argv);
 
+  /* parse arguments & embed */
+  Jumanji.UI.embed = 0;
+  Jumanji.UI.winid = 0;
   Jumanji.Global.arguments = argv;
+
+  int i;
+  for(i = 1; i < argc && argv[i][0] == '-' && argv[i][1] != '\0'; i++)
+  {
+    switch(argv[i][1])
+    {
+      case 'e':
+        if(++i < argc)
+        {
+          Jumanji.UI.embed = atoi(argv[i]);
+          Jumanji.UI.winid = argv[i];
+        }
+        break;
+    }
+  }
 
   /* init jumanji and read configuration */
   init_jumanji();
@@ -2124,7 +2164,7 @@ int main(int argc, char* argv[])
   if(argc < 2)
     create_tab(home_page, -1);
   else
-    create_tab(argv[1], -1);
+    create_tab(argv[i], -1);
 
   gtk_widget_show_all(GTK_WIDGET(Jumanji.UI.window));
   gtk_widget_grab_focus(GTK_WIDGET(GET_CURRENT_TAB_WIDGET()));
