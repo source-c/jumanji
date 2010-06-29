@@ -24,6 +24,10 @@ char* inputbar_bgcolor       = "#141414";
 char* inputbar_fgcolor       = "#9FBC00";
 char* statusbar_bgcolor      = "#000000";
 char* statusbar_fgcolor      = "#FFFFFF";
+char* tabbar_bgcolor         = "#000000";
+char* tabbar_fgcolor         = "#FFFFFF";
+char* tabbar_focus_bgcolor   = "#000000";
+char* tabbar_focus_fgcolor   = "#9FBC00";
 char* completion_fgcolor     = "#DDDDDD";
 char* completion_bgcolor     = "#232323";
 char* completion_g_fgcolor   = "#DEDEDE";
@@ -38,6 +42,7 @@ char* notification_w_fgcolor = "#000000";
 /* additional settings */
 gboolean show_scrollbars = FALSE;
 gboolean show_statusbar  = TRUE;
+gboolean next_to_current = TRUE;
 
 #define GDK_COSHIFT_MASK GDK_CONTROL_MASK | GDK_SHIFT_MASK
 
@@ -143,6 +148,7 @@ Setting settings[] = {
   /* name,                   variable,                           type, re-init, description */
   {"home_page",              &(home_page),                       's',  FALSE,   "Home page"},
   {"height",                 &(default_height),                  'i',  FALSE,   "Default window height"},
+  {"next_to_current",        &(next_to_current),                 'b',  FALSE,   "Open new tab next to the current one"},
   {"scrollbars",             &(show_scrollbars),                 'b',  TRUE,    "Show scrollbars"},
   {"scroll_step",            &(scroll_step),                     'f',  TRUE,    "Scroll step"},
   {"show_statusbar",         &(show_statusbar),                  'b',  TRUE,    "Show statusbar"},

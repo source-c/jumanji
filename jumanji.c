@@ -203,6 +203,7 @@ struct
   {
     GtkWidget       *window;
     GtkBox          *box;
+    GtkWidget       *tabbar;
     GtkWidget       *statusbar;
     GtkBox          *statusbar_entries;
     GtkEntry        *inputbar;
@@ -219,6 +220,10 @@ struct
     GdkColor inputbar_bg;
     GdkColor statusbar_fg;
     GdkColor statusbar_bg;
+    GdkColor tabbar_fg;
+    GdkColor tabbar_bg;
+    GdkColor tabbar_focus_fg;
+    GdkColor tabbar_focus_bg;
     GdkColor completion_fg;
     GdkColor completion_bg;
     GdkColor completion_g_bg;
@@ -397,7 +402,37 @@ create_tab(char* uri, int position)
   gtk_container_add(GTK_CONTAINER(tab), wv);
   gtk_widget_show_all(tab);
   gtk_notebook_insert_page(Jumanji.UI.view, tab, NULL, position);
-  gtk_notebook_set_current_page(Jumanji.UI.view, -1);
+  gtk_notebook_set_current_page(Jumanji.UI.view, position);
+
+  /* create tab label */
+  GtkWidget *tab_label = gtk_label_new(NULL);
+  gtk_label_set_width_chars(GTK_LABEL(tab_label), 1.0);
+  gtk_misc_set_alignment(    GTK_MISC(tab_label), 0.0, 0.0);
+  gtk_misc_set_padding(      GTK_MISC(tab_label), 4.0, 4.0);
+
+  /* create tab container */
+  GtkWidget *tev_box = gtk_event_box_new();
+  GtkWidget *tab_box = gtk_hbox_new(FALSE, 0);
+  GtkWidget *tab_sep = gtk_vseparator_new();
+
+  /* tab style */
+  gtk_widget_modify_font(tab_label, Jumanji.Style.font);
+  gtk_widget_modify_fg(tab_sep,  GTK_STATE_NORMAL, &(Jumanji.Style.completion_fg));
+  gtk_widget_modify_fg(tab_sep, GTK_STATE_NORMAL, &(Jumanji.Style.completion_fg));
+
+  /* build tab */
+  gtk_box_pack_start(GTK_BOX(tab_box), tab_label,  TRUE,  TRUE, 0);
+  gtk_box_pack_start(GTK_BOX(tab_box), tab_sep,   FALSE, FALSE, 0);
+  gtk_container_add(GTK_CONTAINER(tev_box), tab_box);
+
+  /* add to tabbar */
+  gtk_box_pack_start(GTK_BOX(Jumanji.UI.tabbar), tev_box, TRUE, TRUE, 0);
+  gtk_widget_show_all(tev_box);
+
+  /* add reference to tab */
+  g_object_set_data(G_OBJECT(tab), "tab",   (gpointer) tev_box);
+  g_object_set_data(G_OBJECT(tab), "label", (gpointer) tab_label);
+
   gtk_widget_grab_focus(GTK_WIDGET(GET_CURRENT_TAB_WIDGET()));
 
   update_status();
@@ -420,6 +455,10 @@ init_look()
   gdk_color_parse(inputbar_bgcolor,       &(Jumanji.Style.inputbar_bg));
   gdk_color_parse(statusbar_fgcolor,      &(Jumanji.Style.statusbar_fg));
   gdk_color_parse(statusbar_bgcolor,      &(Jumanji.Style.statusbar_bg));
+  gdk_color_parse(tabbar_fgcolor,         &(Jumanji.Style.tabbar_fg));
+  gdk_color_parse(tabbar_bgcolor,         &(Jumanji.Style.tabbar_bg));
+  gdk_color_parse(tabbar_focus_fgcolor,   &(Jumanji.Style.tabbar_focus_fg));
+  gdk_color_parse(tabbar_focus_bgcolor,   &(Jumanji.Style.tabbar_focus_bg));
   gdk_color_parse(completion_fgcolor,     &(Jumanji.Style.completion_fg));
   gdk_color_parse(completion_bgcolor,     &(Jumanji.Style.completion_bg));
   gdk_color_parse(completion_g_fgcolor,   &(Jumanji.Style.completion_g_fg));
@@ -527,8 +566,8 @@ void
 init_jumanji()
 {
   /* other */
-  Jumanji.Global.mode           = NORMAL;
-  Jumanji.Global.search_engines = NULL;
+  Jumanji.Global.mode            = NORMAL;
+  Jumanji.Global.search_engines  = NULL;
 
   /* window */
   if(Jumanji.UI.embed)
@@ -540,6 +579,7 @@ init_jumanji()
   Jumanji.UI.box               = GTK_BOX(gtk_vbox_new(FALSE, 0));
   Jumanji.UI.statusbar         = gtk_event_box_new();
   Jumanji.UI.statusbar_entries = GTK_BOX(gtk_hbox_new(FALSE, 0));
+  Jumanji.UI.tabbar            = gtk_hbox_new(TRUE, 0);
   Jumanji.UI.inputbar          = GTK_ENTRY(gtk_entry_new());
   Jumanji.UI.view              = GTK_NOTEBOOK(gtk_notebook_new());
 
@@ -586,6 +626,7 @@ init_jumanji()
   gtk_notebook_set_show_border(Jumanji.UI.view, FALSE);
 
   /* packing */
+  gtk_box_pack_start(Jumanji.UI.box, GTK_WIDGET(Jumanji.UI.tabbar),    FALSE, FALSE, 0);
   gtk_box_pack_start(Jumanji.UI.box, GTK_WIDGET(Jumanji.UI.view),       TRUE,  TRUE, 0);
   gtk_box_pack_start(Jumanji.UI.box, GTK_WIDGET(Jumanji.UI.statusbar), FALSE, FALSE, 0);
   gtk_box_pack_end(  Jumanji.UI.box, GTK_WIDGET(Jumanji.UI.inputbar),  FALSE, FALSE, 0);
@@ -627,6 +668,8 @@ open_uri(WebKitWebView* web_view, char* uri)
       se = se->next;
     }
   }
+  else if(strlen(uri) == 0)
+    new_uri = g_strdup(home_page);
   else
     new_uri = g_strrstr(uri, ":") ? g_strdup(uri) : g_strconcat("http://", uri, NULL);
 
@@ -664,6 +707,29 @@ update_status()
   gchar* tabs = g_strdup_printf("[%d/%d]", current_tab + 1, number_of_tabs);
   gtk_label_set_markup((GtkLabel*) Jumanji.Statusbar.tabs, tabs);
   g_free(tabs);
+
+  /* update tabbar */
+  int tc = 0;
+  for(tc = 0; tc < number_of_tabs; tc++)
+  {
+    GtkWidget* tab       = GTK_WIDGET(GET_NTH_TAB_WIDGET(tc));
+    GtkWidget *tev_box   = GTK_WIDGET(g_object_get_data(G_OBJECT(tab), "tab"));
+    GtkWidget *tab_label = GTK_WIDGET(g_object_get_data(G_OBJECT(tab), "label"));
+
+    if(tc == current_tab)
+    {
+      gtk_widget_modify_bg(GTK_WIDGET(tev_box),   GTK_STATE_NORMAL, &(Jumanji.Style.tabbar_focus_bg));
+      gtk_widget_modify_fg(GTK_WIDGET(tab_label), GTK_STATE_NORMAL, &(Jumanji.Style.tabbar_focus_fg));
+    }
+    else
+    {
+      gtk_widget_modify_bg(GTK_WIDGET(tev_box),   GTK_STATE_NORMAL, &(Jumanji.Style.tabbar_bg));
+      gtk_widget_modify_fg(GTK_WIDGET(tab_label), GTK_STATE_NORMAL, &(Jumanji.Style.tabbar_fg));
+    }
+
+    const gchar* tab_title = webkit_web_view_get_title(GET_WEBVIEW(tab));
+    gtk_label_set_markup((GtkLabel*) tab_label, tab_title ? tab_title : "(Untitled)");
+  }
 }
 
 void
@@ -1726,7 +1792,11 @@ cmd_tabopen(int argc, char** argv)
     uri = g_string_append(uri, argv[i]);
   }
 
-  create_tab(uri->str, -1);
+  int n = gtk_notebook_get_current_page(Jumanji.UI.view);
+  int p = (next_to_current) ? (n + 1) : -1;
+
+  create_tab(uri->str, p);
+
   g_string_free(uri, FALSE);
 
   return TRUE;
