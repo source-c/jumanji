@@ -236,6 +236,7 @@ struct
     GList   *history;
     int      mode;
     SearchEngineList *search_engines;
+    char   **arguments;
   } Global;
 
   struct
@@ -306,6 +307,7 @@ gboolean cmd_quitall(int, char**);
 gboolean cmd_search_engine(int, char**);
 gboolean cmd_set(int, char**);
 gboolean cmd_tabopen(int, char**);
+gboolean cmd_winopen(int, char**);
 
 /* completion commands */
 Completion* cc_open(char*);
@@ -1719,6 +1721,35 @@ cmd_tabopen(int argc, char** argv)
   return TRUE;
 }
 
+gboolean
+cmd_winopen(int argc, char** argv)
+{
+  if(argc <= 0)
+    return TRUE;
+
+  int i;
+  GString *uri = g_string_new("");
+
+  for(i = 0; i < argc; i++)
+  {
+    if(i != 0)
+      uri = g_string_append_c(uri, ' ');
+
+    uri = g_string_append(uri, argv[i]);
+  }
+
+  char* nargv[3];
+  nargv[0] = *(Jumanji.Global.arguments);
+  nargv[1] = uri->str;
+  nargv[2] = NULL;
+
+  g_spawn_async(NULL, nargv, NULL, G_SPAWN_SEARCH_PATH, NULL, NULL, NULL, NULL);
+
+  g_string_free(uri, FALSE);
+
+  return TRUE;
+}
+
 /* completion command implementation */
 Completion*
 cc_open(char* input)
@@ -2079,6 +2110,8 @@ int main(int argc, char* argv[])
 
   gtk_init(&argc, &argv);
 
+  Jumanji.Global.arguments = argv;
+
   /* init jumanji and read configuration */
   init_jumanji();
   init_directories();
@@ -2088,7 +2121,10 @@ int main(int argc, char* argv[])
   init_look();
 
   /* create tab */
-  create_tab(home_page, -1);
+  if(argc < 2)
+    create_tab(home_page, -1);
+  else
+    create_tab(argv[1], -1);
 
   gtk_widget_show_all(GTK_WIDGET(Jumanji.UI.window));
   gtk_widget_grab_focus(GTK_WIDGET(GET_CURRENT_TAB_WIDGET()));

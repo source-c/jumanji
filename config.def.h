@@ -55,6 +55,8 @@ Shortcut shortcuts[] = {
   {0,                  GDK_O,             sc_focus_inputbar,    NORMAL,              { .data = ":open ", .n = APPEND_URL } },
   {0,                  GDK_t,             sc_focus_inputbar,    NORMAL,              { .data = ":tabopen " } },
   {0,                  GDK_T,             sc_focus_inputbar,    NORMAL,              { .data = ":tabopen ", .n = APPEND_URL } },
+  {0,                  GDK_w,             sc_focus_inputbar,    NORMAL,              { .data = ":winopen " } },
+  {0,                  GDK_W,             sc_focus_inputbar,    NORMAL,              { .data = ":winopen ", .n = APPEND_URL } },
   {GDK_CONTROL_MASK,   GDK_i,             sc_nav_history,       NORMAL,              { NEXT } },
   {GDK_CONTROL_MASK,   GDK_o,             sc_nav_history,       NORMAL,              { PREVIOUS } },
   {GDK_CONTROL_MASK,   GDK_Tab,           sc_nav_tabs,          NORMAL,              { NEXT } },
@@ -110,6 +112,7 @@ Command commands[] = {
   {"quitall",   0,              cmd_quitall,         0,            "Quit jumanji" },
   {"set",       "s",            cmd_set,             cc_set,       "Set an option" },
   {"tabopen",   "t",            cmd_tabopen,         cc_open,      "Open URI in a new tab" },
+  {"winopen",   "w",            cmd_winopen,         cc_open,      "Open URI in a new window" },
 };
 
 /* buffer commands */
