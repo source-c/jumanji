@@ -289,6 +289,7 @@ void completion_group_add_element(CompletionGroup*, char*, char*);
 
 /* shortcut declarations */
 void sc_abort(Argument*);
+void sc_change_mode(Argument*);
 void sc_close_tab(Argument*);
 void sc_focus_inputbar(Argument*);
 void sc_nav_history(Argument*);
@@ -972,6 +973,13 @@ sc_abort(Argument* argument)
 
   /* Unmark search results */
   webkit_web_view_unmark_text_matches(GET_CURRENT_TAB());
+}
+
+void
+sc_change_mode(Argument* argument)
+{
+  if(argument)
+    change_mode(argument->n);
 }
 
 void
