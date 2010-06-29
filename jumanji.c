@@ -675,6 +675,8 @@ open_uri(WebKitWebView* web_view, char* uri)
 
   webkit_web_view_load_uri(web_view, new_uri);
   g_free(new_uri);
+
+  update_status();
 }
 
 void
@@ -969,10 +971,15 @@ sc_abort(Argument* argument)
 void
 sc_close_tab(Argument* argument)
 {
-  int current_tab = gtk_notebook_get_current_page(Jumanji.UI.view);
+  int current_tab      = gtk_notebook_get_current_page(Jumanji.UI.view);
+  GtkWidget* tab       = GTK_WIDGET(GET_NTH_TAB_WIDGET(current_tab));
 
   if(gtk_notebook_get_n_pages(Jumanji.UI.view) > 1)
+  {
+    gtk_container_remove(GTK_CONTAINER(Jumanji.UI.tabbar), GTK_WIDGET(g_object_get_data(G_OBJECT(tab), "tab")));
     gtk_notebook_remove_page(Jumanji.UI.view, current_tab);
+    update_status();
+  }
   else
     open_uri(GET_CURRENT_TAB(), home_page);
 }
