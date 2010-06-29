@@ -81,6 +81,8 @@ Shortcut shortcuts[] = {
   {GDK_CONTROL_MASK,   GDK_b,             sc_scroll,            NORMAL,              { FULL_UP } },
   {0,                  GDK_space,         sc_scroll,            NORMAL,              { FULL_DOWN } },
   {GDK_SHIFT_MASK,     GDK_space,         sc_scroll,            NORMAL,              { FULL_UP } },
+  {0,                  GDK_n,             sc_search,            NORMAL,              { FORWARD } },
+  {0,                  GDK_N,             sc_search,            NORMAL,              { BACKWARD } },
   {GDK_CONTROL_MASK,   GDK_m,             sc_toggle_statusbar,  NORMAL,              {0} },
   {GDK_CONTROL_MASK,   GDK_q,             sc_quit,              ALL,                 {0} },
   {0,                  GDK_y,             sc_yank,              NORMAL,              {0} },

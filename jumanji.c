@@ -25,12 +25,14 @@
 enum {
   ADD_MARKER,
   APPEND_URL,
+  BACKWARD,
   BOTTOM,
   DEFAULT,
   DELETE_LAST_CHAR,
   DELETE_LAST_WORD,
   DOWN,
   ERROR,
+  FORWARD,
   EVAL_MARKER,
   FULL_DOWN,
   FULL_UP,
@@ -293,6 +295,7 @@ void sc_nav_history(Argument*);
 void sc_nav_tabs(Argument*);
 void sc_reload(Argument*);
 void sc_scroll(Argument*);
+void sc_search(Argument*);
 void sc_toggle_statusbar(Argument*);
 void sc_quit(Argument*);
 void sc_yank(Argument*);
@@ -966,6 +969,9 @@ sc_abort(Argument* argument)
 
   /* Hide inputbar */
   gtk_widget_hide(GTK_WIDGET(Jumanji.UI.inputbar));
+
+  /* Unmark search results */
+  webkit_web_view_unmark_text_matches(GET_CURRENT_TAB());
 }
 
 void
@@ -1060,6 +1066,27 @@ sc_scroll(Argument* argument)
     gtk_adjustment_set_value(adjustment, (value + scroll_step) > max ? max : (value + scroll_step));
 
   update_status();
+}
+
+void
+sc_search(Argument* argument)
+{
+  static char* search_item;
+
+  if(argument->data)
+  {
+    if(search_item)
+      g_free(search_item);
+
+    search_item = g_strdup((char*) argument->data);
+  }
+
+  gboolean direction = (argument->n == BACKWARD) ? FALSE : TRUE;
+
+  webkit_web_view_unmark_text_matches(GET_CURRENT_TAB());
+  webkit_web_view_search_text(GET_CURRENT_TAB(), search_item, FALSE, direction, TRUE);
+  webkit_web_view_mark_text_matches(GET_CURRENT_TAB(), search_item, FALSE, 0);
+  webkit_web_view_set_highlight_text_matches(GET_CURRENT_TAB(), TRUE);
 }
 
 void
@@ -1958,6 +1985,12 @@ bcmd_zoom(char* buffer, Argument* argument)
 gboolean
 scmd_search(char* input, Argument* argument)
 {
+  if(!strlen(input))
+    return TRUE;
+
+  argument->data = input;
+  sc_search(argument);
+
   return TRUE;
 }
 
