@@ -52,7 +52,6 @@ Shortcut shortcuts[] = {
   /* mask,             key,               function,             mode,                argument */
   {GDK_CONTROL_MASK,   GDK_c,             sc_abort,             ALL,                 {0} },
   {0,                  GDK_Escape,        sc_abort,             ALL,                 {0} },
-  {0,                  GDK_i,             sc_change_mode,       NORMAL,              { INSERT } },
   {0,                  GDK_v,             sc_change_mode,       NORMAL,              { VISUAL } },
   {GDK_CONTROL_MASK,   GDK_w,             sc_close_tab,         NORMAL,              {0} },
   {0,                  GDK_slash,         sc_focus_inputbar,    NORMAL,              { .data = "/" } },
@@ -65,6 +64,7 @@ Shortcut shortcuts[] = {
   {0,                  GDK_T,             sc_focus_inputbar,    NORMAL,              { .data = ":tabopen ", .n = APPEND_URL } },
   {0,                  GDK_w,             sc_focus_inputbar,    NORMAL,              { .data = ":winopen " } },
   {0,                  GDK_W,             sc_focus_inputbar,    NORMAL,              { .data = ":winopen ", .n = APPEND_URL } },
+  {0,                  GDK_f,             sc_follow_link,       NORMAL,              {-1} },
   {GDK_CONTROL_MASK,   GDK_i,             sc_nav_history,       NORMAL,              { NEXT } },
   {GDK_CONTROL_MASK,   GDK_o,             sc_nav_history,       NORMAL,              { PREVIOUS } },
   {GDK_CONTROL_MASK,   GDK_Tab,           sc_nav_tabs,          NORMAL,              { NEXT } },
@@ -91,6 +91,18 @@ Shortcut shortcuts[] = {
   {0,                  GDK_y,             sc_yank,              NORMAL,              {0} },
   {0,                  GDK_plus,          sc_zoom,              NORMAL,              { ZOOM_IN } },
   {0,                  GDK_minus,         sc_zoom,              NORMAL,              { ZOOM_OUT } },
+  {0,                  GDK_0,             sc_follow_link,       FOLLOW,              {0} },
+  {0,                  GDK_1,             sc_follow_link,       FOLLOW,              {1} },
+  {0,                  GDK_2,             sc_follow_link,       FOLLOW,              {2} },
+  {0,                  GDK_3,             sc_follow_link,       FOLLOW,              {3} },
+  {0,                  GDK_4,             sc_follow_link,       FOLLOW,              {4} },
+  {0,                  GDK_5,             sc_follow_link,       FOLLOW,              {5} },
+  {0,                  GDK_6,             sc_follow_link,       FOLLOW,              {6} },
+  {0,                  GDK_7,             sc_follow_link,       FOLLOW,              {7} },
+  {0,                  GDK_8,             sc_follow_link,       FOLLOW,              {8} },
+  {0,                  GDK_9,             sc_follow_link,       FOLLOW,              {9} },
+  {0,                  GDK_Return,        sc_follow_link,       FOLLOW,              {10} },
+  {0,                  GDK_BackSpace,     sc_follow_link,       FOLLOW,              {11} },
 };
 
 /* inputbar shortcuts */

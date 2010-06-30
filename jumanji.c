@@ -65,6 +65,7 @@ enum {
 #define ALL        (1 << 0)
 #define INSERT     (1 << 1)
 #define VISUAL     (1 << 2)
+#define FOLLOW     (1 << 3)
 
 /* typedefs */
 struct CElement
@@ -309,9 +310,11 @@ void sc_abort(Argument*);
 void sc_change_mode(Argument*);
 void sc_close_tab(Argument*);
 void sc_focus_inputbar(Argument*);
+void sc_follow_link(Argument*);
 void sc_nav_history(Argument*);
 void sc_nav_tabs(Argument*);
 void sc_reload(Argument*);
+void sc_run_script(Argument*);
 void sc_scroll(Argument*);
 void sc_search(Argument*);
 void sc_toggle_statusbar(Argument*);
@@ -359,7 +362,6 @@ gboolean cb_tab_kb_pressed(GtkWidget*, GdkEventKey*, gpointer);
 gboolean cb_wv_load_finished(WebKitWebView*, WebKitWebFrame*, gpointer);
 gboolean cb_wv_load_progress_changed(WebKitWebView*, int, gpointer);
 gboolean cb_wv_nav_policy_decision(WebKitWebView*, WebKitWebFrame*, WebKitNetworkRequest*, WebKitWebNavigationAction*, WebKitWebPolicyDecision*, gpointer);
-gboolean cb_wv_window_object_cleared(WebKitWebView*, WebKitWebFrame*, gpointer, gpointer, gpointer);
 
 /* configuration */
 #include "config.h"
@@ -374,7 +376,7 @@ add_marker(int id)
 void
 change_mode(int mode)
 {
-  char* mode_text;
+  char* mode_text = NULL;
 
   switch(mode)
   {
@@ -388,6 +390,9 @@ change_mode(int mode)
       mode_text = "";
       break;
     case EVAL_MARKER:
+      mode_text = "";
+      break;
+    case FOLLOW:
       mode_text = "";
       break;
     default:
@@ -418,7 +423,6 @@ create_tab(char* uri, int position)
   g_signal_connect(G_OBJECT(wv), "load-progress-changed",                G_CALLBACK(cb_wv_load_progress_changed), NULL);
   g_signal_connect(G_OBJECT(wv), "navigation-policy-decision-requested", G_CALLBACK(cb_wv_nav_policy_decision),   NULL);
   g_signal_connect(G_OBJECT(wv), "new-window-policy-decision-requested", G_CALLBACK(cb_wv_nav_policy_decision),   NULL);
-  g_signal_connect(G_OBJECT(wv), "window-object-cleared",                G_CALLBACK(cb_wv_window_object_cleared), NULL);
 
   g_signal_connect(G_OBJECT(tab), "key-press-event", G_CALLBACK(cb_tab_kb_pressed), NULL);
   open_uri(WEBKIT_WEB_VIEW(wv), uri);
@@ -563,6 +567,9 @@ init_settings()
 
 void notify(int level, char* message)
 {
+  if(!message || strlen(message) <= 0)
+    return;
+
   if(!(GTK_WIDGET_VISIBLE(GTK_WIDGET(Jumanji.UI.inputbar))))
     gtk_widget_show(GTK_WIDGET(Jumanji.UI.inputbar));
 
@@ -845,6 +852,9 @@ read_file(const char* path)
 char*
 reference_to_string(JSContextRef context, JSValueRef reference)
 {
+  if(!context && !reference)
+    return NULL;
+
   JSStringRef ref_st = JSValueToStringCopy(context, reference, NULL);
   size_t      length = JSStringGetMaximumUTF8CStringSize(ref_st);
   gchar*      string = g_new(gchar, length);
@@ -1059,6 +1069,10 @@ sc_abort(Argument* argument)
     gtk_label_set_markup((GtkLabel*) Jumanji.Statusbar.buffer, "");
   }
 
+  /* Clear hints */
+  char* cmd = "clear()";
+  run_script(cmd, NULL, NULL);
+
   /* Set back to normal mode */
   change_mode(NORMAL);
 
@@ -1116,6 +1130,79 @@ sc_focus_inputbar(Argument* argument)
 }
 
 void
+sc_follow_link(Argument* argument)
+{
+  static gboolean follow_links = FALSE;
+  static GString  *buffer      = NULL;
+
+  /* show all links */
+  if(!follow_links || Jumanji.Global.mode != FOLLOW)
+  {
+    if(buffer)
+    {
+      g_string_free(buffer, TRUE);
+      buffer = NULL;
+    }
+
+    run_script("show_hints()", NULL, NULL);
+    change_mode(FOLLOW);
+    follow_links = TRUE;
+    return;
+  }
+
+  /* update buffer */
+  if(!buffer)
+    buffer = g_string_new("");
+
+  if(argument->n == 11)
+  {
+    if(buffer->len > 0)
+      g_string_erase(buffer, buffer->len - 1, 1);
+  }
+  else if(argument->n >= 0 && argument->n <= 9)
+    buffer = g_string_append_c(buffer, (char) (argument->n + 0x030));
+
+
+  if(buffer->len > 0)
+  {
+    char* value = NULL;
+    char* cmd   = NULL;
+
+    /* select link */
+    if(argument->n == 10)
+    {
+      cmd = g_strconcat("fire(", buffer->str, ")", NULL);
+      run_script(cmd, &value, NULL);
+
+      if(value && !strncmp(value, "open;", 5))
+        open_uri(GET_CURRENT_TAB(), value + 5);
+
+      sc_abort(NULL);
+      follow_links = FALSE;
+
+      return;
+    }
+
+    cmd = g_strconcat("update_hints(", buffer->str, ")", NULL);
+    run_script(cmd, &value, NULL);
+
+    if(value)
+    {
+      if(!strncmp(value, "fire;", 5))
+      {
+        cmd = g_strconcat("fire(", value + 5, ")", NULL);
+        run_script(cmd, &value, NULL);
+
+        if(value && !strncmp(value, "open;", 5))
+          open_uri(GET_CURRENT_TAB(), value + 5);
+
+        sc_abort(NULL);
+      }
+    }
+  }
+}
+
+void
 sc_nav_history(Argument* argument)
 {
   if(argument->n == NEXT)
@@ -1134,6 +1221,13 @@ void
 sc_reload(Argument* argument)
 {
   webkit_web_view_reload(GET_CURRENT_TAB());
+}
+
+void
+sc_run_script(Argument* argument)
+{
+  if(argument->data)
+    run_script(argument->data, NULL, NULL);
 }
 
 void
@@ -1469,6 +1563,7 @@ isc_completion(Argument* argument)
     }
     else
     {
+      /*temp = g_strconcat(":", previous_command, " ", rows[current_item].command, NULL);*/
       temp = g_strconcat(":", previous_command, " ", rows[current_item].command, NULL);
     }
 
@@ -2373,6 +2468,14 @@ cb_wv_load_finished(WebKitWebView* wv, WebKitWebFrame* frame, gpointer data)
   if(wv == GET_CURRENT_TAB())
     update_status();
 
+  /* load all added scripts */
+  ScriptList* sl = Jumanji.Global.scripts;
+  while(sl)
+  {
+    run_script(sl->content, NULL, NULL);
+    sl = sl->next;
+  }
+
   return TRUE;
 }
 
@@ -2410,17 +2513,9 @@ cb_wv_nav_policy_decision(WebKitWebView* wv, WebKitWebFrame* frame, WebKitNetwor
 }
 
 gboolean
-cb_wv_window_object_cleared(WebKitWebView* wv, WebKitWebFrame* frame, gpointer context, 
+cb_wv_window_object_cleared(WebKitWebView* wv, WebKitWebFrame* frame, gpointer context,
     gpointer window_object, gpointer user_data)
 {
-  /* load all added scripts */
-  ScriptList* sl = Jumanji.Global.scripts;
-  while(sl)
-  {
-    run_script(sl->content, NULL, NULL);
-    sl = sl->next;
-  }
-
   return TRUE;
 }
 
