@@ -30,6 +30,7 @@ enum {
   APPEND_URL,
   BACKWARD,
   BOTTOM,
+  BYPASS_CACHE,
   DEFAULT,
   DELETE_LAST_CHAR,
   DELETE_LAST_WORD,
@@ -1274,7 +1275,10 @@ sc_paste(Argument* argument)
 void
 sc_reload(Argument* argument)
 {
-  webkit_web_view_reload(GET_CURRENT_TAB());
+  if(argument->n == BYPASS_CACHE)
+    webkit_web_view_reload_bypass_cache(GET_CURRENT_TAB());
+  else
+    webkit_web_view_reload(GET_CURRENT_TAB());
 }
 
 void
