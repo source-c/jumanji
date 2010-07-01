@@ -17,7 +17,7 @@ char* home_page  = "http://www.pwmt.org";
 char* user_agent = "jumanji";
 
 /* look */
-char* font                   = "monospace normal 8";
+char* font                   = "monospace normal 9";
 char* default_bgcolor        = "#000000";
 char* default_fgcolor        = "#DDDDDD";
 char* inputbar_bgcolor       = "#141414";

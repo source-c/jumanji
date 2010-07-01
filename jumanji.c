@@ -265,7 +265,7 @@ struct
 
   struct
   {
-    GtkLabel *uri;
+    GtkLabel *text;
     GtkLabel *buffer;
     GtkLabel *tabs;
   } Statusbar;
@@ -296,6 +296,7 @@ char* reference_to_string(JSContextRef, JSValueRef);
 void run_script(char*, char**, char**);
 void set_completion_row_color(GtkBox*, int, int);
 void switch_view(GtkWidget*);
+void statusbar_set_text(const char*);
 void update_status();
 GtkEventBox* create_completion_row(GtkBox*, char*, char*, gboolean);
 
@@ -359,6 +360,7 @@ gboolean cb_destroy(GtkWidget*, gpointer);
 gboolean cb_inputbar_kb_pressed(GtkWidget*, GdkEventKey*, gpointer);
 gboolean cb_inputbar_activate(GtkEntry*, gpointer);
 gboolean cb_tab_kb_pressed(GtkWidget*, GdkEventKey*, gpointer);
+gboolean cb_wv_console(WebKitWebView*, char*, int, char*, gpointer);
 gboolean cb_wv_load_finished(WebKitWebView*, WebKitWebFrame*, gpointer);
 gboolean cb_wv_load_progress_changed(WebKitWebView*, int, gpointer);
 gboolean cb_wv_nav_policy_decision(WebKitWebView*, WebKitWebFrame*, WebKitNetworkRequest*, WebKitWebNavigationAction*, WebKitWebPolicyDecision*, gpointer);
@@ -419,6 +421,7 @@ create_tab(char* uri, int position)
   else
     gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(tab), GTK_POLICY_NEVER, GTK_POLICY_NEVER);
 
+  g_signal_connect(G_OBJECT(wv), "console-message",                      G_CALLBACK(cb_wv_console),               NULL);
   g_signal_connect(G_OBJECT(wv), "load-finished",                        G_CALLBACK(cb_wv_load_finished),         NULL);
   g_signal_connect(G_OBJECT(wv), "load-progress-changed",                G_CALLBACK(cb_wv_load_progress_changed), NULL);
   g_signal_connect(G_OBJECT(wv), "navigation-policy-decision-requested", G_CALLBACK(cb_wv_nav_policy_decision),   NULL);
@@ -502,11 +505,11 @@ init_look()
   /* statusbar */
   gtk_widget_modify_bg(GTK_WIDGET(Jumanji.UI.statusbar), GTK_STATE_NORMAL, &(Jumanji.Style.statusbar_bg));
 
-  gtk_widget_modify_fg(GTK_WIDGET(Jumanji.Statusbar.uri),    GTK_STATE_NORMAL, &(Jumanji.Style.statusbar_fg));
+  gtk_widget_modify_fg(GTK_WIDGET(Jumanji.Statusbar.text),   GTK_STATE_NORMAL, &(Jumanji.Style.statusbar_fg));
   gtk_widget_modify_fg(GTK_WIDGET(Jumanji.Statusbar.buffer), GTK_STATE_NORMAL, &(Jumanji.Style.statusbar_fg));
   gtk_widget_modify_fg(GTK_WIDGET(Jumanji.Statusbar.tabs),   GTK_STATE_NORMAL, &(Jumanji.Style.statusbar_fg));
 
-  gtk_widget_modify_font(GTK_WIDGET(Jumanji.Statusbar.uri),    Jumanji.Style.font);
+  gtk_widget_modify_font(GTK_WIDGET(Jumanji.Statusbar.text),   Jumanji.Style.font);
   gtk_widget_modify_font(GTK_WIDGET(Jumanji.Statusbar.buffer), Jumanji.Style.font);
   gtk_widget_modify_font(GTK_WIDGET(Jumanji.Statusbar.tabs),   Jumanji.Style.font);
 
@@ -568,7 +571,10 @@ init_settings()
 void notify(int level, char* message)
 {
   if(!message || strlen(message) <= 0)
+  {
+    gtk_widget_hide(GTK_WIDGET(Jumanji.UI.inputbar));
     return;
+  }
 
   if(!(GTK_WIDGET_VISIBLE(GTK_WIDGET(Jumanji.UI.inputbar))))
     gtk_widget_show(GTK_WIDGET(Jumanji.UI.inputbar));
@@ -626,23 +632,23 @@ init_jumanji()
   gtk_container_add(GTK_CONTAINER(Jumanji.UI.window), GTK_WIDGET(Jumanji.UI.box));
 
   /* statusbar */
-  Jumanji.Statusbar.uri    = GTK_LABEL(gtk_label_new(NULL));
+  Jumanji.Statusbar.text   = GTK_LABEL(gtk_label_new(NULL));
   Jumanji.Statusbar.buffer = GTK_LABEL(gtk_label_new(NULL));
   Jumanji.Statusbar.tabs   = GTK_LABEL(gtk_label_new(NULL));
 
-  gtk_misc_set_alignment(GTK_MISC(Jumanji.Statusbar.uri),    0.0, 0.0);
+  gtk_misc_set_alignment(GTK_MISC(Jumanji.Statusbar.text),   0.0, 0.0);
   gtk_misc_set_alignment(GTK_MISC(Jumanji.Statusbar.buffer), 1.0, 0.0);
   gtk_misc_set_alignment(GTK_MISC(Jumanji.Statusbar.tabs),   1.0, 0.0);
 
-  gtk_misc_set_padding(GTK_MISC(Jumanji.Statusbar.uri),    2.0, 4.0);
+  gtk_misc_set_padding(GTK_MISC(Jumanji.Statusbar.text),   2.0, 4.0);
   gtk_misc_set_padding(GTK_MISC(Jumanji.Statusbar.buffer), 2.0, 4.0);
   gtk_misc_set_padding(GTK_MISC(Jumanji.Statusbar.tabs),   2.0, 4.0);
 
-  gtk_label_set_use_markup(Jumanji.Statusbar.uri,    TRUE);
+  gtk_label_set_use_markup(Jumanji.Statusbar.text,   TRUE);
   gtk_label_set_use_markup(Jumanji.Statusbar.buffer, TRUE);
   gtk_label_set_use_markup(Jumanji.Statusbar.tabs,   TRUE);
 
-  gtk_box_pack_start(Jumanji.UI.statusbar_entries, GTK_WIDGET(Jumanji.Statusbar.uri),    TRUE,   TRUE, 2);
+  gtk_box_pack_start(Jumanji.UI.statusbar_entries, GTK_WIDGET(Jumanji.Statusbar.text),   TRUE,   TRUE, 2);
   gtk_box_pack_start(Jumanji.UI.statusbar_entries, GTK_WIDGET(Jumanji.Statusbar.buffer), FALSE, FALSE, 2);
   gtk_box_pack_start(Jumanji.UI.statusbar_entries, GTK_WIDGET(Jumanji.Statusbar.tabs),   FALSE, FALSE, 2);
 
@@ -720,11 +726,9 @@ update_status()
   /* update uri */
   gchar* link = (gchar*) webkit_web_view_get_uri(GET_CURRENT_TAB());
   int progress = (int) g_object_get_data(G_OBJECT(GET_CURRENT_TAB()), "progress");
-  gchar* ptext = (progress != 100 && progress != 0) ? g_strdup_printf(" (%d%%)", progress) : g_strdup("");
-  gchar* uri   = g_strdup_printf("%s%s", link ? link : "[No name]", ptext);
-  g_free(ptext);
-
-  gtk_label_set_markup((GtkLabel*) Jumanji.Statusbar.uri, uri ? uri : "");
+  gchar* uri = (progress != 100 && progress != 0) ? g_strdup_printf("Loading... %s (%d%%)", link ? link : "", progress) :
+               (link ? g_strdup(link) : g_strdup("[No name]"));
+  statusbar_set_text(uri);
   g_free(uri);
 
   /* update title */
@@ -762,7 +766,8 @@ update_status()
     }
 
     const gchar* tab_title = webkit_web_view_get_title(GET_WEBVIEW(tab));
-    gtk_label_set_markup((GtkLabel*) tab_label, tab_title ? tab_title : "(Untitled)");
+    int progress = (int) g_object_get_data(G_OBJECT(GET_WEBVIEW(tab)), "progress");
+    gtk_label_set_markup((GtkLabel*) tab_label, tab_title ? tab_title : ((progress == 100) ? "Loading..." : "(Untitled)"));
   }
 }
 
@@ -918,6 +923,13 @@ switch_view(GtkWidget* widget)
   /*}*/
 
   /*gtk_container_add(GTK_CONTAINER(Jumanji.UI.viewport), GTK_WIDGET(widget));*/
+}
+
+void
+statusbar_set_text(const char* text)
+{
+  if(text)
+    gtk_label_set_markup((GtkLabel*) Jumanji.Statusbar.text, text);
 }
 
 GtkEventBox*
@@ -2460,6 +2472,17 @@ cb_tab_kb_pressed(GtkWidget *widget, GdkEventKey *event, gpointer data)
   }
 
   return FALSE;
+}
+
+gboolean
+cb_wv_console(WebKitWebView* wv, char* message, int line, char* source, gpointer data)
+{
+  if(!strcmp(message, "hintmode_off") || !strcmp(message, "insertmode_off"))
+    change_mode(NORMAL);
+  else if(!strcmp(message, "insertmode_on"))
+    change_mode(INSERT);
+
+  return TRUE;
 }
 
 gboolean
