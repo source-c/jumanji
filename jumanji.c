@@ -875,8 +875,11 @@ open_uri(WebKitWebView* web_view, char* uri)
   webkit_web_view_load_uri(web_view, new_uri);
 
   /* update history */
-  Jumanji.Global.history = g_list_remove_all(Jumanji.Global.history, g_strdup(new_uri));
-  Jumanji.Global.history = g_list_append(Jumanji.Global.history, g_strdup(new_uri));
+  if(!private_browsing)
+  {
+    Jumanji.Global.history = g_list_remove_all(Jumanji.Global.history, g_strdup(new_uri));
+    Jumanji.Global.history = g_list_append(Jumanji.Global.history,     g_strdup(new_uri));
+  }
 
   g_free(new_uri);
 
@@ -2746,7 +2749,8 @@ cb_inputbar_activate(GtkEntry* entry, gpointer data)
   }
 
   /* append input to the command history */
-  Jumanji.Global.command_history = g_list_append(Jumanji.Global.command_history, g_strdup(gtk_entry_get_text(entry)));
+  if(!private_browsing)
+    Jumanji.Global.command_history = g_list_append(Jumanji.Global.command_history, g_strdup(gtk_entry_get_text(entry)));
 
   /* special commands */
   char identifier = gtk_editable_get_chars(GTK_EDITABLE(entry), 0, 1)[0];

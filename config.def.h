@@ -16,6 +16,7 @@ static const char JUMANJI_HISTORY[]   = "history";
 
 /* browser specific settings */
 char* home_page  = "http://www.pwmt.org";
+gboolean private_browsing = FALSE;
 
 /* download settings */
 char* download_dir     = "~/dl/";
@@ -213,7 +214,7 @@ Setting settings[] = {
   {"notification_w_fgcolor", &(notification_w_fgcolor), NULL,                           's',  1, 0, "Notification (warning) foreground color"},
   {"page_cache",             NULL,                      "enable-page-cache",            'b',  0, 1, "Enable page cache"},
   {"plugins",                NULL,                      "enable-plugins",               'b',  0, 1, "Enable embedded plugin objects"},
-  {"private_browsing",       NULL,                      "enable-private-browsing",      'b',  0, 1, "Enable private browsing"},
+  {"private_browsing",       &(private_browsing),       "enable-private-browsing",      'b',  0, 0, "Enable private browsing"},
   {"resizable_text_areas",   NULL,                      "resizable-text-areas",         'b',  0, 1, "Resizable text areas"},
   {"sans_serif_font",        NULL,                      "sans-serif-font-family",       'b',  0, 1, "Sans-serif font family"},
   {"scripts",                NULL,                      "enable-scripts",               'b',  0, 1, "Enable embedded scripting languages"},
