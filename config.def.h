@@ -12,6 +12,7 @@ static const char FORMAT_DESCRIPTION[] = "<i>%s</i>";
 static const char JUMANJI_DIR[]       = ".config/jumanji";
 static const char JUMANJI_RC[]        = "jumanjirc";
 static const char JUMANJI_BOOKMARKS[] = "bookmarks";
+static const char JUMANJI_HISTORY[]   = "history";
 
 /* browser specific settings */
 char* home_page  = "http://www.pwmt.org";

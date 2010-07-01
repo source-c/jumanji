@@ -262,13 +262,14 @@ struct
   struct
   {
     GString *buffer;
-    GList   *history;
+    GList   *command_history;
     int      mode;
     SearchEngineList *search_engines;
     ScriptList *scripts;
     char   **arguments;
     GList* markers;
     GList* bookmarks;
+    GList* history;
   } Global;
 
   struct
@@ -635,6 +636,34 @@ init_data()
   }
 
   g_free(bookmark_file);
+
+  /* read history */
+  char* history_file = g_strdup_printf("%s/%s/%s", g_get_home_dir(), JUMANJI_DIR, JUMANJI_HISTORY);
+
+  if(!history_file)
+    return;
+
+  if(g_file_test(history_file, G_FILE_TEST_IS_REGULAR))
+  {
+    char* content = NULL;
+
+    if(g_file_get_contents(history_file, &content, NULL, NULL))
+    {
+      gchar **lines = g_strsplit(content, "\n", -1);
+      int     n     = g_strv_length(lines) - 1;
+
+      int i;
+      for(i = 0; i < n; i++)
+      {
+        if(!strlen(lines[i]))
+          continue;
+
+        Jumanji.Global.history = g_list_append(Jumanji.Global.history, lines[i]);
+      }
+    }
+  }
+
+  g_free(history_file);
 }
 
 void
@@ -714,9 +743,11 @@ init_jumanji()
   /* other */
   Jumanji.Global.mode            = NORMAL;
   Jumanji.Global.search_engines  = NULL;
+  Jumanji.Global.command_history = NULL;
   Jumanji.Global.scripts         = NULL;
   Jumanji.Global.markers         = NULL;
   Jumanji.Global.bookmarks       = NULL;
+  Jumanji.Global.history         = NULL;
 
   /* window */
   if(Jumanji.UI.embed)
@@ -823,6 +854,11 @@ open_uri(WebKitWebView* web_view, char* uri)
     new_uri = g_strrstr(uri, ":") ? g_strdup(uri) : g_strconcat("http://", uri, NULL);
 
   webkit_web_view_load_uri(web_view, new_uri);
+
+  /* update history */
+  Jumanji.Global.history = g_list_remove_all(Jumanji.Global.history, g_strdup(new_uri));
+  Jumanji.Global.history = g_list_append(Jumanji.Global.history, g_strdup(new_uri));
+
   g_free(new_uri);
 
   update_status();
@@ -1750,7 +1786,7 @@ void
 isc_command_history(Argument* argument)
 {
   static int current = 0;
-  int        length  = g_list_length(Jumanji.Global.history);
+  int        length  = g_list_length(Jumanji.Global.command_history);
 
   if(length > 0)
   {
@@ -1759,7 +1795,7 @@ isc_command_history(Argument* argument)
     else
       current = (length + current - 1) % length;
 
-    gchar* command = (gchar*) g_list_nth_data(Jumanji.Global.history, current);
+    gchar* command = (gchar*) g_list_nth_data(Jumanji.Global.command_history, current);
     notify(DEFAULT, command);
     gtk_widget_grab_focus(GTK_WIDGET(Jumanji.UI.inputbar));
     gtk_editable_set_position(GTK_EDITABLE(Jumanji.UI.inputbar), -1);
@@ -2323,6 +2359,23 @@ cmd_write(int argc, char** argv)
   g_free(bookmark_file);
   g_string_free(bookmark_list, TRUE);
 
+  /* save history */
+  GString *history_list = g_string_new("");
+
+  GList* h;
+  for(h = Jumanji.Global.history; h; h = g_list_next(h))
+  {
+    char* uri = g_strconcat((char*) h->data, "\n", NULL);
+    history_list = g_string_append(history_list, uri);
+    g_free(uri);
+  }
+
+  char* history_file = g_strdup_printf("%s/%s/%s", g_get_home_dir(), JUMANJI_DIR, JUMANJI_HISTORY);
+  g_file_set_contents(history_file, history_list->str, -1, NULL);
+
+  g_free(history_file);
+  g_string_free(history_list, TRUE);
+
   return TRUE;
 }
 
@@ -2359,6 +2412,21 @@ cc_open(char* input)
 
     if(strstr(bookmark, input))
       completion_group_add_element(bookmarks, bookmark, NULL);
+  }
+
+  /* history */
+  CompletionGroup* history = completion_group_create("History");
+  GList* h = Jumanji.Global.history;
+
+  if(h)
+    completion_add_group(completion, history);
+
+  for(; h; h = g_list_next(h))
+  {
+    char* uri = (char*) h->data;
+
+    if(strstr(uri, input))
+      completion_group_add_element(history, uri, NULL);
   }
 
   return completion;
@@ -2476,6 +2544,13 @@ cb_destroy(GtkWidget* widget, gpointer data)
 
   g_list_free(Jumanji.Global.bookmarks);
 
+  /* clear history */
+  GList* h;
+  for(h = Jumanji.Global.history; h; h = g_list_next(h))
+    free(h->data);
+
+  g_list_free(Jumanji.Global.history);
+
   /* clean shortcut list */
   ShortcutList* sc = Jumanji.Bindings.sclist;
 
@@ -2514,6 +2589,12 @@ cb_destroy(GtkWidget* widget, gpointer data)
     free(list->data);
 
   g_list_free(Jumanji.Global.markers);
+
+  /* clean markers */
+  for(list = Jumanji.Global.command_history; list; list = g_list_next(list))
+    free(list->data);
+
+  g_list_free(Jumanji.Global.command_history);
 
   gtk_main_quit();
 
@@ -2572,7 +2653,7 @@ cb_inputbar_activate(GtkEntry* entry, gpointer data)
   }
 
   /* append input to the command history */
-  Jumanji.Global.history = g_list_append(Jumanji.Global.history, g_strdup(gtk_entry_get_text(entry)));
+  Jumanji.Global.command_history = g_list_append(Jumanji.Global.command_history, g_strdup(gtk_entry_get_text(entry)));
 
   /* special commands */
   char identifier = gtk_editable_get_chars(GTK_EDITABLE(entry), 0, 1)[0];
