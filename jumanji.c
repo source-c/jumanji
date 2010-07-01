@@ -185,6 +185,7 @@ typedef struct
 {
   char* name;
   void* variable;
+  char* webkitvar;
   char  type;
   gboolean reinit;
   char* description;
@@ -264,12 +265,13 @@ struct
     GString *buffer;
     GList   *command_history;
     int      mode;
-    SearchEngineList *search_engines;
-    ScriptList *scripts;
     char   **arguments;
-    GList* markers;
-    GList* bookmarks;
-    GList* history;
+    GList   *markers;
+    GList   *bookmarks;
+    GList   *history;
+    SearchEngineList  *search_engines;
+    ScriptList        *scripts;
+    WebKitWebSettings *browser_settings;
   } Global;
 
   struct
@@ -476,16 +478,21 @@ create_tab(char* uri)
   else
     gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(tab), GTK_POLICY_NEVER, GTK_POLICY_NEVER);
 
-  g_signal_connect(G_OBJECT(wv), "console-message",                      G_CALLBACK(cb_wv_console),               NULL);
-  g_signal_connect(G_OBJECT(wv), "create-web-view",                      G_CALLBACK(cb_wv_create_web_view),       NULL);
-  g_signal_connect(G_OBJECT(wv), "download-requested",                   G_CALLBACK(cb_wv_download_request),      NULL);
-  g_signal_connect(G_OBJECT(wv), "hovering-over-link",                   G_CALLBACK(cb_wv_hover_link),            NULL);
-  g_signal_connect(G_OBJECT(wv), "navigation-policy-decision-requested", G_CALLBACK(cb_wv_nav_policy_decision),   NULL);
-  g_signal_connect(G_OBJECT(wv), "new-window-policy-decision-requested", G_CALLBACK(cb_wv_nav_policy_decision),   NULL);
-  g_signal_connect(G_OBJECT(wv), "notify::progress",                     G_CALLBACK(cb_wv_notify_progress),       NULL);
-  g_signal_connect(G_OBJECT(wv), "notify::title",                        G_CALLBACK(cb_wv_notify_title),          NULL);
+  /* connect callbacks */
+  g_signal_connect(G_OBJECT(wv),  "console-message",                      G_CALLBACK(cb_wv_console),               NULL);
+  g_signal_connect(G_OBJECT(wv),  "create-web-view",                      G_CALLBACK(cb_wv_create_web_view),       NULL);
+  g_signal_connect(G_OBJECT(wv),  "download-requested",                   G_CALLBACK(cb_wv_download_request),      NULL);
+  g_signal_connect(G_OBJECT(wv),  "hovering-over-link",                   G_CALLBACK(cb_wv_hover_link),            NULL);
+  g_signal_connect(G_OBJECT(wv),  "navigation-policy-decision-requested", G_CALLBACK(cb_wv_nav_policy_decision),   NULL);
+  g_signal_connect(G_OBJECT(wv),  "new-window-policy-decision-requested", G_CALLBACK(cb_wv_nav_policy_decision),   NULL);
+  g_signal_connect(G_OBJECT(wv),  "notify::progress",                     G_CALLBACK(cb_wv_notify_progress),       NULL);
+  g_signal_connect(G_OBJECT(wv),  "notify::title",                        G_CALLBACK(cb_wv_notify_title),          NULL);
+  g_signal_connect(G_OBJECT(tab), "key-press-event",                      G_CALLBACK(cb_tab_kb_pressed),           NULL);
 
-  g_signal_connect(G_OBJECT(tab), "key-press-event", G_CALLBACK(cb_tab_kb_pressed), NULL);
+  /* apply browser setting */
+  webkit_web_view_set_settings(WEBKIT_WEB_VIEW(wv), Jumanji.Global.browser_settings);
+
+  /* open uri */
   open_uri(WEBKIT_WEB_VIEW(wv), uri);
 
   gtk_container_add(GTK_CONTAINER(tab), wv);
@@ -810,6 +817,9 @@ init_jumanji()
   gtk_box_pack_start(Jumanji.UI.box, GTK_WIDGET(Jumanji.UI.view),       TRUE,  TRUE, 0);
   gtk_box_pack_start(Jumanji.UI.box, GTK_WIDGET(Jumanji.UI.statusbar), FALSE, FALSE, 0);
   gtk_box_pack_end(  Jumanji.UI.box, GTK_WIDGET(Jumanji.UI.inputbar),  FALSE, FALSE, 0);
+
+  /* webkit settings */
+  Jumanji.Global.browser_settings = webkit_web_settings_new();
 }
 
 void
@@ -2186,6 +2196,10 @@ cmd_set(int argc, char** argv)
   if(argc <= 0)
     return TRUE;
 
+  /* get webkit settings */
+  WebKitWebSettings* browser_settings = (gtk_notebook_get_current_page(Jumanji.UI.view) < 0) ?
+    Jumanji.Global.browser_settings : webkit_web_view_get_settings(GET_CURRENT_TAB());
+
   int i;
   for(i = 0; i < LENGTH(settings); i++)
   {
@@ -2194,23 +2208,32 @@ cmd_set(int argc, char** argv)
       /* check var type */
       if(settings[i].type == 'b')
       {
-        gboolean *x = (gboolean*) (settings[i].variable);
-        *x = !(*x);
+        gboolean value = TRUE;
 
         if(argv[1])
         {
           if(!strcmp(argv[1], "false") || !strcmp(argv[1], "0"))
-            *x = FALSE;
+            value = FALSE;
           else
-            *x = TRUE;
+            value = TRUE;
         }
+        if(settings[i].variable)
+        {
+          gboolean *x = (gboolean*) (settings[i].variable);
+          *x = !(*x);
+
+          if(argv[1])
+            *x = value;
+        }
+
+        /* check browser settings */
+        if(settings[i].webkitvar)
+          g_object_set(G_OBJECT(browser_settings), settings[i].webkitvar, value, NULL);
       }
       else if(settings[i].type == 'i')
       {
         if(argc != 2)
           return TRUE;
-
-        int *x = (int*) (settings[i].variable);
 
         int id = -1;
         int arg_c;
@@ -2226,16 +2249,32 @@ cmd_set(int argc, char** argv)
         if(id == -1)
           id = atoi(argv[1]);
 
-        *x = id;
+        if(settings[i].variable)
+        {
+          int *x = (int*) (settings[i].variable);
+          *x = id;
+        }
+
+        /* check browser settings */
+        if(settings[i].webkitvar)
+          g_object_set(G_OBJECT(browser_settings), settings[i].webkitvar, id, NULL);
       }
       else if(settings[i].type == 'f')
       {
         if(argc != 2)
           return TRUE;
 
-        float *x = (float*) (settings[i].variable);
-        if(argv[1])
-          *x = atof(argv[1]);
+        float value = atof(argv[1]);
+
+        if(settings[i].variable)
+        {
+          float *x = (float*) (settings[i].variable);
+          *x = value;
+        }
+
+        /* check browser settings */
+        if(settings[i].webkitvar)
+          g_object_set(G_OBJECT(browser_settings), settings[i].webkitvar, value, NULL);
       }
       else if(settings[i].type == 's')
       {
@@ -2253,17 +2292,32 @@ cmd_set(int argc, char** argv)
           s = g_string_append(s, argv[j]);
         }
 
-        char **x = (char**) settings[i].variable;
-        *x = s->str;
+        if(settings[i].variable)
+        {
+          char **x = (char**) settings[i].variable;
+          *x = s->str;
+        }
+
+        /* check browser settings */
+        if(settings[i].webkitvar)
+          g_object_set(G_OBJECT(browser_settings), settings[i].webkitvar, s->str, NULL);
       }
       else if(settings[i].type == 'c')
       {
         if(argc != 2)
           return TRUE;
 
-        char *x = (char*) (settings[i].variable);
-        if(argv[1])
-          *x = argv[1][0];
+        char value = argv[1][0];
+
+        if(settings[i].variable)
+        {
+          char *x = (char*) (settings[i].variable);
+          *x = value;
+        }
+
+        /* check browser settings */
+        if(settings[i].webkitvar)
+          g_object_set(G_OBJECT(browser_settings), settings[i].webkitvar, value, NULL);
       }
 
       /* re-init */
