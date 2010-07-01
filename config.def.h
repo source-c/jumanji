@@ -56,6 +56,8 @@ Shortcut shortcuts[] = {
   /* mask,             key,               function,             mode,                argument */
   {GDK_CONTROL_MASK,   GDK_c,             sc_abort,             ALL,                 {0} },
   {0,                  GDK_Escape,        sc_abort,             ALL,                 {0} },
+  {0,                  GDK_m,             sc_change_mode,       NORMAL,              { ADD_MARKER } },
+  {0,                  GDK_apostrophe,    sc_change_mode,       NORMAL,              { EVAL_MARKER } },
   {0,                  GDK_v,             sc_change_mode,       NORMAL,              { VISUAL } },
   {GDK_CONTROL_MASK,   GDK_w,             sc_close_tab,         NORMAL,              {0} },
   {0,                  GDK_slash,         sc_focus_inputbar,    NORMAL,              { .data = "/" } },

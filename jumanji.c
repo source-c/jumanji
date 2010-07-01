@@ -26,8 +26,7 @@
 
 /* enums */
 enum {
-  ADD_MARKER,
-  APPEND_URL,
+  APPEND_URL = 1,
   BACKWARD,
   BOTTOM,
   BYPASS_CACHE,
@@ -37,7 +36,6 @@ enum {
   DOWN,
   ERROR,
   FORWARD,
-  EVAL_MARKER,
   FULL_DOWN,
   FULL_UP,
   HALF_DOWN,
@@ -64,10 +62,12 @@ enum {
 };
 
 /* define modes */
-#define ALL        (1 << 0)
-#define INSERT     (1 << 1)
-#define VISUAL     (1 << 2)
-#define FOLLOW     (1 << 3)
+#define ALL         (1 << 0)
+#define INSERT      (1 << 1)
+#define VISUAL      (1 << 2)
+#define FOLLOW      (1 << 3)
+#define ADD_MARKER  (1 << 4)
+#define EVAL_MARKER (1 << 5)
 
 /* typedefs */
 struct CElement
@@ -210,8 +210,12 @@ typedef struct SScript ScriptList;
 
 typedef struct
 {
-  GtkScrolledWindow *view;
-} Page;
+  int id;
+  int tab_id;
+  gdouble hadjustment;
+  gdouble vadjustment;
+  float zoom_level;
+} Marker;
 
 /* jumanji */
 struct
@@ -263,6 +267,7 @@ struct
     SearchEngineList *search_engines;
     ScriptList *scripts;
     char   **arguments;
+    GList* markers;
   } Global;
 
   struct
@@ -379,7 +384,42 @@ gboolean cb_wv_title_changed(WebKitWebView*, WebKitWebFrame*, char*, gpointer);
 void
 add_marker(int id)
 {
+  if((id < 0x30) || (id > 0x7A))
+    return;
 
+  GtkAdjustment* adjustment;
+  adjustment = gtk_scrolled_window_get_vadjustment(GET_CURRENT_TAB_WIDGET());
+  gdouble va = gtk_adjustment_get_value(adjustment);
+  adjustment = gtk_scrolled_window_get_hadjustment(GET_CURRENT_TAB_WIDGET());
+  gdouble ha = gtk_adjustment_get_value(adjustment);
+  float zl   = webkit_web_view_get_zoom_level(GET_CURRENT_TAB());
+  int ti     = gtk_notebook_get_current_page(Jumanji.UI.view);
+
+  /* search if entry already exists */
+  GList* list;
+  for(list = Jumanji.Global.markers; list; list = g_list_next(list))
+  {
+    Marker* marker = (Marker*) list->data;
+
+    if(marker->id == id)
+    {
+      marker->tab_id      = ti;
+      marker->vadjustment = va;
+      marker->hadjustment = ha;
+      marker->zoom_level  = zl;
+      return;
+    }
+  }
+
+  /* add new marker */
+  Marker* marker = malloc(sizeof(Marker));
+  marker->id          = id;
+  marker->tab_id      = ti;
+  marker->vadjustment = va;
+  marker->hadjustment = ha;
+  marker->zoom_level  = zl;
+
+  Jumanji.Global.markers = g_list_append(Jumanji.Global.markers, marker);
 }
 
 void
@@ -485,7 +525,27 @@ create_tab(char* uri)
 void
 eval_marker(int id)
 {
+  if((id < 0x30) || (id > 0x7A))
+    return;
 
+  GList* list;
+  for(list = Jumanji.Global.markers; list; list = g_list_next(list))
+  {
+    Marker* marker = (Marker*) list->data;
+
+    if(marker->id == id)
+    {
+      gtk_notebook_set_current_page(Jumanji.UI.view, marker->tab_id);
+      GtkAdjustment* adjustment;
+      adjustment = gtk_scrolled_window_get_vadjustment(GET_CURRENT_TAB_WIDGET());
+      gtk_adjustment_set_value(adjustment, marker->vadjustment);
+      adjustment = gtk_scrolled_window_get_hadjustment(GET_CURRENT_TAB_WIDGET());
+      gtk_adjustment_set_value(adjustment, marker->hadjustment);
+      webkit_web_view_set_zoom_level(GET_CURRENT_TAB(), marker->zoom_level);
+      update_status();
+      return;
+    }
+  }
 }
 
 void
@@ -1124,6 +1184,20 @@ sc_close_tab(Argument* argument)
 {
   int current_tab      = gtk_notebook_get_current_page(Jumanji.UI.view);
   GtkWidget* tab       = GTK_WIDGET(GET_NTH_TAB_WIDGET(current_tab));
+
+  /* remove markers for this tab */
+  GList* list;
+  for(list = Jumanji.Global.markers; list; list = g_list_next(list))
+  {
+    Marker* marker = (Marker*) list->data;
+
+    if(marker->tab_id == current_tab)
+    {
+      Jumanji.Global.markers = g_list_remove(Jumanji.Global.markers, list->data);
+      free(marker);
+      break;
+    }
+  }
 
   if(gtk_notebook_get_n_pages(Jumanji.UI.view) > 1)
   {
@@ -2333,6 +2407,13 @@ cb_destroy(GtkWidget* widget, gpointer data)
     free(sl);
     sl = ne;
   }
+
+  /* clean markers */
+  GList* list;
+  for(list = Jumanji.Global.markers; list; list = g_list_next(list))
+    free(list->data);
+
+  g_list_free(Jumanji.Global.markers);
 
   gtk_main_quit();
 
