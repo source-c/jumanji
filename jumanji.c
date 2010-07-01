@@ -1256,6 +1256,8 @@ sc_abort(Argument* argument)
 
   /* Unmark search results */
   webkit_web_view_unmark_text_matches(GET_CURRENT_TAB());
+
+  gtk_widget_grab_focus(GTK_WIDGET(GET_CURRENT_TAB_WIDGET()));
 }
 
 void
