@@ -9,8 +9,9 @@ static const char FORMAT_COMMAND[]     = "<b>%s</b>";
 static const char FORMAT_DESCRIPTION[] = "<i>%s</i>";
 
 /* directories and files */
-static const char JUMANJI_DIR[]   = ".config/jumanji";
-static const char JUMANJI_RC[]    = "jumanjirc";
+static const char JUMANJI_DIR[]       = ".config/jumanji";
+static const char JUMANJI_RC[]        = "jumanjirc";
+static const char JUMANJI_BOOKMARKS[] = "bookmarks";
 
 /* browser specific settings */
 char* home_page  = "http://www.pwmt.org";
@@ -136,7 +137,8 @@ InputbarShortcut inputbar_shortcuts[] = {
 /* commands */
 Command commands[] = {
   /* command,   abbreviation,   function,            completion,   description  */
-  {"back",      "b",            cmd_back,            0,            "Go back in the browser history" },
+  {"back",      0,              cmd_back,            0,            "Go back in the browser history" },
+  {"bmark",     "b",            cmd_bookmark,        0,            "Add a bookmark" },
   {"forward",   "f",            cmd_forward,         0,            "Go forward in the browser history" },
   {"map",       "m",            cmd_map,             0,            "Map a key sequence" },
   {"open",      "o",            cmd_open,            cc_open,      "Open URI in the current tab" },
@@ -146,6 +148,7 @@ Command commands[] = {
   {"script",    0,              cmd_script,          0,            "Load a javascript file" },
   {"tabopen",   "t",            cmd_tabopen,         cc_open,      "Open URI in a new tab" },
   {"winopen",   "w",            cmd_winopen,         cc_open,      "Open URI in a new window" },
+  {"write",     "w",            cmd_write,           0,            "Write bookmark and history file" },
 };
 
 /* buffer commands */

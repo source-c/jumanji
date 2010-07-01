@@ -268,6 +268,7 @@ struct
     ScriptList *scripts;
     char   **arguments;
     GList* markers;
+    GList* bookmarks;
   } Global;
 
   struct
@@ -289,6 +290,7 @@ void add_marker(int);
 void change_mode(int);
 void create_tab(char*);
 void eval_marker(int);
+void init_data();
 void init_directories();
 void init_jumanji();
 void init_keylist();
@@ -339,6 +341,7 @@ void isc_string_manipulation(Argument*);
 
 /* command declarations */
 gboolean cmd_back(int, char**);
+gboolean cmd_bookmark(int, char**);
 gboolean cmd_forward(int, char**);
 gboolean cmd_map(int, char**);
 gboolean cmd_open(int, char**);
@@ -349,6 +352,7 @@ gboolean cmd_search_engine(int, char**);
 gboolean cmd_set(int, char**);
 gboolean cmd_tabopen(int, char**);
 gboolean cmd_winopen(int, char**);
+gboolean cmd_write(int, char**);
 
 /* completion commands */
 Completion* cc_open(char*);
@@ -602,6 +606,38 @@ init_look()
 }
 
 void
+init_data()
+{
+  /* read bookmarks */
+  char* bookmark_file = g_strdup_printf("%s/%s/%s", g_get_home_dir(), JUMANJI_DIR, JUMANJI_BOOKMARKS);
+
+  if(!bookmark_file)
+    return;
+
+  if(g_file_test(bookmark_file, G_FILE_TEST_IS_REGULAR))
+  {
+    char* content = NULL;
+
+    if(g_file_get_contents(bookmark_file, &content, NULL, NULL))
+    {
+      gchar **lines = g_strsplit(content, "\n", -1);
+      int     n     = g_strv_length(lines) - 1;
+
+      int i;
+      for(i = 0; i < n; i++)
+      {
+        if(!strlen(lines[i]))
+          continue;
+
+        Jumanji.Global.bookmarks = g_list_append(Jumanji.Global.bookmarks, lines[i]);
+      }
+    }
+  }
+
+  g_free(bookmark_file);
+}
+
+void
 init_directories()
 {
   /* create jumanji directory */
@@ -679,6 +715,8 @@ init_jumanji()
   Jumanji.Global.mode            = NORMAL;
   Jumanji.Global.search_engines  = NULL;
   Jumanji.Global.scripts         = NULL;
+  Jumanji.Global.markers         = NULL;
+  Jumanji.Global.bookmarks       = NULL;
 
   /* window */
   if(Jumanji.UI.embed)
@@ -1580,9 +1618,7 @@ isc_completion(Argument* argument)
 
         for(element = group->elements; element != NULL; element = element->next)
         {
-          if( (element->value) &&
-              (current_parameter_length <= strlen(element->value)) && !strncmp(current_parameter, element->value, current_parameter_length)
-            )
+          if(element->value)
           {
             rows = realloc(rows, (n_items + 1) * sizeof(CompletionRow));
             rows[n_items].command     = element->value;
@@ -1779,6 +1815,21 @@ cmd_back(int argc, char** argv)
   Argument argument;
   argument.n = PREVIOUS;
   sc_nav_history(&argument);
+
+  return TRUE;
+}
+
+gboolean
+cmd_bookmark(int argc, char** argv)
+{
+  char* bookmark;
+  if(argc >= 1)
+    bookmark = g_strdup(argv[0]);
+  else
+    bookmark = g_strdup(webkit_web_view_get_uri(GET_CURRENT_TAB()));
+
+  Jumanji.Global.bookmarks = g_list_remove_all(Jumanji.Global.bookmarks, bookmark);
+  Jumanji.Global.bookmarks = g_list_append(Jumanji.Global.bookmarks, bookmark);
 
   return TRUE;
 }
@@ -2252,6 +2303,29 @@ cmd_winopen(int argc, char** argv)
   return TRUE;
 }
 
+gboolean
+cmd_write(int argc, char** argv)
+{
+  /* save bookmarks */
+  GString *bookmark_list = g_string_new("");
+
+  GList* l;
+  for(l = Jumanji.Global.bookmarks; l; l = g_list_next(l))
+  {
+    char* bookmark = g_strconcat((char*) l->data, "\n", NULL);
+    bookmark_list = g_string_append(bookmark_list, bookmark);
+    g_free(bookmark);
+  }
+
+  char* bookmark_file = g_strdup_printf("%s/%s/%s", g_get_home_dir(), JUMANJI_DIR, JUMANJI_BOOKMARKS);
+  g_file_set_contents(bookmark_file, bookmark_list->str, -1, NULL);
+
+  g_free(bookmark_file);
+  g_string_free(bookmark_list, TRUE);
+
+  return TRUE;
+}
+
 /* completion command implementation */
 Completion*
 cc_open(char* input)
@@ -2262,13 +2336,29 @@ cc_open(char* input)
   CompletionGroup* search_engines = completion_group_create("Search engines");
   SearchEngineList* se = Jumanji.Global.search_engines;
 
-  if(se)
+  /*if(se)*/
     completion_add_group(completion, search_engines);
 
   while(se)
   {
-    completion_group_add_element(search_engines, se->name, NULL);
+    if(strstr(se->name, input))
+      completion_group_add_element(search_engines, se->name, NULL);
     se = se->next;
+  }
+
+  /* bookmarks */
+  CompletionGroup* bookmarks = completion_group_create("Bookmarks");
+  GList* l = Jumanji.Global.bookmarks;
+
+  if(l)
+    completion_add_group(completion, bookmarks);
+
+  for(; l; l = g_list_next(l))
+  {
+    char* bookmark = (char*) l->data;
+
+    if(strstr(bookmark, input))
+      completion_group_add_element(bookmarks, bookmark, NULL);
   }
 
   return completion;
@@ -2375,6 +2465,16 @@ gboolean
 cb_destroy(GtkWidget* widget, gpointer data)
 {
   pango_font_description_free(Jumanji.Style.font);
+
+  /* write bookmarks and history */
+  cmd_write(0, NULL);
+
+  /* clear bookmarks */
+  GList* l;
+  for(l = Jumanji.Global.bookmarks; l; l = g_list_next(l))
+    free(l->data);
+
+  g_list_free(Jumanji.Global.bookmarks);
 
   /* clean shortcut list */
   ShortcutList* sc = Jumanji.Bindings.sclist;
@@ -2736,6 +2836,7 @@ int main(int argc, char* argv[])
   /* init jumanji and read configuration */
   init_jumanji();
   init_directories();
+  init_data();
   init_keylist();
   read_configuration();
   init_settings();
