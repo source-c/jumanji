@@ -47,6 +47,7 @@ enum {
   NEXT,
   NEXT_CHAR,
   NEXT_GROUP,
+  NEW_TAB,
   NORMAL,
   PREVIOUS,
   PREVIOUS_CHAR,
@@ -280,7 +281,7 @@ struct
 /* function declarations */
 void add_marker(int);
 void change_mode(int);
-void create_tab(char*, int);
+void create_tab(char*);
 void eval_marker(int);
 void init_directories();
 void init_jumanji();
@@ -314,6 +315,7 @@ void sc_focus_inputbar(Argument*);
 void sc_follow_link(Argument*);
 void sc_nav_history(Argument*);
 void sc_nav_tabs(Argument*);
+void sc_paste(Argument*);
 void sc_reload(Argument*);
 void sc_run_script(Argument*);
 void sc_scroll(Argument*);
@@ -412,13 +414,16 @@ change_mode(int mode)
 }
 
 void
-create_tab(char* uri, int position)
+create_tab(char* uri)
 {
   GtkWidget *tab = gtk_scrolled_window_new(NULL, NULL);
   GtkWidget *wv  = webkit_web_view_new();
 
   if(!tab || !wv)
     return;
+
+  int number_of_tabs = gtk_notebook_get_current_page(Jumanji.UI.view);
+  int position       = (next_to_current) ? (number_of_tabs + 1) : -1;
 
   if(show_scrollbars)
     gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(tab), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
@@ -1207,11 +1212,7 @@ sc_follow_link(Argument* argument)
         if(open_mode == -1)
           open_uri(GET_CURRENT_TAB(), value + 5);
         else
-        {
-          int n = gtk_notebook_get_current_page(Jumanji.UI.view);
-          int p = (next_to_current) ? (n + 1) : -1;
-          create_tab(value + 5, p);
-        }
+          create_tab(value + 5);
       }
 
       sc_abort(NULL);
@@ -1235,11 +1236,7 @@ sc_follow_link(Argument* argument)
           if(open_mode == -1)
             open_uri(GET_CURRENT_TAB(), value + 5);
           else
-          {
-            int n = gtk_notebook_get_current_page(Jumanji.UI.view);
-            int p = (next_to_current) ? (n + 1) : -1;
-            create_tab(value + 5, p);
-          }
+            create_tab(value + 5);
         }
 
         sc_abort(NULL);
@@ -1261,6 +1258,17 @@ void
 sc_nav_tabs(Argument* argument)
 {
   bcmd_nav_tabs(NULL, argument);
+}
+
+void
+sc_paste(Argument* argument)
+{
+  char* text = gtk_clipboard_wait_for_text(gtk_clipboard_get(GDK_SELECTION_PRIMARY));
+
+  if(argument->n == NEW_TAB)
+    create_tab(text);
+  else
+    open_uri(GET_CURRENT_TAB(), text);
 }
 
 void
@@ -2119,10 +2127,7 @@ cmd_tabopen(int argc, char** argv)
     uri = g_string_append(uri, argv[i]);
   }
 
-  int n = gtk_notebook_get_current_page(Jumanji.UI.view);
-  int p = (next_to_current) ? (n + 1) : -1;
-
-  create_tab(uri->str, p);
+  create_tab(uri->str);
 
   g_string_free(uri, FALSE);
 
@@ -2523,10 +2528,7 @@ gboolean
 cb_wv_create_web_view(WebKitWebView* wv, WebKitWebFrame* frame, gpointer data)
 {
   char* uri = (char*) webkit_web_view_get_uri(wv);
-  int n     = gtk_notebook_get_current_page(Jumanji.UI.view);
-  int p     = (next_to_current) ? (n + 1) : -1;
-
-  create_tab(uri, p);
+  create_tab(uri);
 
   return TRUE;
 }
@@ -2573,7 +2575,7 @@ cb_wv_nav_policy_decision(WebKitWebView* wv, WebKitWebFrame* frame, WebKitNetwor
       webkit_web_policy_decision_ignore(decision);
       return TRUE;
     case 2: /* middle mouse button */
-      create_tab((char*) webkit_network_request_get_uri(request), -1);
+      create_tab((char*) webkit_network_request_get_uri(request));
       webkit_web_policy_decision_ignore(decision);
       return TRUE;
     case 3: /* right mouse button */
@@ -2656,9 +2658,9 @@ int main(int argc, char* argv[])
 
   /* create tab */
   if(argc < 2)
-    create_tab(home_page, -1);
+    create_tab(home_page);
   else
-    create_tab(argv[i], -1);
+    create_tab(argv[i]);
 
   gtk_widget_show_all(GTK_WIDGET(Jumanji.UI.window));
   gtk_widget_grab_focus(GTK_WIDGET(GET_CURRENT_TAB_WIDGET()));

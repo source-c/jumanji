@@ -74,6 +74,8 @@ Shortcut shortcuts[] = {
   {GDK_CONTROL_MASK,   GDK_o,             sc_nav_history,       NORMAL,              { PREVIOUS } },
   {GDK_CONTROL_MASK,   GDK_Tab,           sc_nav_tabs,          NORMAL,              { NEXT } },
   {GDK_COSHIFT_MASK,   GDK_ISO_Left_Tab,  sc_nav_tabs,          NORMAL,              { PREVIOUS } },
+  {0,                  GDK_p,             sc_paste,             NORMAL,              {0} },
+  {0,                  GDK_P,             sc_paste,             NORMAL,              { NEW_TAB } },
   {0,                  GDK_r,             sc_reload,            NORMAL,              {0} },
   {0,                  GDK_h,             sc_scroll,            NORMAL,              { LEFT } },
   {0,                  GDK_j,             sc_scroll,            NORMAL,              { DOWN } },
