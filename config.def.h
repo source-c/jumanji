@@ -16,6 +16,10 @@ static const char JUMANJI_RC[]    = "jumanjirc";
 char* home_page  = "http://www.pwmt.org";
 char* user_agent = "jumanji";
 
+/* download settings */
+char* download_dir     = "~/dl/";
+char* download_command = "urxvt -e sh -c \"wget '%s' -O %s\"";
+
 /* look */
 char* font                   = "monospace normal 9";
 char* default_bgcolor        = "#000000";

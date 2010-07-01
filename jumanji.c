@@ -362,7 +362,7 @@ gboolean cb_inputbar_activate(GtkEntry*, gpointer);
 gboolean cb_tab_kb_pressed(GtkWidget*, GdkEventKey*, gpointer);
 gboolean cb_wv_console(WebKitWebView*, char*, int, char*, gpointer);
 gboolean cb_wv_create_web_view(WebKitWebView*, WebKitWebFrame*, gpointer);
-gboolean cb_wv_download_request(WebKitWebView*, GObject*, gpointer);
+gboolean cb_wv_download_request(WebKitWebView*, WebKitDownload*, gpointer);
 gboolean cb_wv_hover_link(WebKitWebView*, char*, char*, gpointer);
 gboolean cb_wv_notify_progress(WebKitWebView*, GParamSpec*, gpointer);
 gboolean cb_wv_notify_title(WebKitWebView*, GParamSpec*, gpointer);
@@ -2532,8 +2532,19 @@ cb_wv_create_web_view(WebKitWebView* wv, WebKitWebFrame* frame, gpointer data)
 }
 
 gboolean
-cb_wv_download_request(WebKitWebView* wv, GObject* download, gpointer data)
+cb_wv_download_request(WebKitWebView* wv, WebKitDownload* download, gpointer data)
 {
+  const char* uri      = webkit_download_get_uri(download);
+  const char* filename = webkit_download_get_suggested_filename(download);
+
+  char* file      = g_strconcat(download_dir, filename ? filename : uri, NULL);
+  char* command   = g_strdup_printf(download_command, uri, file);
+
+  g_spawn_command_line_async(command, NULL);
+
+  g_free(command);
+  g_free(file);
+
   return TRUE;
 }
 
