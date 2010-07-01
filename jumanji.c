@@ -915,7 +915,8 @@ update_status()
 
     const gchar* tab_title = webkit_web_view_get_title(GET_WEBVIEW(tab));
     int progress = webkit_web_view_get_progress(GET_WEBVIEW(tab)) * 100;
-    gtk_label_set_markup((GtkLabel*) tab_label, tab_title ? tab_title : ((progress == 100) ? "Loading..." : "(Untitled)"));
+    gchar* markup = g_strdup_printf("%d | %s", tc + 1, tab_title ? tab_title : ((progress == 100) ? "Loading..." : "(Untitled)"));
+    gtk_label_set_markup((GtkLabel*) tab_label, markup);
   }
 }
 
@@ -2471,13 +2472,16 @@ bcmd_nav_tabs(char* buffer, Argument* argument)
 
   if(argument->n == PREVIOUS)
     step = -1;
-  else if(argument->n == SPECIFIC)
+
+  int new_tab = (current_tab + step) % number_of_tabs;
+
+  if(argument->n == SPECIFIC)
   {
     char* number = g_strndup(buffer, strlen(buffer) - 2);
-    step         = atoi(number) * ((buffer[strlen(buffer)-1] == 't') ? 1 : -1);
+    new_tab      = atoi(number) - 1;
   }
 
-  gtk_notebook_set_current_page(Jumanji.UI.view, (current_tab + step) % number_of_tabs);
+  gtk_notebook_set_current_page(Jumanji.UI.view, new_tab);
   update_status();
 }
 
