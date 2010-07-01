@@ -65,6 +65,7 @@ Shortcut shortcuts[] = {
   {0,                  GDK_w,             sc_focus_inputbar,    NORMAL,              { .data = ":winopen " } },
   {0,                  GDK_W,             sc_focus_inputbar,    NORMAL,              { .data = ":winopen ", .n = APPEND_URL } },
   {0,                  GDK_f,             sc_follow_link,       NORMAL,              {-1} },
+  {0,                  GDK_F,             sc_follow_link,       NORMAL,              {-2} },
   {GDK_CONTROL_MASK,   GDK_i,             sc_nav_history,       NORMAL,              { NEXT } },
   {GDK_CONTROL_MASK,   GDK_o,             sc_nav_history,       NORMAL,              { PREVIOUS } },
   {GDK_CONTROL_MASK,   GDK_Tab,           sc_nav_tabs,          NORMAL,              { NEXT } },

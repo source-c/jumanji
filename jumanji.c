@@ -1155,6 +1155,11 @@ sc_follow_link(Argument* argument)
 {
   static gboolean follow_links = FALSE;
   static GString  *buffer      = NULL;
+  static int      open_mode    = -1;
+
+  /* update open mode */
+  if(argument->n < 0)
+    open_mode = argument->n;
 
   /* show all links */
   if(!follow_links || Jumanji.Global.mode != FOLLOW)
@@ -1196,7 +1201,16 @@ sc_follow_link(Argument* argument)
       run_script(cmd, &value, NULL);
 
       if(value && !strncmp(value, "open;", 5))
-        open_uri(GET_CURRENT_TAB(), value + 5);
+      {
+        if(open_mode == -1)
+          open_uri(GET_CURRENT_TAB(), value + 5);
+        else
+        {
+          int n = gtk_notebook_get_current_page(Jumanji.UI.view);
+          int p = (next_to_current) ? (n + 1) : -1;
+          create_tab(value + 5, p);
+        }
+      }
 
       sc_abort(NULL);
       follow_links = FALSE;
@@ -1215,7 +1229,16 @@ sc_follow_link(Argument* argument)
         run_script(cmd, &value, NULL);
 
         if(value && !strncmp(value, "open;", 5))
-          open_uri(GET_CURRENT_TAB(), value + 5);
+        {
+          if(open_mode == -1)
+            open_uri(GET_CURRENT_TAB(), value + 5);
+          else
+          {
+            int n = gtk_notebook_get_current_page(Jumanji.UI.view);
+            int p = (next_to_current) ? (n + 1) : -1;
+            create_tab(value + 5, p);
+          }
+        }
 
         sc_abort(NULL);
       }
