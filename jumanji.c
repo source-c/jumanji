@@ -188,6 +188,7 @@ typedef struct
   char* webkitvar;
   char  type;
   gboolean reinit;
+  gboolean reload;
   char* description;
 } Setting;
 
@@ -490,7 +491,7 @@ create_tab(char* uri)
   g_signal_connect(G_OBJECT(tab), "key-press-event",                      G_CALLBACK(cb_tab_kb_pressed),           NULL);
 
   /* apply browser setting */
-  webkit_web_view_set_settings(WEBKIT_WEB_VIEW(wv), Jumanji.Global.browser_settings);
+  webkit_web_view_set_settings(WEBKIT_WEB_VIEW(wv), webkit_web_settings_copy(Jumanji.Global.browser_settings));
 
   /* open uri */
   open_uri(WEBKIT_WEB_VIEW(wv), uri);
@@ -2323,6 +2324,11 @@ cmd_set(int argc, char** argv)
       /* re-init */
       if(settings[i].reinit)
         init_look();
+
+      /* reload */
+      if(settings[i].reload)
+        if(gtk_notebook_get_current_page(Jumanji.UI.view) >= 0)
+          webkit_web_view_reload(GET_CURRENT_TAB());
     }
   }
 

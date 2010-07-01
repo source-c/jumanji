@@ -1,8 +1,8 @@
 /* settings */
-int   default_width  = 800;
-int   default_height = 600;
-float zoom_step      = 10;
-float scroll_step    = 40;
+int   default_width    = 800;
+int   default_height   = 600;
+float zoom_step        = 10;
+float scroll_step      = 40;
 
 /* completion */
 static const char FORMAT_COMMAND[]     = "<b>%s</b>";
@@ -16,7 +16,6 @@ static const char JUMANJI_HISTORY[]   = "history";
 
 /* browser specific settings */
 char* home_page  = "http://www.pwmt.org";
-char* user_agent = "jumanji";
 
 /* download settings */
 char* download_dir     = "~/dl/";
@@ -177,41 +176,58 @@ SpecialCommand special_commands[] = {
 
 /* settings */
 Setting settings[] = {
-  /* name,                  variable,            webkit-setting,                 type, re-init, description */
-  {"96dpi",                 NULL,                "enforce-96-dpi",               'b',  FALSE,   "Enforce a resolution of 96 DPI"},
-  {"auto_load_images",      NULL,                "auto-load-images",             'b',  FALSE,   "Load images automatically"},
-  {"auto_shrink_images",    NULL,                "auto-shrink-images",           'b',  FALSE,   "Shrink standalone images to fit"},
-  {"background",            NULL,                "print-backgrounds",            'b',  FALSE,   "Print background images"},
-  {"caret_browsing",        NULL,                "enable-caret-browsing",        'b',  FALSE,   "Wheter to enable caret browsing mode"},
-  {"cursive_font_family",   NULL,                "cursive-font-family",          's',  FALSE,   "Default cursive font family to display text"},
-  {"developer_extras",      NULL,                "enable-developer-extras",      'b',  FALSE,   "Enable webkit developer extensions"},
-  {"encoding",              NULL,                "default-encoding",             's',  FALSE,   "The default encoding to display text"},
-  {"fantasy_font",          NULL,                "fantasy-font-family",          'b',  FALSE,   "The default fantasy font family"},
-  {"font",                  NULL,                "default-font-family",          's',  FALSE,   "The default font family"},
-  {"font_size",             NULL,                "default-font-size",            'i',  FALSE,   "The default font size to display text"},
-  {"height",                &(default_height),   NULL,                           'i',  FALSE,   "Default window height"},
-  {"home_page",             &(home_page),        NULL,                           's',  FALSE,   "Home page"},
-  {"java_applet",           NULL,                "enable-java-applet",           'b',  FALSE,   "Enable Java <applet> tag"},
-  {"minimum_font_size",     NULL,                "minimum-font-size",            'i',  FALSE,   "Minimum font-size"},
-  {"monospace_font",        NULL,                "monospace-font-family",        's',  FALSE,   "Monospace font family"},
-  {"monospace_font_size",   NULL,                "default-monospace-font-size",  'i',  FALSE,   "The default font size to display monospace text"},
-  {"next_to_current",       &(next_to_current),  NULL,                           'b',  FALSE,   "Open new tab next to the current one"},
-  {"page_cache",            NULL,                "enable-page-cache",            'b',  FALSE,   "Enable page cache"},
-  {"plugins",               NULL,                "enable-plugins",               'b',  FALSE,   "Enable embedded plugin objects"},
-  {"private_browsing",      NULL,                "enable-private-browsing",      'b',  FALSE,   "Enable private browsing"},
-  {"resizable_text_areas",  NULL,                "resizable-text-areas",         'b',  FALSE,   "Resizable text areas"},
-  {"sans_serif_font",       NULL,                "sans-serif-font-family",       'b',  FALSE,   "Sans-serif font family"},
-  {"scripts",               NULL,                "enable-scripts",               'b',  FALSE,   "Enable embedded scripting languages"},
-  {"scroll_step",           &(scroll_step),      NULL,                           'f',  TRUE,    "Scroll step"},
-  {"scrollbars",            &(show_scrollbars),  NULL,                           'b',  TRUE,    "Show scrollbars"},
-  {"serif_font",            NULL,                "serif-font-family",            'b',  FALSE,   "Serif font family"},
-  {"show_statusbar",        &(show_statusbar),   NULL,                           'b',  TRUE,    "Show statusbar"},
-  {"spell_checking",        NULL,                "enable-spell-checking",        'b',  FALSE,   "Enable spell checking while typing"},
-  {"spell_checking_lang",   NULL,                "spell-checking-languages",     's',  FALSE,   "Spell checking languages"},
-  {"stylesheet",            NULL,                "user-stylesheet-uri",          'b',  FALSE,   "Custom stylesheet"},
-  {"user_agent",            &(user_agent),       "user-agent",                   's',  TRUE,    "User agent"},
-  {"width",                 &(default_height),   NULL,                           'i',  FALSE,   "Default window width"},
-  {"zoom_step",             &(zoom_step),        "zoom-step",                    'f',  TRUE,    "Zoom step"},
+  /* name,                   variable,                  webkit-setting,                 type, i, r, description */
+  {"96dpi",                  NULL,                      "enforce-96-dpi",               'b',  0, 1, "Enforce a resolution of 96 DPI"},
+  {"auto_shrink_images",     NULL,                      "auto-shrink-images",           'b',  0, 1, "Shrink standalone images to fit"},
+  {"background",             NULL,                      "print-backgrounds",            'b',  0, 1, "Print background images"},
+  {"caret_browsing",         NULL,                      "enable-caret-browsing",        'b',  0, 1, "Wheter to enable caret browsing mode"},
+  {"completion_bgcolor",     &(completion_bgcolor),     NULL,                           's',  1, 0, "Completion background color"},
+  {"completion_fgcolor",     &(completion_fgcolor),     NULL,                           's',  1, 0, "Completion foreground color"},
+  {"completion_g_bgcolor",   &(completion_g_bgcolor),   NULL,                           's',  1, 0, "Completion (group) background color"},
+  {"completion_g_fgcolor",   &(completion_g_fgcolor),   NULL,                           's',  1, 0, "Completion (group) foreground color"},
+  {"completion_hl_bgcolor",  &(completion_hl_bgcolor),  NULL,                           's',  1, 0, "Completion (highlight) background color"},
+  {"completion_hl_fgcolor",  &(completion_hl_fgcolor),  NULL,                           's',  1, 0, "Completion (highlight) foreground color"},
+  {"cursive_font_family",    NULL,                      "cursive-font-family",          's',  0, 1, "Default cursive font family to display text"},
+  {"default_bgcolor",        &(default_bgcolor),        NULL,                           's',  1, 0, "Default background color"},
+  {"default_fgcolor",        &(default_fgcolor),        NULL,                           's',  1, 0, "Default foreground color"},
+  {"developer_extras",       NULL,                      "enable-developer-extras",      'b',  0, 1, "Enable webkit developer extensions"},
+  {"encoding",               NULL,                      "default-encoding",             's',  0, 1, "The default encoding to display text"},
+  {"fantasy_font",           NULL,                      "fantasy-font-family",          'b',  0, 1, "The default fantasy font family"},
+  {"font",                   &(font),                   NULL,                           's',  1, 0, "The used font" },
+  {"font",                   NULL,                      "default-font-family",          's',  0, 1, "The default font family"},
+  {"font_size",              NULL,                      "default-font-size",            'i',  0, 1, "The default font size to display text"},
+  {"height",                 &(default_height),         NULL,                           'i',  0, 0, "Default window height"},
+  {"height",                 &(default_height),         NULL,                           'i',  0, 0, "Default window height"},
+  {"home_page",              &(home_page),              NULL,                           's',  0, 0, "Home page"},
+  {"images",                 NULL,                      "auto-load-images",             'b',  0, 1, "Load images automatically"},
+  {"inputbar_bgcolor",       &(inputbar_bgcolor),       NULL,                           's',  1, 0, "Inputbar background color"},
+  {"inputbar_fgcolor",       &(inputbar_fgcolor),       NULL,                           's',  1, 0, "Inputbar foreground color"},
+  {"java_applet",            NULL,                      "enable-java-applet",           'b',  0, 1, "Enable Java <applet> tag"},
+  {"minimum_font_size",      NULL,                      "minimum-font-size",            'i',  0, 1, "Minimum font-size"},
+  {"monospace_font",         NULL,                      "monospace-font-family",        's',  0, 1, "Monospace font family"},
+  {"monospace_font_size",    NULL,                      "default-monospace-font-size",  'i',  0, 1, "The default font size to display monospace text"},
+  {"next_to_current",        &(next_to_current),        NULL,                           'b',  0, 0, "Open new tab next to the current one"},
+  {"notification_e_bgcolor", &(notification_e_bgcolor), NULL,                           's',  1, 0, "Notification (error) background color"},
+  {"notification_e_fgcolor", &(notification_e_fgcolor), NULL,                           's',  1, 0, "Notification (error) foreground color"},
+  {"notification_w_bgcolor", &(notification_w_bgcolor), NULL,                           's',  1, 0, "Notification (warning) background color"},
+  {"notification_w_fgcolor", &(notification_w_fgcolor), NULL,                           's',  1, 0, "Notification (warning) foreground color"},
+  {"page_cache",             NULL,                      "enable-page-cache",            'b',  0, 1, "Enable page cache"},
+  {"plugins",                NULL,                      "enable-plugins",               'b',  0, 1, "Enable embedded plugin objects"},
+  {"private_browsing",       NULL,                      "enable-private-browsing",      'b',  0, 1, "Enable private browsing"},
+  {"resizable_text_areas",   NULL,                      "resizable-text-areas",         'b',  0, 1, "Resizable text areas"},
+  {"sans_serif_font",        NULL,                      "sans-serif-font-family",       'b',  0, 1, "Sans-serif font family"},
+  {"scripts",                NULL,                      "enable-scripts",               'b',  0, 1, "Enable embedded scripting languages"},
+  {"scroll_step",            &(scroll_step),            NULL,                           'f',  1, 0, "Scroll step"},
+  {"scrollbars",             &(show_scrollbars),        NULL,                           'b',  1, 0, "Show scrollbars"},
+  {"serif_font",             NULL,                      "serif-font-family",            'b',  0, 1, "Serif font family"},
+  {"show_statusbar",         &(show_statusbar),         NULL,                           'b',  1, 0, "Show statusbar"},
+  {"spell_checking",         NULL,                      "enable-spell-checking",        'b',  0, 1, "Enable spell checking while typing"},
+  {"spell_checking_lang",    NULL,                      "spell-checking-languages",     's',  0, 1, "Spell checking languages"},
+  {"stylesheet",             NULL,                      "user-stylesheet-uri",          'b',  0, 1, "Custom stylesheet"},
+  {"user_agent",             NULL,                      "user-agent",                   's',  1, 1, "User agent"},
+  {"width",                  &(default_height),         NULL,                           'i',  0, 0, "Default window width"},
+  {"width",                  &(default_width),          NULL,                           'i',  0, 0, "Default window width"},
+  {"zoom_step",              &(zoom_step),              "zoom-step",                    'f',  1, 0, "Zoom step"},
 };
 
 /* shortcut names */
