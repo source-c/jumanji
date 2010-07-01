@@ -280,6 +280,7 @@ struct
     GtkLabel *text;
     GtkLabel *buffer;
     GtkLabel *tabs;
+    GtkLabel *position;
   } Statusbar;
 
   struct
@@ -591,13 +592,15 @@ init_look()
   /* statusbar */
   gtk_widget_modify_bg(GTK_WIDGET(Jumanji.UI.statusbar), GTK_STATE_NORMAL, &(Jumanji.Style.statusbar_bg));
 
-  gtk_widget_modify_fg(GTK_WIDGET(Jumanji.Statusbar.text),   GTK_STATE_NORMAL, &(Jumanji.Style.statusbar_fg));
-  gtk_widget_modify_fg(GTK_WIDGET(Jumanji.Statusbar.buffer), GTK_STATE_NORMAL, &(Jumanji.Style.statusbar_fg));
-  gtk_widget_modify_fg(GTK_WIDGET(Jumanji.Statusbar.tabs),   GTK_STATE_NORMAL, &(Jumanji.Style.statusbar_fg));
+  gtk_widget_modify_fg(GTK_WIDGET(Jumanji.Statusbar.text),     GTK_STATE_NORMAL, &(Jumanji.Style.statusbar_fg));
+  gtk_widget_modify_fg(GTK_WIDGET(Jumanji.Statusbar.buffer),   GTK_STATE_NORMAL, &(Jumanji.Style.statusbar_fg));
+  gtk_widget_modify_fg(GTK_WIDGET(Jumanji.Statusbar.tabs),     GTK_STATE_NORMAL, &(Jumanji.Style.statusbar_fg));
+  gtk_widget_modify_fg(GTK_WIDGET(Jumanji.Statusbar.position), GTK_STATE_NORMAL, &(Jumanji.Style.statusbar_fg));
 
-  gtk_widget_modify_font(GTK_WIDGET(Jumanji.Statusbar.text),   Jumanji.Style.font);
-  gtk_widget_modify_font(GTK_WIDGET(Jumanji.Statusbar.buffer), Jumanji.Style.font);
-  gtk_widget_modify_font(GTK_WIDGET(Jumanji.Statusbar.tabs),   Jumanji.Style.font);
+  gtk_widget_modify_font(GTK_WIDGET(Jumanji.Statusbar.text),     Jumanji.Style.font);
+  gtk_widget_modify_font(GTK_WIDGET(Jumanji.Statusbar.buffer),   Jumanji.Style.font);
+  gtk_widget_modify_font(GTK_WIDGET(Jumanji.Statusbar.tabs),     Jumanji.Style.font);
+  gtk_widget_modify_font(GTK_WIDGET(Jumanji.Statusbar.position), Jumanji.Style.font);
 
   if(show_statusbar)
     gtk_widget_show(GTK_WIDGET(Jumanji.UI.statusbar));
@@ -782,25 +785,30 @@ init_jumanji()
   gtk_container_add(GTK_CONTAINER(Jumanji.UI.window), GTK_WIDGET(Jumanji.UI.box));
 
   /* statusbar */
-  Jumanji.Statusbar.text   = GTK_LABEL(gtk_label_new(NULL));
-  Jumanji.Statusbar.buffer = GTK_LABEL(gtk_label_new(NULL));
-  Jumanji.Statusbar.tabs   = GTK_LABEL(gtk_label_new(NULL));
+  Jumanji.Statusbar.text       = GTK_LABEL(gtk_label_new(NULL));
+  Jumanji.Statusbar.buffer     = GTK_LABEL(gtk_label_new(NULL));
+  Jumanji.Statusbar.tabs       = GTK_LABEL(gtk_label_new(NULL));
+  Jumanji.Statusbar.position   = GTK_LABEL(gtk_label_new(NULL));
 
-  gtk_misc_set_alignment(GTK_MISC(Jumanji.Statusbar.text),   0.0, 0.0);
-  gtk_misc_set_alignment(GTK_MISC(Jumanji.Statusbar.buffer), 1.0, 0.0);
-  gtk_misc_set_alignment(GTK_MISC(Jumanji.Statusbar.tabs),   1.0, 0.0);
+  gtk_misc_set_alignment(GTK_MISC(Jumanji.Statusbar.text),     0.0, 0.0);
+  gtk_misc_set_alignment(GTK_MISC(Jumanji.Statusbar.buffer),   1.0, 0.0);
+  gtk_misc_set_alignment(GTK_MISC(Jumanji.Statusbar.tabs),     1.0, 0.0);
+  gtk_misc_set_alignment(GTK_MISC(Jumanji.Statusbar.position), 1.0, 0.0);
 
-  gtk_misc_set_padding(GTK_MISC(Jumanji.Statusbar.text),   2.0, 4.0);
-  gtk_misc_set_padding(GTK_MISC(Jumanji.Statusbar.buffer), 2.0, 4.0);
-  gtk_misc_set_padding(GTK_MISC(Jumanji.Statusbar.tabs),   2.0, 4.0);
+  gtk_misc_set_padding(GTK_MISC(Jumanji.Statusbar.text),     2.0, 4.0);
+  gtk_misc_set_padding(GTK_MISC(Jumanji.Statusbar.buffer),   2.0, 4.0);
+  gtk_misc_set_padding(GTK_MISC(Jumanji.Statusbar.tabs),     2.0, 4.0);
+  gtk_misc_set_padding(GTK_MISC(Jumanji.Statusbar.position), 2.0, 4.0);
 
-  gtk_label_set_use_markup(Jumanji.Statusbar.text,   TRUE);
-  gtk_label_set_use_markup(Jumanji.Statusbar.buffer, TRUE);
-  gtk_label_set_use_markup(Jumanji.Statusbar.tabs,   TRUE);
+  gtk_label_set_use_markup(Jumanji.Statusbar.text,     TRUE);
+  gtk_label_set_use_markup(Jumanji.Statusbar.buffer,   TRUE);
+  gtk_label_set_use_markup(Jumanji.Statusbar.tabs,     TRUE);
+  gtk_label_set_use_markup(Jumanji.Statusbar.position, TRUE);
 
-  gtk_box_pack_start(Jumanji.UI.statusbar_entries, GTK_WIDGET(Jumanji.Statusbar.text),   TRUE,   TRUE, 2);
-  gtk_box_pack_start(Jumanji.UI.statusbar_entries, GTK_WIDGET(Jumanji.Statusbar.buffer), FALSE, FALSE, 2);
-  gtk_box_pack_start(Jumanji.UI.statusbar_entries, GTK_WIDGET(Jumanji.Statusbar.tabs),   FALSE, FALSE, 2);
+  gtk_box_pack_start(Jumanji.UI.statusbar_entries, GTK_WIDGET(Jumanji.Statusbar.text),     TRUE,   TRUE, 2);
+  gtk_box_pack_start(Jumanji.UI.statusbar_entries, GTK_WIDGET(Jumanji.Statusbar.buffer),   FALSE, FALSE, 2);
+  gtk_box_pack_start(Jumanji.UI.statusbar_entries, GTK_WIDGET(Jumanji.Statusbar.tabs),     FALSE, FALSE, 2);
+  gtk_box_pack_start(Jumanji.UI.statusbar_entries, GTK_WIDGET(Jumanji.Statusbar.position), FALSE, FALSE, 2);
 
   gtk_container_add(GTK_CONTAINER(Jumanji.UI.statusbar), GTK_WIDGET(Jumanji.UI.statusbar_entries));
 
@@ -929,6 +937,23 @@ update_status()
     gchar* markup = g_strdup_printf("%d | %s", tc + 1, tab_title ? tab_title : ((progress == 100) ? "Loading..." : "(Untitled)"));
     gtk_label_set_markup((GtkLabel*) tab_label, markup);
   }
+
+  /* update position */
+  GtkAdjustment* adjustment = gtk_scrolled_window_get_vadjustment(GET_CURRENT_TAB_WIDGET());
+  gdouble view_size         = gtk_adjustment_get_page_size(adjustment);
+  gdouble value             = gtk_adjustment_get_value(adjustment);
+  gdouble max               = gtk_adjustment_get_upper(adjustment) - view_size;
+
+  gchar* position;
+  if(value == max)
+    position = g_strdup("Bot");
+  else if(value == 0)
+    position = g_strdup("Top");
+  else
+    position = g_strdup_printf("%2d%%", (int) ((value / max) * 100));
+
+  gtk_label_set_markup((GtkLabel*) Jumanji.Statusbar.position, position);
+  g_free(position);
 }
 
 void
@@ -2560,6 +2585,8 @@ bcmd_scroll(char* buffer, Argument* argument)
   gdouble value  = (max / 100.0f) * (float) percentage;
 
   gtk_adjustment_set_value(adjustment, value);
+
+  update_status();
 }
 
 void
