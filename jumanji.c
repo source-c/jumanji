@@ -361,10 +361,12 @@ gboolean cb_inputbar_kb_pressed(GtkWidget*, GdkEventKey*, gpointer);
 gboolean cb_inputbar_activate(GtkEntry*, gpointer);
 gboolean cb_tab_kb_pressed(GtkWidget*, GdkEventKey*, gpointer);
 gboolean cb_wv_console(WebKitWebView*, char*, int, char*, gpointer);
+gboolean cb_wv_create_web_view(WebKitWebView*, WebKitWebFrame*, gpointer);
 gboolean cb_wv_hover_link(WebKitWebView*, char*, char*, gpointer);
 gboolean cb_wv_load_finished(WebKitWebView*, WebKitWebFrame*, gpointer);
 gboolean cb_wv_load_progress_changed(WebKitWebView*, int, gpointer);
 gboolean cb_wv_nav_policy_decision(WebKitWebView*, WebKitWebFrame*, WebKitNetworkRequest*, WebKitWebNavigationAction*, WebKitWebPolicyDecision*, gpointer);
+gboolean cb_wv_title_changed(WebKitWebView*, WebKitWebFrame*, char*, gpointer);
 
 /* configuration */
 #include "config.h"
@@ -423,11 +425,13 @@ create_tab(char* uri, int position)
     gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(tab), GTK_POLICY_NEVER, GTK_POLICY_NEVER);
 
   g_signal_connect(G_OBJECT(wv), "console-message",                      G_CALLBACK(cb_wv_console),               NULL);
+  g_signal_connect(G_OBJECT(wv), "create-web-view",                      G_CALLBACK(cb_wv_create_web_view),       NULL);
   g_signal_connect(G_OBJECT(wv), "hovering-over-link",                   G_CALLBACK(cb_wv_hover_link),            NULL);
   g_signal_connect(G_OBJECT(wv), "load-finished",                        G_CALLBACK(cb_wv_load_finished),         NULL);
   g_signal_connect(G_OBJECT(wv), "load-progress-changed",                G_CALLBACK(cb_wv_load_progress_changed), NULL);
   g_signal_connect(G_OBJECT(wv), "navigation-policy-decision-requested", G_CALLBACK(cb_wv_nav_policy_decision),   NULL);
   g_signal_connect(G_OBJECT(wv), "new-window-policy-decision-requested", G_CALLBACK(cb_wv_nav_policy_decision),   NULL);
+  g_signal_connect(G_OBJECT(wv), "title-changed",                        G_CALLBACK(cb_wv_title_changed),         NULL);
 
   g_signal_connect(G_OBJECT(tab), "key-press-event", G_CALLBACK(cb_tab_kb_pressed), NULL);
   open_uri(WEBKIT_WEB_VIEW(wv), uri);
@@ -931,7 +935,10 @@ void
 statusbar_set_text(const char* text)
 {
   if(text)
-    gtk_label_set_markup((GtkLabel*) Jumanji.Statusbar.text, text);
+  {
+    char* s = g_markup_escape_text(text, -1);
+    gtk_label_set_markup((GtkLabel*) Jumanji.Statusbar.text, s);
+  }
 }
 
 GtkEventBox*
@@ -2488,6 +2495,18 @@ cb_wv_console(WebKitWebView* wv, char* message, int line, char* source, gpointer
 }
 
 gboolean
+cb_wv_create_web_view(WebKitWebView* wv, WebKitWebFrame* frame, gpointer data)
+{
+  char* uri = (char*) webkit_web_view_get_uri(wv);
+  int n     = gtk_notebook_get_current_page(Jumanji.UI.view);
+  int p     = (next_to_current) ? (n + 1) : -1;
+
+  create_tab(uri, p);
+
+  return TRUE;
+}
+
+gboolean
 cb_wv_hover_link(WebKitWebView* wv, char* title, char* link, gpointer data)
 {
   if(link)
@@ -2552,9 +2571,10 @@ cb_wv_nav_policy_decision(WebKitWebView* wv, WebKitWebFrame* frame, WebKitNetwor
 }
 
 gboolean
-cb_wv_window_object_cleared(WebKitWebView* wv, WebKitWebFrame* frame, gpointer context,
-    gpointer window_object, gpointer user_data)
+cb_wv_title_changed(WebKitWebView* wv, WebKitWebFrame* frame, char* message, gpointer data)
 {
+  gtk_window_set_title(GTK_WINDOW(Jumanji.UI.window), message);
+  update_status();
   return TRUE;
 }
 
