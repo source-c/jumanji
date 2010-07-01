@@ -361,6 +361,7 @@ gboolean cb_inputbar_kb_pressed(GtkWidget*, GdkEventKey*, gpointer);
 gboolean cb_inputbar_activate(GtkEntry*, gpointer);
 gboolean cb_tab_kb_pressed(GtkWidget*, GdkEventKey*, gpointer);
 gboolean cb_wv_console(WebKitWebView*, char*, int, char*, gpointer);
+gboolean cb_wv_hover_link(WebKitWebView*, char*, char*, gpointer);
 gboolean cb_wv_load_finished(WebKitWebView*, WebKitWebFrame*, gpointer);
 gboolean cb_wv_load_progress_changed(WebKitWebView*, int, gpointer);
 gboolean cb_wv_nav_policy_decision(WebKitWebView*, WebKitWebFrame*, WebKitNetworkRequest*, WebKitWebNavigationAction*, WebKitWebPolicyDecision*, gpointer);
@@ -422,6 +423,7 @@ create_tab(char* uri, int position)
     gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(tab), GTK_POLICY_NEVER, GTK_POLICY_NEVER);
 
   g_signal_connect(G_OBJECT(wv), "console-message",                      G_CALLBACK(cb_wv_console),               NULL);
+  g_signal_connect(G_OBJECT(wv), "hovering-over-link",                   G_CALLBACK(cb_wv_hover_link),            NULL);
   g_signal_connect(G_OBJECT(wv), "load-finished",                        G_CALLBACK(cb_wv_load_finished),         NULL);
   g_signal_connect(G_OBJECT(wv), "load-progress-changed",                G_CALLBACK(cb_wv_load_progress_changed), NULL);
   g_signal_connect(G_OBJECT(wv), "navigation-policy-decision-requested", G_CALLBACK(cb_wv_nav_policy_decision),   NULL);
@@ -2481,6 +2483,20 @@ cb_wv_console(WebKitWebView* wv, char* message, int line, char* source, gpointer
     change_mode(NORMAL);
   else if(!strcmp(message, "insertmode_on"))
     change_mode(INSERT);
+
+  return TRUE;
+}
+
+gboolean
+cb_wv_hover_link(WebKitWebView* wv, char* title, char* link, gpointer data)
+{
+  if(link)
+    link = g_strconcat("Link: ", link, NULL);
+
+  statusbar_set_text(link ? link : webkit_web_view_get_uri(GET_CURRENT_TAB()));
+
+  if(link)
+    g_free(link);
 
   return TRUE;
 }
