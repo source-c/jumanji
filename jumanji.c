@@ -373,6 +373,7 @@ void bcmd_zoom(char*, Argument*);
 gboolean scmd_search(char*, Argument*);
 
 /* callback declarations */
+gboolean cb_blank();
 gboolean cb_destroy(GtkWidget*, gpointer);
 gboolean cb_inputbar_kb_pressed(GtkWidget*, GdkEventKey*, gpointer);
 gboolean cb_inputbar_activate(GtkEntry*, gpointer);
@@ -478,7 +479,12 @@ create_tab(char* uri)
   if(show_scrollbars)
     gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(tab), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
   else
+  {
+    WebKitWebFrame* mf = webkit_web_view_get_main_frame(WEBKIT_WEB_VIEW(wv));
+    g_signal_connect(G_OBJECT(mf),  "scrollbars-policy-changed", G_CALLBACK(cb_blank), NULL);
+
     gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(tab), GTK_POLICY_NEVER, GTK_POLICY_NEVER);
+  }
 
   /* connect callbacks */
   g_signal_connect(G_OBJECT(wv),  "console-message",                      G_CALLBACK(cb_wv_console),               NULL);
@@ -2625,6 +2631,12 @@ scmd_search(char* input, Argument* argument)
 }
 
 /* callback implementation */
+gboolean
+cb_blank()
+{
+  return TRUE;
+}
+
 gboolean
 cb_destroy(GtkWidget* widget, gpointer data)
 {
