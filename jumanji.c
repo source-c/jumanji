@@ -334,6 +334,7 @@ void sc_run_script(Argument*);
 void sc_scroll(Argument*);
 void sc_search(Argument*);
 void sc_toggle_statusbar(Argument*);
+void sc_toggle_sourcecode(Argument*);
 void sc_quit(Argument*);
 void sc_yank(Argument*);
 void sc_zoom(Argument*);
@@ -1546,6 +1547,19 @@ sc_toggle_statusbar(Argument* argument)
     gtk_widget_hide(GTK_WIDGET(Jumanji.UI.statusbar));
   else
     gtk_widget_show(GTK_WIDGET(Jumanji.UI.statusbar));
+}
+
+void
+sc_toggle_sourcecode(Argument* argument)
+{
+  gchar* uri = (char*) webkit_web_view_get_uri(GET_CURRENT_TAB());
+
+  if(webkit_web_view_get_view_source_mode(GET_CURRENT_TAB()))
+    webkit_web_view_set_view_source_mode(GET_CURRENT_TAB(), FALSE);
+  else
+    webkit_web_view_set_view_source_mode(GET_CURRENT_TAB(), TRUE);
+
+  open_uri(GET_CURRENT_TAB(), uri);
 }
 
 void
