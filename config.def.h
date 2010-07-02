@@ -17,6 +17,7 @@ static const char JUMANJI_HISTORY[]   = "history";
 /* browser specific settings */
 char* home_page  = "http://www.pwmt.org";
 gboolean private_browsing = FALSE;
+gboolean plugin_blocker   = TRUE;
 
 /* download settings */
 char* download_dir     = "~/dl/";
@@ -144,6 +145,7 @@ Command commands[] = {
   {"forward",   "f",            cmd_forward,         0,            "Go forward in the browser history" },
   {"map",       "m",            cmd_map,             0,            "Map a key sequence" },
   {"open",      "o",            cmd_open,            cc_open,      "Open URI in the current tab" },
+  {"plugin",    0,              cmd_plugintype,      0,            "Allow plugin type" },
   {"quit",      "q",            cmd_quit,            0,            "Quit current tab" },
   {"quitall",   0,              cmd_quitall,         0,            "Quit jumanji" },
   {"set",       "s",            cmd_set,             cc_set,       "Set an option" },
@@ -217,6 +219,7 @@ Setting settings[] = {
   {"notification_w_fgcolor", &(notification_w_fgcolor), NULL,                           's',  1, 0, "Notification (warning) foreground color"},
   {"page_cache",             NULL,                      "enable-page-cache",            'b',  0, 1, "Enable page cache"},
   {"plugins",                NULL,                      "enable-plugins",               'b',  0, 1, "Enable embedded plugin objects"},
+  {"plugin_blocker",         &(plugin_blocker),         NULL,                           'b',  0, 1, "Enable plugin-blocker"},
   {"private_browsing",       &(private_browsing),       "enable-private-browsing",      'b',  0, 0, "Enable private browsing"},
   {"resizable_text_areas",   NULL,                      "resizable-text-areas",         'b',  0, 1, "Resizable text areas"},
   {"sans_serif_font",        NULL,                      "sans-serif-font-family",       'b',  0, 1, "Sans-serif font family"},

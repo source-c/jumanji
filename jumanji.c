@@ -219,6 +219,12 @@ typedef struct
   float zoom_level;
 } Marker;
 
+typedef struct
+{
+  gchar     *uri;
+  GtkWidget *box;
+} Plugin;
+
 /* jumanji */
 struct
 {
@@ -270,6 +276,8 @@ struct
     GList   *markers;
     GList   *bookmarks;
     GList   *history;
+    GList   *allowed_plugins;
+    GList   *allowed_plugin_uris;
     SearchEngineList  *search_engines;
     ScriptList        *scripts;
     WebKitWebSettings *browser_settings;
@@ -351,6 +359,7 @@ gboolean cmd_bookmark(int, char**);
 gboolean cmd_forward(int, char**);
 gboolean cmd_map(int, char**);
 gboolean cmd_open(int, char**);
+gboolean cmd_plugintype(int, char**);
 gboolean cmd_quit(int, char**);
 gboolean cmd_quitall(int, char**);
 gboolean cmd_script(int, char**);
@@ -379,6 +388,7 @@ gboolean cb_destroy(GtkWidget*, gpointer);
 gboolean cb_inputbar_kb_pressed(GtkWidget*, GdkEventKey*, gpointer);
 gboolean cb_inputbar_activate(GtkEntry*, gpointer);
 gboolean cb_tab_kb_pressed(GtkWidget*, GdkEventKey*, gpointer);
+GtkWidget* cb_wv_block_plugin(WebKitWebView*, gchar*, gchar*, GHashTable*, gpointer);
 gboolean cb_wv_console(WebKitWebView*, char*, int, char*, gpointer);
 gboolean cb_wv_create_web_view(WebKitWebView*, WebKitWebFrame*, gpointer);
 gboolean cb_wv_download_request(WebKitWebView*, WebKitDownload*, gpointer);
@@ -386,7 +396,7 @@ gboolean cb_wv_hover_link(WebKitWebView*, char*, char*, gpointer);
 gboolean cb_wv_notify_progress(WebKitWebView*, GParamSpec*, gpointer);
 gboolean cb_wv_notify_title(WebKitWebView*, GParamSpec*, gpointer);
 gboolean cb_wv_nav_policy_decision(WebKitWebView*, WebKitWebFrame*, WebKitNetworkRequest*, WebKitWebNavigationAction*, WebKitWebPolicyDecision*, gpointer);
-gboolean cb_wv_title_changed(WebKitWebView*, WebKitWebFrame*, char*, gpointer);
+gboolean cb_wv_unblock_plugin(GtkWidget*, GdkEventButton*, gpointer);
 
 /* configuration */
 #include "config.h"
@@ -489,6 +499,7 @@ create_tab(char* uri)
 
   /* connect callbacks */
   g_signal_connect(G_OBJECT(wv),  "console-message",                      G_CALLBACK(cb_wv_console),               NULL);
+  g_signal_connect(G_OBJECT(wv),  "create-plugin-widget",                 G_CALLBACK(cb_wv_block_plugin),          NULL);
   g_signal_connect(G_OBJECT(wv),  "create-web-view",                      G_CALLBACK(cb_wv_create_web_view),       NULL);
   g_signal_connect(G_OBJECT(wv),  "download-requested",                   G_CALLBACK(cb_wv_download_request),      NULL);
   g_signal_connect(G_OBJECT(wv),  "hovering-over-link",                   G_CALLBACK(cb_wv_hover_link),            NULL);
@@ -759,13 +770,15 @@ void
 init_jumanji()
 {
   /* other */
-  Jumanji.Global.mode            = NORMAL;
-  Jumanji.Global.search_engines  = NULL;
-  Jumanji.Global.command_history = NULL;
-  Jumanji.Global.scripts         = NULL;
-  Jumanji.Global.markers         = NULL;
-  Jumanji.Global.bookmarks       = NULL;
-  Jumanji.Global.history         = NULL;
+  Jumanji.Global.mode                = NORMAL;
+  Jumanji.Global.search_engines      = NULL;
+  Jumanji.Global.command_history     = NULL;
+  Jumanji.Global.scripts             = NULL;
+  Jumanji.Global.markers             = NULL;
+  Jumanji.Global.bookmarks           = NULL;
+  Jumanji.Global.history             = NULL;
+  Jumanji.Global.allowed_plugins     = NULL;
+  Jumanji.Global.allowed_plugin_uris = NULL;
 
   /* window */
   if(Jumanji.UI.embed)
@@ -1000,6 +1013,8 @@ read_configuration()
           cmd_search_engine(length - 1, tokens + 1);
         else if(!strcmp(tokens[0], "script"))
           cmd_script(length - 1, tokens + 1);
+        else if(!strcmp(tokens[0], "plugin"))
+          cmd_plugintype(length - 1, tokens + 1);
       }
     }
   }
@@ -2137,6 +2152,20 @@ cmd_open(int argc, char** argv)
 }
 
 gboolean
+cmd_plugintype(int argc, char** argv)
+{
+  if(argc < 1)
+    return TRUE;
+
+  Jumanji.Global.allowed_plugins = g_list_append(Jumanji.Global.allowed_plugins, strdup(argv[0]));
+
+  if(gtk_notebook_get_current_page(Jumanji.UI.view) >= 0)
+    sc_reload(NULL);
+
+  return TRUE;
+}
+
+gboolean
 cmd_quit(int argc, char** argv)
 {
   sc_close_tab(NULL);
@@ -2712,11 +2741,23 @@ cb_destroy(GtkWidget* widget, gpointer data)
 
   g_list_free(Jumanji.Global.markers);
 
-  /* clean markers */
+  /* clean command history */
   for(list = Jumanji.Global.command_history; list; list = g_list_next(list))
     free(list->data);
 
   g_list_free(Jumanji.Global.command_history);
+
+  /* clean allowed plugins */
+  for(list = Jumanji.Global.allowed_plugins; list; list = g_list_next(list))
+    free(list->data);
+
+  g_list_free(Jumanji.Global.allowed_plugins);
+
+  /* clean allowed plugin uris */
+  for(list = Jumanji.Global.allowed_plugin_uris; list; list = g_list_next(list))
+    free(list->data);
+
+  g_list_free(Jumanji.Global.allowed_plugin_uris);
 
   gtk_main_quit();
 
@@ -2902,6 +2943,48 @@ cb_tab_kb_pressed(GtkWidget *widget, GdkEventKey *event, gpointer data)
   return FALSE;
 }
 
+GtkWidget*
+cb_wv_block_plugin(WebKitWebView* wv, gchar* mime_type, gchar* uri, GHashTable* param, gpointer data)
+{
+  if(!plugin_blocker)
+    return NULL;
+
+  /* check if plugin type is allowed */
+  GList* l;
+  for(l = Jumanji.Global.allowed_plugins; l; l = g_list_next(l))
+  {
+    if(!strcmp((char*) l->data, mime_type))
+      return NULL;
+  }
+
+  /* check if this plugin is allowed */
+  for(l = Jumanji.Global.allowed_plugin_uris; l; l = g_list_next(l))
+  {
+    if(!strcmp((char*) l->data, uri))
+      return NULL;
+  }
+
+  /*if(block_flash && !strcmp(mime_type, "application/x-shockwave-flash"))*/
+  Plugin *plugin = malloc(sizeof(Plugin));
+  plugin->uri    = strdup(uri);
+  plugin->box    = gtk_event_box_new();
+
+  char* label_text = g_strconcat("Click to enable \"", mime_type, "\" plugin", NULL);
+  GtkWidget* label  = gtk_label_new(label_text);
+
+  gtk_misc_set_alignment(GTK_MISC(label), 0.5, 0.5);
+  gtk_container_add(GTK_CONTAINER(plugin->box), label);
+  g_free(label_text);
+
+  /* click to allow flash */
+  g_signal_connect(G_OBJECT(plugin->box), "button-press-event", G_CALLBACK(cb_wv_unblock_plugin), plugin);
+
+  gtk_widget_show_all(plugin->box);
+
+  return plugin->box;
+}
+
+
 gboolean
 cb_wv_console(WebKitWebView* wv, char* message, int line, char* source, gpointer data)
 {
@@ -3008,6 +3091,25 @@ cb_wv_notify_title(WebKitWebView* wv, GParamSpec* pspec, gpointer data)
   }
 
   return TRUE;
+}
+
+gboolean
+cb_wv_unblock_plugin(GtkWidget* widget, GdkEventButton* event, gpointer data)
+{
+  Plugin* plugin = (Plugin*) data;
+
+  GtkWidget* parent = gtk_widget_get_parent(plugin->box);
+  gtk_container_remove(GTK_CONTAINER(parent), plugin->box);
+
+  /* move uri to allowed plugin list */
+  Jumanji.Global.allowed_plugin_uris = g_list_append(Jumanji.Global.allowed_plugin_uris, strdup(plugin->uri));
+
+  /* reload */
+  webkit_web_view_reload(WEBKIT_WEB_VIEW(parent));
+
+  free(plugin);
+
+  return FALSE;
 }
 
 /* main function */
