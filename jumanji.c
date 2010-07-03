@@ -917,7 +917,29 @@ update_status()
   gchar* link  = (gchar*) webkit_web_view_get_uri(GET_CURRENT_TAB());
   int progress = webkit_web_view_get_progress(GET_CURRENT_TAB()) * 100;
   gchar* uri   = (progress != 100 && progress != 0) ? g_strdup_printf("Loading... %s (%d%%)", link ? link : "", progress) :
-                 (link ? g_strdup(link) : g_strdup("[No name]"));
+                 (link ? g_strdup(link) : NULL);
+
+  /* check for possible navigation */
+  if(!uri)
+    uri = g_strdup("[No name]");
+  else
+  {
+    GString* navigation = g_string_new("");
+
+    if(webkit_web_view_can_go_back(GET_CURRENT_TAB()))
+      g_string_append_c(navigation, '+');
+    if(webkit_web_view_can_go_forward(GET_CURRENT_TAB()))
+      g_string_append_c(navigation, '-');
+
+    if(navigation->len > 0)
+    {
+      char* new_uri = g_strconcat(uri, " [", navigation->str, "]", NULL);
+      g_free(uri);
+      uri = new_uri;
+    }
+
+    g_string_free(navigation, TRUE);
+  }
 
   statusbar_set_text(uri);
   g_free(uri);
@@ -1083,12 +1105,27 @@ reference_to_string(JSContextRef context, JSValueRef reference)
 void
 run_script(char* script, char** value, char** error)
 {
+  if(!script)
+    return;
+
   WebKitWebFrame *frame = webkit_web_view_get_main_frame(GET_CURRENT_TAB());
+
+  if(!frame)
+    return;
+
   JSContextRef context  = webkit_web_frame_get_global_context(frame);
+  JSStringRef sc        = JSStringCreateWithUTF8CString(script);
+
+  if(!context || !sc)
+    return;
+
+  JSObjectRef ob = JSContextGetGlobalObject(context);
+
+  if(!ob)
+    return;
 
   JSValueRef exception;
-  JSStringRef sc = JSStringCreateWithUTF8CString(script);
-  JSValueRef va   = JSEvaluateScript(context, sc, JSContextGetGlobalObject(context), NULL, 0, &exception);
+  JSValueRef va   = JSEvaluateScript(context, sc, ob, NULL, 0, &exception);
   JSStringRelease(sc);
 
   if(!va && error)
