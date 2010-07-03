@@ -1691,7 +1691,7 @@ sc_scroll(Argument* argument)
 void
 sc_search(Argument* argument)
 {
-  static char* search_item;
+  static char* search_item = NULL;
 
   if(argument->data)
   {
@@ -1700,6 +1700,9 @@ sc_search(Argument* argument)
 
     search_item = g_strdup((char*) argument->data);
   }
+
+  if(!search_item)
+    return;
 
   gboolean direction = (argument->n == BACKWARD) ? FALSE : TRUE;
 
