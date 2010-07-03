@@ -32,6 +32,8 @@ char* inputbar_bgcolor       = "#141414";
 char* inputbar_fgcolor       = "#9FBC00";
 char* statusbar_bgcolor      = "#000000";
 char* statusbar_fgcolor      = "#FFFFFF";
+char* statusbar_ssl_bgcolor  = "#9FBC00";
+char* statusbar_ssl_fgcolor  = "#000000";
 char* tabbar_bgcolor         = "#000000";
 char* tabbar_fgcolor         = "#FFFFFF";
 char* tabbar_focus_bgcolor   = "#000000";
@@ -221,8 +223,8 @@ Setting settings[] = {
   {"notification_w_bgcolor", &(notification_w_bgcolor), NULL,                           's',  1, 0, "Notification (warning) background color"},
   {"notification_w_fgcolor", &(notification_w_fgcolor), NULL,                           's',  1, 0, "Notification (warning) foreground color"},
   {"page_cache",             NULL,                      "enable-page-cache",            'b',  0, 1, "Enable page cache"},
-  {"plugins",                NULL,                      "enable-plugins",               'b',  0, 1, "Enable embedded plugin objects"},
   {"plugin_blocker",         &(plugin_blocker),         NULL,                           'b',  0, 1, "Enable plugin-blocker"},
+  {"plugins",                NULL,                      "enable-plugins",               'b',  0, 1, "Enable embedded plugin objects"},
   {"private_browsing",       &(private_browsing),       "enable-private-browsing",      'b',  0, 0, "Enable private browsing"},
   {"resizable_text_areas",   NULL,                      "resizable-text-areas",         'b',  0, 1, "Resizable text areas"},
   {"sans_serif_font",        NULL,                      "sans-serif-font-family",       'b',  0, 1, "Sans-serif font family"},
@@ -233,11 +235,20 @@ Setting settings[] = {
   {"show_statusbar",         &(show_statusbar),         NULL,                           'b',  1, 0, "Show statusbar"},
   {"spell_checking",         NULL,                      "enable-spell-checking",        'b',  0, 1, "Enable spell checking while typing"},
   {"spell_checking_lang",    NULL,                      "spell-checking-languages",     's',  0, 1, "Spell checking languages"},
+  {"statusbar_bgcolor",      &(statusbar_bgcolor),      NULL,                           's',  1, 0, "Statusbar background color"},
+  {"statusbar_fgcolor",      &(statusbar_fgcolor),      NULL,                           's',  1, 0, "Statusbar foreground color"},
+  {"statusbar_ssl_fgcolor",  &(statusbar_ssl_bgcolor),  NULL,                           's',  1, 0, "Statusbar (SSL) background color"},
+  {"statusbar_ssl_fgcolor",  &(statusbar_ssl_fgcolor),  NULL,                           's',  1, 0, "Statusbar (SSL) foreground color"},
   {"stylesheet",             NULL,                      "user-stylesheet-uri",          's',  0, 1, "Custom stylesheet"},
+  {"tabbar_bgcolor",         &(tabbar_bgcolor),         NULL,                           's',  1, 0, "Tabbar background color"},
+  {"tabbar_fgcolor",         &(tabbar_fgcolor),         NULL,                           's',  1, 0, "Tabbar foreground color"},
+  {"tabbar_focus_bgcolor",   &(tabbar_focus_bgcolor),   NULL,                           's',  1, 0, "Tabbar (focus) background color"},
+  {"tabbar_focus_bgcolor",   &(tabbar_focus_bgcolor),   NULL,                           's',  1, 0, "Tabbar (focus) background color"},
+  {"tabbar_separator_color", &(tabbar_separator_color), NULL,                           's',  1, 0, "Tabbar separator color"},
   {"user_agent",             NULL,                      "user-agent",                   's',  1, 1, "User agent"},
   {"width",                  &(default_height),         NULL,                           'i',  0, 0, "Default window width"},
   {"width",                  &(default_width),          NULL,                           'i',  0, 0, "Default window width"},
-  {"zoom_step",              &(zoom_step),              "zoom-step",                    'f',  1, 0, "Zoom step"},
+  {"zoom_step",              &(zoom_step),              "zoom-step",                    'f',  0, 0, "Zoom step"},
 };
 
 /* shortcut names */
