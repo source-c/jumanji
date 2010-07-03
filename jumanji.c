@@ -1081,7 +1081,9 @@ update_status()
   gdouble max               = gtk_adjustment_get_upper(adjustment) - view_size;
 
   gchar* position;
-  if(value == max)
+  if(max == 0)
+    position = g_strdup("All");
+  else if(value == max)
     position = g_strdup("Bot");
   else if(value == 0)
     position = g_strdup("Top");
