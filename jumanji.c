@@ -903,10 +903,25 @@ open_uri(WebKitWebView* web_view, char* uri)
       se = se->next;
     }
   }
+  /* no arguemnt given */
   else if(strlen(uri) == 0)
     new_uri = g_strdup(home_page);
+  /* no dot, default searchengine */
+  else if(!strchr(uri, '.'))
+  {
+    if(Jumanji.Global.search_engines)
+      new_uri = g_strdup_printf(Jumanji.Global.search_engines->uri, uri);
+    else
+      new_uri = g_strconcat("http://", uri, NULL);
+  }
+  /* file path */
+  else if(strcspn(uri, "/") == 0 || strcspn(uri, "./") == 0)
+  {
+    new_uri = g_strconcat("file://", uri, NULL);
+  }
+  /* prepend http */
   else
-    new_uri = g_strrstr(uri, ":") ? g_strdup(uri) : g_strconcat("http://", uri, NULL);
+    new_uri = g_strrstr(uri, "://") ? g_strdup(uri) : g_strconcat("http://", uri, NULL);
 
   webkit_web_view_load_uri(web_view, new_uri);
 
