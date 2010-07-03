@@ -3,6 +3,190 @@
 jumanji \- a web browser
 .SH SYNOPSIS
 .B jumanji
+.RB [-e\ xid]
+.RB [uri]
 .SH DESCRIPTION
-jumanji is a highliy customizable and functional web browser based on the 
+jumanji is a highliy customizable and functional web browser based on the
 libwebkit web content engine and the gtk+ toolkit.
+.SH OPTIONS
+.TP
+.B -e xid
+Reparents to window specified by xid.
+.SH DEFAULT SETTINGS
+.SS Keyboard commands
+.TP
+.B h / Left
+Scroll left
+.TP
+.B j / Down
+Scroll down
+.TP
+.B k / Up
+Scroll up
+.TP
+.B l / Right
+Scroll right
+.TP
+.B ^d
+Scroll half viewport down
+.TP
+.B ^u
+Scroll half viewport up
+.TP
+.B ^f / Space
+Scroll full viewport down
+.TP
+.B ^b / Shift-Space
+Scroll full viewport up
+.TP
+.B o / O
+Open URI (append current one)
+.TP
+.B t / T
+Open URI in a new tab (append current one)
+.TP
+.B w / W
+Open URI in a new window (append current one)
+.TP
+.B ^w
+Close current tab
+.TP
+.B ^Tab / Shift-^Tab
+Goto next/previous tab
+.TP
+.B ^i
+Navigate forward in the history
+.TP
+.B ^o
+Navigate backwards in the history
+.TP
+.B Slash / n
+Search forwards
+.TP
+.B ? / N
+Search backwards
+.TP
+.B f
+Follow link
+.TP
+.B + / -
+Zoom in/out
+.TP
+.B r / R
+Reload current URI (with ignoring cache)
+.TP
+.B p / P
+Open URI in clipboard (in a new tab)
+.TP
+.B y
+Yank current URI to clipboard
+.TP
+.B m
+Mark current position and save it in register specified by a character
+.TP
+.B '
+Go to saved position specified by the ensuing character
+.TP
+.B Backspace
+Delete last character of the buffer
+.TP
+.B ^s
+Toggle source code
+.TP
+.B ^m
+Toggle statusbar
+.TP
+.B :
+Enter a command
+.TP
+.B ^c / Esc
+Abort
+.TP
+.B ^q
+Quit jumanji
+.SS Buffered commands
+.TP
+.B gg
+Go to the top of the page
+.TP
+.B G
+Go to the bottom of the page
+.TP
+.B [0-9]+% / [0-9]+G
+Scroll to the given position of the page
+.TP
+.B gt / gT
+Navigate to the next/previous tab
+.TP
+.B [0-9]+gt / [0-9]+gT
+Navigate to a specific tab
+.TP
+.B zI / zO / z0
+Zoom in/out/to the original size
+.TP
+.B [0-9]+Z
+Zoom to a specific value
+.SS Commands
+.TP
+.B back
+Go back in the browser history
+.TP
+.B bmark
+Add a bookmark
+.TP
+.B forward
+Go forward in the browser history
+.TP
+.B map
+Map a key sequence
+.TP
+.B open
+Open URI in the current tab
+.TP
+.B plugin
+Allow plugin type
+.TP
+.B quit
+Quit current tab
+.TP
+.B quitall
+Quit jumanji
+.TP
+.B set
+Set an option
+.TP
+.B script
+Load a javascript file
+.TP
+.B tabopen
+Open URI in a new tab
+.TP
+.B winopen
+Open URI in a new window
+.TP
+.B write
+Write bookmark and history file
+.SS Inputbar shortcuts
+.TP
+.B Up
+Move up in the command history
+.TP
+.B Down
+Move down in the command history
+.TP
+.B Tab | Shift + Tab
+Tab completion
+.TP
+.B ^h / ^w / ^f / ^b
+Manipulate inputbar value/cursor
+.TP
+.B Esc / ^c
+Abort
+.SH CONFIGURATION
+The complete configuration including the appearance and shortcuts of the program
+are defined in a separate file named config.h. In this file you are able to
+change and adjust all the settings of jumanji according to your wishes.
+
+In addition you can create a jumanji file (default path: ~/.config/jumanji/jumanjirc)
+to overwrite settings and keybindings by using the set and map function. For
+more information please check the faq on the website: http://pwmt.org/jumanji
