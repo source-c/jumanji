@@ -251,6 +251,8 @@ struct
     GdkColor inputbar_bg;
     GdkColor statusbar_fg;
     GdkColor statusbar_bg;
+    GdkColor statusbar_ssl_fg;
+    GdkColor statusbar_ssl_bg;
     GdkColor tabbar_fg;
     GdkColor tabbar_bg;
     GdkColor tabbar_focus_fg;
@@ -598,6 +600,8 @@ init_look()
   gdk_color_parse(inputbar_bgcolor,       &(Jumanji.Style.inputbar_bg));
   gdk_color_parse(statusbar_fgcolor,      &(Jumanji.Style.statusbar_fg));
   gdk_color_parse(statusbar_bgcolor,      &(Jumanji.Style.statusbar_bg));
+  gdk_color_parse(statusbar_ssl_fgcolor,  &(Jumanji.Style.statusbar_ssl_fg));
+  gdk_color_parse(statusbar_ssl_bgcolor,  &(Jumanji.Style.statusbar_ssl_bg));
   gdk_color_parse(tabbar_fgcolor,         &(Jumanji.Style.tabbar_fg));
   gdk_color_parse(tabbar_bgcolor,         &(Jumanji.Style.tabbar_bg));
   gdk_color_parse(tabbar_focus_fgcolor,   &(Jumanji.Style.tabbar_focus_fg));
@@ -616,12 +620,29 @@ init_look()
   Jumanji.Style.font = pango_font_description_from_string(font);
 
   /* statusbar */
-  gtk_widget_modify_bg(GTK_WIDGET(Jumanji.UI.statusbar), GTK_STATE_NORMAL, &(Jumanji.Style.statusbar_bg));
+  gchar* link = NULL;
+  if(gtk_notebook_get_n_pages(Jumanji.UI.view) < 0)
+    link = (gchar*) webkit_web_view_get_uri(GET_CURRENT_TAB());
+  gboolean ssl = link ? g_str_has_prefix(link, "https://") : FALSE;
 
-  gtk_widget_modify_fg(GTK_WIDGET(Jumanji.Statusbar.text),     GTK_STATE_NORMAL, &(Jumanji.Style.statusbar_fg));
-  gtk_widget_modify_fg(GTK_WIDGET(Jumanji.Statusbar.buffer),   GTK_STATE_NORMAL, &(Jumanji.Style.statusbar_fg));
-  gtk_widget_modify_fg(GTK_WIDGET(Jumanji.Statusbar.tabs),     GTK_STATE_NORMAL, &(Jumanji.Style.statusbar_fg));
-  gtk_widget_modify_fg(GTK_WIDGET(Jumanji.Statusbar.position), GTK_STATE_NORMAL, &(Jumanji.Style.statusbar_fg));
+  if(ssl)
+  {
+    gtk_widget_modify_bg(GTK_WIDGET(Jumanji.UI.statusbar), GTK_STATE_NORMAL, &(Jumanji.Style.statusbar_bg));
+
+    gtk_widget_modify_fg(GTK_WIDGET(Jumanji.Statusbar.text),     GTK_STATE_NORMAL, &(Jumanji.Style.statusbar_fg));
+    gtk_widget_modify_fg(GTK_WIDGET(Jumanji.Statusbar.buffer),   GTK_STATE_NORMAL, &(Jumanji.Style.statusbar_fg));
+    gtk_widget_modify_fg(GTK_WIDGET(Jumanji.Statusbar.tabs),     GTK_STATE_NORMAL, &(Jumanji.Style.statusbar_fg));
+    gtk_widget_modify_fg(GTK_WIDGET(Jumanji.Statusbar.position), GTK_STATE_NORMAL, &(Jumanji.Style.statusbar_fg));
+  }
+  else
+  {
+    gtk_widget_modify_bg(GTK_WIDGET(Jumanji.UI.statusbar), GTK_STATE_NORMAL, &(Jumanji.Style.statusbar_ssl_bg));
+
+    gtk_widget_modify_fg(GTK_WIDGET(Jumanji.Statusbar.text),     GTK_STATE_NORMAL, &(Jumanji.Style.statusbar_ssl_fg));
+    gtk_widget_modify_fg(GTK_WIDGET(Jumanji.Statusbar.buffer),   GTK_STATE_NORMAL, &(Jumanji.Style.statusbar_ssl_fg));
+    gtk_widget_modify_fg(GTK_WIDGET(Jumanji.Statusbar.tabs),     GTK_STATE_NORMAL, &(Jumanji.Style.statusbar_ssl_fg));
+    gtk_widget_modify_fg(GTK_WIDGET(Jumanji.Statusbar.position), GTK_STATE_NORMAL, &(Jumanji.Style.statusbar_ssl_fg));
+  }
 
   gtk_widget_modify_font(GTK_WIDGET(Jumanji.Statusbar.text),     Jumanji.Style.font);
   gtk_widget_modify_font(GTK_WIDGET(Jumanji.Statusbar.buffer),   Jumanji.Style.font);
@@ -955,6 +976,29 @@ update_status()
   int progress = webkit_web_view_get_progress(GET_CURRENT_TAB()) * 100;
   gchar* uri   = (progress != 100 && progress != 0) ? g_strdup_printf("Loading... %s (%d%%)", link ? link : "", progress) :
                  (link ? g_strdup(link) : NULL);
+
+  /* check for https */
+  GdkColor* fg;
+  GdkColor* bg;
+
+  gboolean ssl = link ? g_str_has_prefix(link, "https://") : FALSE;
+  if(ssl)
+  {
+    fg = &(Jumanji.Style.statusbar_ssl_fg);
+    bg = &(Jumanji.Style.statusbar_ssl_bg);
+  }
+  else
+  {
+    fg = &(Jumanji.Style.statusbar_fg);
+    bg = &(Jumanji.Style.statusbar_bg);
+  }
+
+  gtk_widget_modify_bg(GTK_WIDGET(Jumanji.UI.statusbar),      GTK_STATE_NORMAL,  bg);
+  gtk_widget_modify_fg(GTK_WIDGET(Jumanji.Statusbar.text),     GTK_STATE_NORMAL, fg);
+  gtk_widget_modify_fg(GTK_WIDGET(Jumanji.Statusbar.buffer),   GTK_STATE_NORMAL, fg);
+  gtk_widget_modify_fg(GTK_WIDGET(Jumanji.Statusbar.tabs),     GTK_STATE_NORMAL, fg);
+  gtk_widget_modify_fg(GTK_WIDGET(Jumanji.Statusbar.position), GTK_STATE_NORMAL, fg);
+
 
   /* check for possible navigation */
   if(!uri)
@@ -1808,12 +1852,12 @@ isc_completion(Argument* argument)
      *  the current command does not differ from the previous one
      *  the current command has an completion function
      */
-    if( (previous_command) && (current_parameter) && !strcmp(current_command, previous_command) )
+    if( (previous_command) && !strcmp(current_command, previous_command) )
     {
       if(previous_id < 0 || !commands[previous_id].completion)
         return;
 
-      Completion *result = commands[previous_id].completion(current_parameter);
+      Completion *result = commands[previous_id].completion(current_parameter ? current_parameter : "");
 
       if(!result || !result->groups)
         return;
@@ -2628,7 +2672,7 @@ cc_open(char* input)
 
   while(se)
   {
-    if(strstr(se->name, input))
+    if(!strncmp(se->name, input, strlen(input)))
       completion_group_add_element(search_engines, se->name, NULL);
     se = se->next;
   }
