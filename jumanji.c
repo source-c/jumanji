@@ -337,6 +337,7 @@ void completion_group_add_element(CompletionGroup*, char*, char*);
 
 /* shortcut declarations */
 void sc_abort(Argument*);
+void sc_change_buffer(Argument*);
 void sc_change_mode(Argument*);
 void sc_close_tab(Argument*);
 void sc_focus_inputbar(Argument*);
@@ -1382,6 +1383,32 @@ sc_abort(Argument* argument)
   webkit_web_view_unmark_text_matches(GET_CURRENT_TAB());
 
   gtk_widget_grab_focus(GTK_WIDGET(GET_CURRENT_TAB_WIDGET()));
+}
+
+void
+sc_change_buffer(Argument* argument)
+{
+  if(!Jumanji.Global.buffer)
+    return;
+
+  int buffer_length = Jumanji.Global.buffer->len;
+
+  if(argument->n == DELETE_LAST_CHAR)
+  {
+    if((buffer_length - 1) == 0)
+    {
+      g_string_free(Jumanji.Global.buffer, TRUE);
+      Jumanji.Global.buffer = NULL;
+      gtk_label_set_markup((GtkLabel*) Jumanji.Statusbar.buffer, "");
+    }
+    else
+    {
+      GString* temp = g_string_new_len(Jumanji.Global.buffer->str, buffer_length - 1);
+      g_string_free(Jumanji.Global.buffer, TRUE);
+      Jumanji.Global.buffer = temp;
+      gtk_label_set_markup((GtkLabel*) Jumanji.Statusbar.buffer, Jumanji.Global.buffer->str);
+    }
+  }
 }
 
 void
