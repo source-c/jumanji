@@ -16,9 +16,10 @@ static const char JUMANJI_HISTORY[]   = "history";
 static const char JUMANJI_COOKIES[]   = "cookies";
 
 /* browser specific settings */
-char* home_page  = "http://www.pwmt.org";
+char* home_page           = "http://www.pwmt.org";
 gboolean private_browsing = FALSE;
 gboolean plugin_blocker   = TRUE;
+int auto_save_interval    = 0;
 
 /* download settings */
 char* download_dir     = "~/dl/";
@@ -187,6 +188,7 @@ SpecialCommand special_commands[] = {
 Setting settings[] = {
   /* name,                   variable,                  webkit-setting,                 type, i, r, description */
   {"96dpi",                  NULL,                      "enforce-96-dpi",               'b',  0, 1, "Enforce a resolution of 96 DPI"},
+  {"auto_save",              &(auto_save_interval),     NULL,                           'i',  0, 0, "Autosave bookmarks and history"},
   {"auto_shrink_images",     NULL,                      "auto-shrink-images",           'b',  0, 1, "Shrink standalone images to fit"},
   {"background",             NULL,                      "print-backgrounds",            'b',  0, 1, "Print background images"},
   {"caret_browsing",         NULL,                      "enable-caret-browsing",        'b',  0, 1, "Wheter to enable caret browsing mode"},
