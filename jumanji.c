@@ -8,6 +8,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <libgen.h>
+#include <math.h>
 
 #include <gtk/gtk.h>
 #include <gdk/gdkkeysyms.h>
@@ -973,7 +974,7 @@ update_status()
   else if(value == 0)
     position = g_strdup("Top");
   else
-    position = g_strdup_printf("%2d%%", (int) ((value / max) * 100));
+    position = g_strdup_printf("%2d%%", (int) ceil(((value / max) * 100)));
 
   gtk_label_set_markup((GtkLabel*) Jumanji.Statusbar.position, position);
   g_free(position);
@@ -997,7 +998,7 @@ read_configuration()
       int     n     = g_strv_length(lines) - 1;
 
       int i;
-      for(i = 0; i < n; i++)
+      for(i = 0; i <= n; i++)
       {
         if(!strlen(lines[i]))
           continue;
@@ -2297,6 +2298,7 @@ cmd_set(int argc, char** argv)
           else
             value = TRUE;
         }
+
         if(settings[i].variable)
         {
           gboolean *x = (gboolean*) (settings[i].variable);
