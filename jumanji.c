@@ -309,6 +309,7 @@ struct
 
 /* function declarations */
 void add_marker(int);
+gboolean auto_save(gpointer);
 void change_mode(int);
 void create_tab(char*);
 void eval_marker(int);
@@ -451,6 +452,14 @@ add_marker(int id)
   marker->zoom_level  = zl;
 
   Jumanji.Global.markers = g_list_append(Jumanji.Global.markers, marker);
+}
+
+gboolean
+auto_save(gpointer data)
+{
+  cmd_write(0, NULL);
+
+  return TRUE;
 }
 
 void
@@ -3285,6 +3294,10 @@ int main(int argc, char* argv[])
   read_configuration();
   init_settings();
   init_look();
+
+  /* init autosave */
+  if(auto_save_interval)
+    g_timeout_add(auto_save_interval * 1000, auto_save, NULL);
 
   /* create tab */
   if(argc < 2)
