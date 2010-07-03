@@ -639,7 +639,6 @@ init_look()
 
   g_signal_connect(G_OBJECT(Jumanji.UI.inputbar), "key-press-event", G_CALLBACK(cb_inputbar_kb_pressed), NULL);
   g_signal_connect(G_OBJECT(Jumanji.UI.inputbar), "activate",        G_CALLBACK(cb_inputbar_activate),   NULL);
-
 }
 
 void
@@ -694,7 +693,7 @@ init_data()
         if(!strlen(lines[i]))
           continue;
 
-        Jumanji.Global.history = g_list_append(Jumanji.Global.history, lines[i]);
+        Jumanji.Global.history = g_list_prepend(Jumanji.Global.history, lines[i]);
       }
     }
   }
@@ -914,8 +913,14 @@ open_uri(WebKitWebView* web_view, char* uri)
   /* update history */
   if(!private_browsing)
   {
-    Jumanji.Global.history = g_list_remove_all(Jumanji.Global.history, g_strdup(new_uri));
-    Jumanji.Global.history = g_list_append(Jumanji.Global.history,     g_strdup(new_uri));
+    GList* l = Jumanji.Global.history;
+    for(; l; l = g_list_next(l))
+    {
+      if(!strcmp(new_uri, (char*) l->data))
+        Jumanji.Global.history = g_list_remove(Jumanji.Global.history, l->data);
+    }
+
+    Jumanji.Global.history = g_list_append(Jumanji.Global.history, g_strdup(new_uri));
   }
 
   g_free(new_uri);
@@ -1995,7 +2000,13 @@ cmd_bookmark(int argc, char** argv)
   else
     bookmark = g_strdup(webkit_web_view_get_uri(GET_CURRENT_TAB()));
 
-  Jumanji.Global.bookmarks = g_list_remove_all(Jumanji.Global.bookmarks, bookmark);
+  GList* l = Jumanji.Global.bookmarks;
+  for(; l; l = g_list_next(l))
+  {
+    if(!strcmp(bookmark, (char*) l->data))
+      Jumanji.Global.bookmarks = g_list_remove(Jumanji.Global.bookmarks, l->data);
+  }
+
   Jumanji.Global.bookmarks = g_list_append(Jumanji.Global.bookmarks, bookmark);
 
   return TRUE;
