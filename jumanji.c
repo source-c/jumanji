@@ -636,9 +636,6 @@ init_look()
   gtk_widget_modify_base(GTK_WIDGET(Jumanji.UI.inputbar), GTK_STATE_NORMAL, &(Jumanji.Style.inputbar_bg));
   gtk_widget_modify_text(GTK_WIDGET(Jumanji.UI.inputbar), GTK_STATE_NORMAL, &(Jumanji.Style.inputbar_fg));
   gtk_widget_modify_font(GTK_WIDGET(Jumanji.UI.inputbar),                     Jumanji.Style.font);
-
-  g_signal_connect(G_OBJECT(Jumanji.UI.inputbar), "key-press-event", G_CALLBACK(cb_inputbar_kb_pressed), NULL);
-  g_signal_connect(G_OBJECT(Jumanji.UI.inputbar), "activate",        G_CALLBACK(cb_inputbar_activate),   NULL);
 }
 
 void
@@ -849,6 +846,9 @@ init_jumanji()
   gtk_entry_set_inner_border(Jumanji.UI.inputbar, NULL);
   gtk_entry_set_has_frame(   Jumanji.UI.inputbar, FALSE);
   gtk_editable_set_editable( GTK_EDITABLE(Jumanji.UI.inputbar), TRUE);
+
+  g_signal_connect(G_OBJECT(Jumanji.UI.inputbar), "key-press-event", G_CALLBACK(cb_inputbar_kb_pressed), NULL);
+  g_signal_connect(G_OBJECT(Jumanji.UI.inputbar), "activate",        G_CALLBACK(cb_inputbar_activate),   NULL);
 
   /* view */
   gtk_notebook_set_show_tabs(Jumanji.UI.view,   FALSE);
