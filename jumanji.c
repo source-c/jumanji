@@ -1851,7 +1851,7 @@ isc_completion(Argument* argument)
           rows[n_items].description = NULL;
           rows[n_items].command_id  = -1;
           rows[n_items].is_group    = TRUE;
-          rows[n_items].row       = GTK_WIDGET(create_completion_row(results, group->value, NULL, TRUE));
+          rows[n_items].row         = GTK_WIDGET(create_completion_row(results, group->value, NULL, TRUE));
 
           /* Swap group element with first element of the list */
           CompletionRow temp = rows[n_items - group_elements];
@@ -1939,15 +1939,9 @@ isc_completion(Argument* argument)
     set_completion_row_color(results, HIGHLIGHT, current_item);
 
     if(command_mode)
-    {
-      char* cp = (current_parameter) ? g_strconcat(" ", current_parameter, NULL) : 0;
-      temp = g_strconcat(":", rows[current_item].command, cp, NULL);
-    }
+      temp = g_strconcat(":", rows[current_item].command, NULL);
     else
-    {
-      /*temp = g_strconcat(":", previous_command, " ", rows[current_item].command, NULL);*/
       temp = g_strconcat(":", previous_command, " ", rows[current_item].command, NULL);
-    }
 
     gtk_entry_set_text(Jumanji.UI.inputbar, temp);
     gtk_editable_set_position(GTK_EDITABLE(Jumanji.UI.inputbar), -1);
