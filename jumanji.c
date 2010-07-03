@@ -9,6 +9,7 @@
 #include <unistd.h>
 #include <libgen.h>
 #include <math.h>
+#include <libsoup/soup.h>
 
 #include <gtk/gtk.h>
 #include <gdk/gdkkeysyms.h>
@@ -283,6 +284,11 @@ struct
     ScriptList        *scripts;
     WebKitWebSettings *browser_settings;
   } Global;
+
+  struct
+  {
+    SoupSession* session;
+  } Soup;
 
   struct
   {
@@ -694,6 +700,13 @@ init_data()
   }
 
   g_free(history_file);
+
+  /* load cookies */
+  char* cookie_file        = g_strdup_printf("%s/%s/%s", g_get_home_dir(), JUMANJI_DIR, JUMANJI_COOKIES);
+  SoupCookieJar *cookiejar = soup_cookie_jar_text_new(cookie_file, FALSE);
+
+  soup_session_add_feature(Jumanji.Soup.session, (SoupSessionFeature*) cookiejar);
+  g_free(cookie_file);
 }
 
 void
@@ -850,6 +863,9 @@ init_jumanji()
 
   /* webkit settings */
   Jumanji.Global.browser_settings = webkit_web_settings_new();
+
+  /* libsoup session */
+  Jumanji.Soup.session = webkit_get_default_session();
 }
 
 void
@@ -1124,7 +1140,7 @@ run_script(char* script, char** value, char** error)
   if(!ob)
     return;
 
-  JSValueRef exception;
+  JSValueRef exception = NULL;
   JSValueRef va   = JSEvaluateScript(context, sc, ob, NULL, 0, &exception);
   JSStringRelease(sc);
 

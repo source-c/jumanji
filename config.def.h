@@ -13,6 +13,7 @@ static const char JUMANJI_DIR[]       = ".config/jumanji";
 static const char JUMANJI_RC[]        = "jumanjirc";
 static const char JUMANJI_BOOKMARKS[] = "bookmarks";
 static const char JUMANJI_HISTORY[]   = "history";
+static const char JUMANJI_COOKIES[]   = "cookies";
 
 /* browser specific settings */
 char* home_page  = "http://www.pwmt.org";
@@ -21,7 +22,7 @@ gboolean plugin_blocker   = TRUE;
 
 /* download settings */
 char* download_dir     = "~/dl/";
-char* download_command = "urxvt -e sh -c \"wget '%s' -O %s\"";
+char* download_command = "urxvt -e sh -c \"wget --load-cookies ~/.config/jumanji/cookies '%s' -O %s\"";
 
 /* look */
 char* font                   = "monospace normal 9";
