@@ -1,8 +1,9 @@
 /* settings */
-int   default_width    = 800;
-int   default_height   = 600;
-float zoom_step        = 10;
-float scroll_step      = 40;
+int   default_width      = 800;
+int   default_height     = 600;
+float zoom_step          = 10;
+float scroll_step        = 40;
+int   n_completion_items = 15;
 
 /* completion */
 static const char FORMAT_COMMAND[]     = "<b>%s</b>";
@@ -198,6 +199,7 @@ Setting settings[] = {
   {"completion_g_fgcolor",   &(completion_g_fgcolor),   NULL,                           's',  1, 0, "Completion (group) foreground color"},
   {"completion_hl_bgcolor",  &(completion_hl_bgcolor),  NULL,                           's',  1, 0, "Completion (highlight) background color"},
   {"completion_hl_fgcolor",  &(completion_hl_fgcolor),  NULL,                           's',  1, 0, "Completion (highlight) foreground color"},
+  {"n_completion_items",     &(n_completion_items),     NULL,                           'i',  0, 0, "Number of completion items"},
   {"cursive_font_family",    NULL,                      "cursive-font-family",          's',  0, 1, "Default cursive font family to display text"},
   {"default_bgcolor",        &(default_bgcolor),        NULL,                           's',  1, 0, "Default background color"},
   {"default_fgcolor",        &(default_fgcolor),        NULL,                           's',  1, 0, "Default foreground color"},
