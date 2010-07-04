@@ -916,7 +916,7 @@ open_uri(WebKitWebView* web_view, char* uri)
 
   gchar **tokens = g_strsplit(uri, " ", -1);
   int     length = g_strv_length(tokens);
-  gchar* new_uri = "";
+  gchar* new_uri = NULL;
 
   /* check search engine */
   if(length > 1)
@@ -937,21 +937,22 @@ open_uri(WebKitWebView* web_view, char* uri)
   /* no arguemnt given */
   else if(strlen(uri) == 0)
     new_uri = g_strdup(home_page);
-  /* no dot, default searchengine */
-  else if(!strchr(uri, '.'))
-  {
-    if(Jumanji.Global.search_engines)
-      new_uri = g_strdup_printf(Jumanji.Global.search_engines->uri, uri);
-    else
-      new_uri = g_strconcat("http://", uri, NULL);
-  }
   /* file path */
   else if(strcspn(uri, "/") == 0 || strcspn(uri, "./") == 0)
   {
     new_uri = g_strconcat("file://", uri, NULL);
   }
   /* prepend http */
-  else
+
+  /* no dot, default searchengine */
+  if(!new_uri && !strchr(uri, '.'))
+  {
+    if(Jumanji.Global.search_engines)
+      new_uri = g_strdup_printf(Jumanji.Global.search_engines->uri, uri);
+    else
+      new_uri = g_strconcat("http://", uri, NULL);
+  }
+  else if(!new_uri)
     new_uri = g_strrstr(uri, "://") ? g_strdup(uri) : g_strconcat("http://", uri, NULL);
 
   webkit_web_view_load_uri(web_view, new_uri);
