@@ -1287,16 +1287,16 @@ create_completion_row(GtkBox* results, char* command, char* description, gboolea
   gtk_misc_set_alignment(GTK_MISC(show_command),     0.0, 0.0);
   gtk_misc_set_alignment(GTK_MISC(show_description), 0.0, 0.0);
 
-  if(group)
-  {
-    gtk_misc_set_padding(GTK_MISC(show_command),     2.0, 4.0);
-    gtk_misc_set_padding(GTK_MISC(show_description), 2.0, 4.0);
-  }
-  else
-  {
+  /*if(group)*/
+  /*{*/
+    /*gtk_misc_set_padding(GTK_MISC(show_command),     2.0, 4.0);*/
+    /*gtk_misc_set_padding(GTK_MISC(show_description), 2.0, 4.0);*/
+  /*}*/
+  /*else*/
+  /*{*/
     gtk_misc_set_padding(GTK_MISC(show_command),     1.0, 1.0);
     gtk_misc_set_padding(GTK_MISC(show_description), 1.0, 1.0);
-  }
+  /*}*/
 
   gtk_label_set_use_markup(show_command,     TRUE);
   gtk_label_set_use_markup(show_description, TRUE);
@@ -1987,6 +1987,21 @@ isc_completion(Argument* argument)
     }
 
     set_completion_row_color(results, HIGHLIGHT, current_item);
+
+    /* hide other items */
+    int uh = ceil(n_completion_items / 2);
+    int lh = floor(n_completion_items / 2);
+
+    for(i = 0; i < n_items; i++)
+    {
+     if((i >= (current_item - lh) && (i <= current_item + uh)) ||
+        (i < n_completion_items && current_item < lh) ||
+        (i >= (n_items - n_completion_items) && (current_item >= (n_items - uh)))
+       )
+        gtk_widget_show(rows[i].row);
+      else
+        gtk_widget_hide(rows[i].row);
+    }
 
     if(command_mode)
       temp = g_strconcat(":", rows[current_item].command, NULL);
