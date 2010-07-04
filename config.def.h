@@ -18,6 +18,7 @@ static const char JUMANJI_COOKIES[]   = "cookies";
 
 /* browser specific settings */
 char* home_page           = "http://www.pwmt.org";
+char* proxy               = NULL;
 gboolean private_browsing = FALSE;
 gboolean plugin_blocker   = TRUE;
 int auto_save_interval    = 0;
@@ -105,6 +106,7 @@ Shortcut shortcuts[] = {
   {GDK_SHIFT_MASK,     GDK_space,         sc_scroll,            NORMAL,              { FULL_UP } },
   {0,                  GDK_n,             sc_search,            NORMAL,              { FORWARD } },
   {0,                  GDK_N,             sc_search,            NORMAL,              { BACKWARD } },
+  {GDK_CONTROL_MASK,   GDK_p,             sc_toggle_proxy,      NORMAL,              {0} },
   {GDK_CONTROL_MASK,   GDK_m,             sc_toggle_statusbar,  NORMAL,              {0} },
   {GDK_CONTROL_MASK,   GDK_s,             sc_toggle_sourcecode, NORMAL,              {0} },
   {GDK_CONTROL_MASK,   GDK_q,             sc_quit,              ALL,                 {0} },
@@ -229,6 +231,7 @@ Setting settings[] = {
   {"plugin_blocker",         &(plugin_blocker),         NULL,                           'b',  0, 1, "Enable plugin-blocker"},
   {"plugins",                NULL,                      "enable-plugins",               'b',  0, 1, "Enable embedded plugin objects"},
   {"private_browsing",       &(private_browsing),       "enable-private-browsing",      'b',  0, 0, "Enable private browsing"},
+  {"proxy",                  &(proxy),                  NULL,                           's',  0, 0, "Set proxy"},
   {"resizable_text_areas",   NULL,                      "resizable-text-areas",         'b',  0, 1, "Resizable text areas"},
   {"sans_serif_font",        NULL,                      "sans-serif-font-family",       'b',  0, 1, "Sans-serif font family"},
   {"scripts",                NULL,                      "enable-scripts",               'b',  0, 1, "Enable embedded scripting languages"},

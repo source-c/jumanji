@@ -352,6 +352,7 @@ void sc_reload(Argument*);
 void sc_run_script(Argument*);
 void sc_scroll(Argument*);
 void sc_search(Argument*);
+void sc_toggle_proxy(Argument*);
 void sc_toggle_statusbar(Argument*);
 void sc_toggle_sourcecode(Argument*);
 void sc_quit(Argument*);
@@ -774,6 +775,7 @@ void
 init_settings()
 {
   gtk_window_set_default_size(GTK_WINDOW(Jumanji.UI.window), default_width, default_height);
+  sc_toggle_proxy(NULL);
 }
 
 void notify(int level, char* message)
@@ -1713,6 +1715,39 @@ sc_search(Argument* argument)
   webkit_web_view_search_text(GET_CURRENT_TAB(), search_item, FALSE, direction, TRUE);
   webkit_web_view_mark_text_matches(GET_CURRENT_TAB(), search_item, FALSE, 0);
   webkit_web_view_set_highlight_text_matches(GET_CURRENT_TAB(), TRUE);
+}
+
+void
+sc_toggle_proxy(Argument* argument)
+{
+  static gboolean enable = FALSE;
+
+  if(enable)
+  {
+    g_object_set(Jumanji.Soup.session, "proxy-uri", NULL, NULL);
+    notify(DEFAULT, "Proxy deactivated");
+  }
+  else
+  {
+    char* purl = (proxy) ? proxy : (char*) g_getenv("HTTP_PROXY");
+    if(!purl)
+    {
+      notify(DEFAULT, "No proxy defined");
+      return;
+    }
+
+    char* uri = g_strrstr(purl, "://") ? g_strdup(purl) : g_strconcat("http://", purl, NULL);
+    SoupURI* proxy_uri = soup_uri_new(uri);
+
+    g_object_set(Jumanji.Soup.session, "proxy-uri", proxy_uri, NULL);
+
+    soup_uri_free(proxy_uri);
+    g_free(uri);
+
+    notify(DEFAULT, "Proxy activated");
+  }
+
+  enable = !enable;
 }
 
 void
