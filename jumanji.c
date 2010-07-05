@@ -64,12 +64,13 @@ enum {
 };
 
 /* define modes */
-#define ALL         (1 << 0)
-#define INSERT      (1 << 1)
-#define VISUAL      (1 << 2)
-#define FOLLOW      (1 << 3)
-#define ADD_MARKER  (1 << 4)
-#define EVAL_MARKER (1 << 5)
+#define ALL          (1 << 0)
+#define INSERT       (1 << 1)
+#define VISUAL       (1 << 2)
+#define FOLLOW       (1 << 3)
+#define ADD_MARKER   (1 << 4)
+#define EVAL_MARKER  (1 << 5)
+#define PASS_THROUGH (1 << 6)
 
 /* typedefs */
 struct CElement
@@ -484,6 +485,9 @@ change_mode(int mode)
       break;
     case FOLLOW:
       mode_text = "";
+      break;
+    case PASS_THROUGH:
+      mode_text = "-- PASS THROUGH --";
       break;
     default:
       mode_text = "";
@@ -3119,6 +3123,9 @@ cb_tab_kb_pressed(GtkWidget *widget, GdkEventKey *event, gpointer data)
 
     sc = sc->next;
   }
+
+  if(Jumanji.Global.mode == PASS_THROUGH)
+    return FALSE;
 
   if(Jumanji.Global.mode == ADD_MARKER)
   {

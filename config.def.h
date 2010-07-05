@@ -70,6 +70,7 @@ Shortcut shortcuts[] = {
   {0,                  GDK_m,             sc_change_mode,       NORMAL,              { ADD_MARKER } },
   {0,                  GDK_apostrophe,    sc_change_mode,       NORMAL,              { EVAL_MARKER } },
   {0,                  GDK_v,             sc_change_mode,       NORMAL,              { VISUAL } },
+  {GDK_CONTROL_MASK,   GDK_z,             sc_change_mode,       NORMAL,              { PASS_THROUGH } },
   {GDK_CONTROL_MASK,   GDK_w,             sc_close_tab,         NORMAL,              {0} },
   {0,                  GDK_slash,         sc_focus_inputbar,    NORMAL,              { .data = "/" } },
   {GDK_SHIFT_MASK,     GDK_slash,         sc_focus_inputbar,    NORMAL,              { .data = "/" } },
@@ -305,10 +306,11 @@ ArgumentName argument_names[] = {
 
 /* mode names */
 ModeName mode_names[] = {
-  {"all",        ALL},
-  {"insert",     INSERT},
-  {"visual",     VISUAL},
-  {"follow",     FOLLOW},
+  {"all",          ALL},
+  {"insert",       INSERT},
+  {"visual",       VISUAL},
+  {"follow",       FOLLOW},
+  {"pass_through", PASS_THROUGH},
 };
 
 /* special keys */
