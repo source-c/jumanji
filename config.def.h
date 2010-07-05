@@ -17,7 +17,7 @@ static const char JUMANJI_HISTORY[]   = "history";
 static const char JUMANJI_COOKIES[]   = "cookies";
 
 /* browser specific settings */
-char* user_agent          = "jumanji";
+char* user_agent          = "Mozilla/5.0 (X11; U; Linux x86_64; en-us) AppleWebKit/531.2+ (KHTML, like Gecko) Safari/531.2+ jumanji/0.1";
 char* home_page           = "http://www.pwmt.org";
 char* proxy               = NULL;
 gboolean private_browsing = FALSE;
