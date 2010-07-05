@@ -1186,7 +1186,7 @@ read_file(const char* path)
 char*
 reference_to_string(JSContextRef context, JSValueRef reference)
 {
-  if(!context && !reference)
+  if(!context || !reference)
     return NULL;
 
   JSStringRef ref_st = JSValueToStringCopy(context, reference, NULL);
