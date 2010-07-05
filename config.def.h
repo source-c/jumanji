@@ -147,6 +147,13 @@ InputbarShortcut inputbar_shortcuts[] = {
   {GDK_CONTROL_MASK,   GDK_b,             isc_string_manipulation,   { PREVIOUS_CHAR } },
 };
 
+/* mouse buttons */
+Mouse mouse[] = {
+  /* mask,             button,   function,            mode,      argument */
+  {0,                  2,        sc_paste,            ALL,       {0} },
+  {GDK_CONTROL_MASK,   2,        sc_paste,            ALL,       { NEW_TAB } },
+};
+
 /* commands */
 Command commands[] = {
   /* command,   abbreviation,   function,            completion,   description  */

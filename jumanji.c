@@ -180,6 +180,15 @@ typedef struct SCList ShortcutList;
 
 typedef struct
 {
+  int mask;
+  int button;
+  void (*function)(Argument*);
+  int mode;
+  Argument argument;
+} Mouse;
+
+typedef struct
+{
   char* identifier;
   int   key;
 } GDKKey;
@@ -405,6 +414,7 @@ GtkWidget* cb_wv_block_plugin(WebKitWebView*, gchar*, gchar*, GHashTable*, gpoin
 gboolean cb_wv_console(WebKitWebView*, char*, int, char*, gpointer);
 gboolean cb_wv_create_web_view(WebKitWebView*, WebKitWebFrame*, gpointer);
 gboolean cb_wv_download_request(WebKitWebView*, WebKitDownload*, gpointer);
+gboolean cb_wv_event(GtkWidget*, GdkEvent*, gpointer);
 gboolean cb_wv_hover_link(WebKitWebView*, char*, char*, gpointer);
 gboolean cb_wv_notify_progress(WebKitWebView*, GParamSpec*, gpointer);
 gboolean cb_wv_notify_title(WebKitWebView*, GParamSpec*, gpointer);
@@ -526,6 +536,7 @@ create_tab(char* uri, gboolean background)
   g_signal_connect(G_OBJECT(wv),  "create-plugin-widget",                 G_CALLBACK(cb_wv_block_plugin),          NULL);
   g_signal_connect(G_OBJECT(wv),  "create-web-view",                      G_CALLBACK(cb_wv_create_web_view),       NULL);
   g_signal_connect(G_OBJECT(wv),  "download-requested",                   G_CALLBACK(cb_wv_download_request),      NULL);
+  g_signal_connect(G_OBJECT(wv),  "event",                                G_CALLBACK(cb_wv_event),                 NULL);
   g_signal_connect(G_OBJECT(wv),  "hovering-over-link",                   G_CALLBACK(cb_wv_hover_link),            NULL);
   g_signal_connect(G_OBJECT(wv),  "navigation-policy-decision-requested", G_CALLBACK(cb_wv_nav_policy_decision),   NULL);
   g_signal_connect(G_OBJECT(wv),  "new-window-policy-decision-requested", G_CALLBACK(cb_wv_nav_policy_decision),   NULL);
@@ -3288,6 +3299,28 @@ cb_wv_download_request(WebKitWebView* wv, WebKitDownload* download, gpointer dat
   g_free(file);
 
   return TRUE;
+}
+
+gboolean
+cb_wv_event(GtkWidget* widget, GdkEvent* event, gpointer data)
+{
+  if(event->type == GDK_BUTTON_RELEASE)
+  {
+    int i;
+    for(i = 0; i < LENGTH(mouse); i++)
+    {
+      if( CLEAN(event->button.state) == mouse[i].mask &&
+          event->button.button == mouse[i].button &&
+          ((Jumanji.Global.mode == mouse[i].mode) || (mouse[i].mode == ALL)) &&
+          mouse[i].function
+        )
+      {
+        mouse[i].function(&(mouse[i].argument));
+      }
+     }
+  }
+
+  return FALSE;
 }
 
 gboolean
