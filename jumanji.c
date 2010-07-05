@@ -3239,6 +3239,26 @@ cb_wv_download_request(WebKitWebView* wv, WebKitDownload* download, gpointer dat
   const char* uri      = webkit_download_get_uri(download);
   const char* filename = webkit_download_get_suggested_filename(download);
 
+  if(!uri)
+  {
+    notify(DEFAULT, "Could not retreive download uri");
+    return FALSE;
+  }
+
+  /* create download directory directory */
+  char* download_path = NULL;
+  if(download_dir[0] == '~')
+    download_path = g_strdup_printf("%s%s", getenv("HOME"), download_dir + 1);
+  else
+    download_path = g_strdup(download_path);
+
+  gchar *base_directory = g_build_filename(download_path, NULL);
+  g_mkdir_with_parents(base_directory,  0771);
+
+  g_free(base_directory);
+  g_free(download_path);
+
+  /* download file */
   char* file      = g_strconcat(download_dir, filename ? filename : uri, NULL);
   char* command   = g_strdup_printf(download_command, uri, file);
 
