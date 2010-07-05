@@ -26,7 +26,7 @@ int auto_save_interval    = 0;
 
 /* download settings */
 char* download_dir     = "~/dl/";
-char* download_command = "urxvt -e sh -c \"wget --load-cookies ~/.config/jumanji/cookies '%s' -O %s\"";
+char* download_command = "xterm -e sh -c \"wget --load-cookies ~/.config/jumanji/cookies '%s' -O %s\"";
 
 /* look */
 char* font                   = "monospace normal 9";
