@@ -895,6 +895,7 @@ init_jumanji()
 
   /* webkit settings */
   Jumanji.Global.browser_settings = webkit_web_settings_new();
+  g_object_set(G_OBJECT(Jumanji.Global.browser_settings), "user-agent", user_agent, NULL);
 
   /* libsoup session */
   Jumanji.Soup.session = webkit_get_default_session();
