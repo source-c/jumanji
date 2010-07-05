@@ -484,7 +484,7 @@ change_mode(int mode)
       mode_text = "";
       break;
     case FOLLOW:
-      mode_text = "";
+      mode_text = "Follow hint: ";
       break;
     case PASS_THROUGH:
       mode_text = "-- PASS THROUGH --";
@@ -1572,6 +1572,10 @@ sc_follow_link(Argument* argument)
   else if(argument->n >= 0 && argument->n <= 9)
     buffer = g_string_append_c(buffer, (char) (argument->n + 0x030));
 
+  /* update inputbar */
+  gchar* inputbar_text = g_strdup_printf("Follow hint: %d", argument->n);
+  gtk_entry_set_text(Jumanji.UI.inputbar, inputbar_text);
+  g_free(inputbar_text);
 
   if(buffer->len > 0)
   {
