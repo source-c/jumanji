@@ -17,6 +17,7 @@ static const char JUMANJI_HISTORY[]   = "history";
 static const char JUMANJI_COOKIES[]   = "cookies";
 
 /* browser specific settings */
+char* user_agent          = "jumanji";
 char* home_page           = "http://www.pwmt.org";
 char* proxy               = NULL;
 gboolean private_browsing = FALSE;
@@ -251,7 +252,7 @@ Setting settings[] = {
   {"tabbar_focus_bgcolor",   &(tabbar_focus_bgcolor),   NULL,                           's',  1, 0, "Tabbar (focus) background color"},
   {"tabbar_focus_bgcolor",   &(tabbar_focus_bgcolor),   NULL,                           's',  1, 0, "Tabbar (focus) background color"},
   {"tabbar_separator_color", &(tabbar_separator_color), NULL,                           's',  1, 0, "Tabbar separator color"},
-  {"user_agent",             NULL,                      "user-agent",                   's',  1, 1, "User agent"},
+  {"user_agent",             &(user_agent),             "user-agent",                   's',  1, 1, "User agent"},
   {"width",                  &(default_width),          NULL,                           'i',  0, 0, "Default window width"},
   {"zoom_step",              &(zoom_step),              "zoom-step",                    'f',  0, 0, "Zoom step"},
 };
