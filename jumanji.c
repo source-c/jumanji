@@ -312,7 +312,7 @@ struct
 void add_marker(int);
 gboolean auto_save(gpointer);
 void change_mode(int);
-void create_tab(char*);
+void create_tab(char*, gboolean);
 void eval_marker(int);
 void init_data();
 void init_directories();
@@ -500,7 +500,7 @@ change_mode(int mode)
 }
 
 void
-create_tab(char* uri)
+create_tab(char* uri, gboolean background)
 {
   GtkWidget *tab = gtk_scrolled_window_new(NULL, NULL);
   GtkWidget *wv  = webkit_web_view_new();
@@ -542,7 +542,9 @@ create_tab(char* uri)
   gtk_container_add(GTK_CONTAINER(tab), wv);
   gtk_widget_show_all(tab);
   gtk_notebook_insert_page(Jumanji.UI.view, tab, NULL, position);
-  gtk_notebook_set_current_page(Jumanji.UI.view, position);
+
+  if(!background)
+    gtk_notebook_set_current_page(Jumanji.UI.view, position);
 
   /* create tab label */
   GtkWidget *tab_label = gtk_label_new(NULL);
@@ -1593,7 +1595,7 @@ sc_follow_link(Argument* argument)
         if(open_mode == -1)
           open_uri(GET_CURRENT_TAB(), value + 5);
         else
-          create_tab(value + 5);
+          create_tab(value + 5, FALSE);
       }
 
       sc_abort(NULL);
@@ -1617,7 +1619,7 @@ sc_follow_link(Argument* argument)
           if(open_mode == -1)
             open_uri(GET_CURRENT_TAB(), value + 5);
           else
-            create_tab(value + 5);
+            create_tab(value + 5, FALSE);
         }
 
         sc_abort(NULL);
@@ -1647,7 +1649,7 @@ sc_paste(Argument* argument)
   char* text = gtk_clipboard_wait_for_text(gtk_clipboard_get(GDK_SELECTION_PRIMARY));
 
   if(argument->n == NEW_TAB)
-    create_tab(text);
+    create_tab(text, FALSE);
   else
     open_uri(GET_CURRENT_TAB(), text);
 }
@@ -2668,7 +2670,7 @@ cmd_tabopen(int argc, char** argv)
     uri = g_string_append(uri, argv[i]);
   }
 
-  create_tab(uri->str);
+  create_tab(uri->str, FALSE);
 
   g_string_free(uri, FALSE);
 
@@ -3239,7 +3241,7 @@ gboolean
 cb_wv_create_web_view(WebKitWebView* wv, WebKitWebFrame* frame, gpointer data)
 {
   char* uri = (char*) webkit_web_view_get_uri(wv);
-  create_tab(uri);
+  create_tab(uri, TRUE);
 
   return TRUE;
 }
@@ -3306,7 +3308,7 @@ cb_wv_nav_policy_decision(WebKitWebView* wv, WebKitWebFrame* frame, WebKitNetwor
       webkit_web_policy_decision_ignore(decision);
       return TRUE;
     case 2: /* middle mouse button */
-      create_tab((char*) webkit_network_request_get_uri(request));
+      create_tab((char*) webkit_network_request_get_uri(request), TRUE);
       webkit_web_policy_decision_ignore(decision);
       return TRUE;
     case 3: /* right mouse button */
@@ -3413,9 +3415,9 @@ int main(int argc, char* argv[])
 
   /* create tab */
   if(argc < 2)
-    create_tab(home_page);
+    create_tab(home_page, FALSE);
   else
-    create_tab(argv[i]);
+    create_tab(argv[i], FALSE);
 
   gtk_widget_show_all(GTK_WIDGET(Jumanji.UI.window));
   gtk_widget_grab_focus(GTK_WIDGET(GET_CURRENT_TAB_WIDGET()));
