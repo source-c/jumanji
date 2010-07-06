@@ -416,6 +416,7 @@ gboolean cb_wv_create_web_view(WebKitWebView*, WebKitWebFrame*, gpointer);
 gboolean cb_wv_download_request(WebKitWebView*, WebKitDownload*, gpointer);
 gboolean cb_wv_event(GtkWidget*, GdkEvent*, gpointer);
 gboolean cb_wv_hover_link(WebKitWebView*, char*, char*, gpointer);
+gboolean cb_wv_mimetype_policy_decision(WebKitWebView*, WebKitWebFrame*, WebKitNetworkRequest*, char*, WebKitWebPolicyDecision*, gpointer);
 gboolean cb_wv_notify_progress(WebKitWebView*, GParamSpec*, gpointer);
 gboolean cb_wv_notify_title(WebKitWebView*, GParamSpec*, gpointer);
 gboolean cb_wv_nav_policy_decision(WebKitWebView*, WebKitWebFrame*, WebKitNetworkRequest*, WebKitWebNavigationAction*, WebKitWebPolicyDecision*, gpointer);
@@ -532,17 +533,18 @@ create_tab(char* uri, gboolean background)
   }
 
   /* connect callbacks */
-  g_signal_connect(G_OBJECT(wv),  "console-message",                      G_CALLBACK(cb_wv_console),               NULL);
-  g_signal_connect(G_OBJECT(wv),  "create-plugin-widget",                 G_CALLBACK(cb_wv_block_plugin),          NULL);
-  g_signal_connect(G_OBJECT(wv),  "create-web-view",                      G_CALLBACK(cb_wv_create_web_view),       NULL);
-  g_signal_connect(G_OBJECT(wv),  "download-requested",                   G_CALLBACK(cb_wv_download_request),      NULL);
-  g_signal_connect(G_OBJECT(wv),  "event",                                G_CALLBACK(cb_wv_event),                 NULL);
-  g_signal_connect(G_OBJECT(wv),  "hovering-over-link",                   G_CALLBACK(cb_wv_hover_link),            NULL);
-  g_signal_connect(G_OBJECT(wv),  "navigation-policy-decision-requested", G_CALLBACK(cb_wv_nav_policy_decision),   NULL);
-  g_signal_connect(G_OBJECT(wv),  "new-window-policy-decision-requested", G_CALLBACK(cb_wv_nav_policy_decision),   NULL);
-  g_signal_connect(G_OBJECT(wv),  "notify::progress",                     G_CALLBACK(cb_wv_notify_progress),       NULL);
-  g_signal_connect(G_OBJECT(wv),  "notify::title",                        G_CALLBACK(cb_wv_notify_title),          NULL);
-  g_signal_connect(G_OBJECT(tab), "key-press-event",                      G_CALLBACK(cb_tab_kb_pressed),           NULL);
+  g_signal_connect(G_OBJECT(wv),  "console-message",                      G_CALLBACK(cb_wv_console),                  NULL);
+  g_signal_connect(G_OBJECT(wv),  "create-plugin-widget",                 G_CALLBACK(cb_wv_block_plugin),             NULL);
+  g_signal_connect(G_OBJECT(wv),  "create-web-view",                      G_CALLBACK(cb_wv_create_web_view),          NULL);
+  g_signal_connect(G_OBJECT(wv),  "download-requested",                   G_CALLBACK(cb_wv_download_request),         NULL);
+  g_signal_connect(G_OBJECT(wv),  "event",                                G_CALLBACK(cb_wv_event),                    NULL);
+  g_signal_connect(G_OBJECT(wv),  "hovering-over-link",                   G_CALLBACK(cb_wv_hover_link),               NULL);
+  g_signal_connect(G_OBJECT(wv),  "mime-type-policy-decision-requested",  G_CALLBACK(cb_wv_mimetype_policy_decision), NULL);
+  g_signal_connect(G_OBJECT(wv),  "navigation-policy-decision-requested", G_CALLBACK(cb_wv_nav_policy_decision),      NULL);
+  g_signal_connect(G_OBJECT(wv),  "new-window-policy-decision-requested", G_CALLBACK(cb_wv_nav_policy_decision),      NULL);
+  g_signal_connect(G_OBJECT(wv),  "notify::progress",                     G_CALLBACK(cb_wv_notify_progress),          NULL);
+  g_signal_connect(G_OBJECT(wv),  "notify::title",                        G_CALLBACK(cb_wv_notify_title),             NULL);
+  g_signal_connect(G_OBJECT(tab), "key-press-event",                      G_CALLBACK(cb_tab_kb_pressed),              NULL);
 
   /* apply browser setting */
   webkit_web_view_set_settings(WEBKIT_WEB_VIEW(wv), webkit_web_settings_copy(Jumanji.Global.browser_settings));
@@ -3318,6 +3320,19 @@ cb_wv_event(GtkWidget* widget, GdkEvent* event, gpointer data)
         mouse[i].function(&(mouse[i].argument));
       }
      }
+  }
+
+  return FALSE;
+}
+
+gboolean
+cb_wv_mimetype_policy_decision(WebKitWebView* wv, WebKitWebFrame* frame, WebKitNetworkRequest* request,
+    char* mimetype, WebKitWebPolicyDecision* decision, gpointer data)
+{
+  if(!webkit_web_view_can_show_mime_type(wv, mimetype))
+  {
+    webkit_web_policy_decision_download(decision);
+    return TRUE;
   }
 
   return FALSE;
