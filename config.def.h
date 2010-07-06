@@ -150,8 +150,8 @@ InputbarShortcut inputbar_shortcuts[] = {
 /* mouse buttons */
 Mouse mouse[] = {
   /* mask,             button,   function,            mode,      argument */
-  {0,                  2,        sc_paste,            ALL,       {0} },
-  {GDK_CONTROL_MASK,   2,        sc_paste,            ALL,       { NEW_TAB } },
+  {0,                  2,        sc_paste,            NORMAL,    {0} },
+  {GDK_CONTROL_MASK,   2,        sc_paste,            NORMAL,    { NEW_TAB } },
 };
 
 /* commands */
@@ -276,6 +276,7 @@ ShortcutName shortcut_names[] = {
   {"nav_history",       sc_nav_history},
   {"nav_tabs",          sc_nav_tabs},
   {"paste",             sc_paste},
+  {"proxy",             sc_toggle_proxy},
   {"reload",            sc_reload},
   {"script",            sc_run_script},
   {"scroll",            sc_scroll},
