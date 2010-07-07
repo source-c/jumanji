@@ -418,6 +418,7 @@ GtkWidget* cb_wv_create_web_view(WebKitWebView*, WebKitWebFrame*, gpointer);
 gboolean cb_wv_download_request(WebKitWebView*, WebKitDownload*, gpointer);
 gboolean cb_wv_event(GtkWidget*, GdkEvent*, gpointer);
 gboolean cb_wv_hover_link(WebKitWebView*, char*, char*, gpointer);
+WebKitWebView* cb_wv_inspector_view(WebKitWebInspector*, WebKitWebView*, gpointer);
 gboolean cb_wv_mimetype_policy_decision(WebKitWebView*, WebKitWebFrame*, WebKitNetworkRequest*, char*, WebKitWebPolicyDecision*, gpointer);
 gboolean cb_wv_notify_progress(WebKitWebView*, GParamSpec*, gpointer);
 gboolean cb_wv_notify_title(WebKitWebView*, GParamSpec*, gpointer);
@@ -551,6 +552,10 @@ create_tab(char* uri, gboolean background)
 
   /* apply browser setting */
   webkit_web_view_set_settings(WEBKIT_WEB_VIEW(wv), webkit_web_settings_copy(Jumanji.Global.browser_settings));
+
+  /* set web inspector */
+  WebKitWebInspector* web_inspector = webkit_web_view_get_inspector(WEBKIT_WEB_VIEW(wv));
+  g_signal_connect(G_OBJECT(web_inspector), "inspect-web-view", G_CALLBACK(cb_wv_inspector_view), NULL);
 
   /* open uri */
   open_uri(WEBKIT_WEB_VIEW(wv), uri);
@@ -3380,6 +3385,32 @@ cb_wv_hover_link(WebKitWebView* wv, char* title, char* link, gpointer data)
     g_free(link);
 
   return TRUE;
+}
+
+WebKitWebView*
+cb_wv_inspector_view(WebKitWebInspector* inspector, WebKitWebView* wv, gpointer data)
+{
+  GtkWidget* window;
+  GtkWidget* webview;
+
+  /* create window */
+  if(Jumanji.UI.embed)
+    window = gtk_plug_new(Jumanji.UI.embed);
+  else
+    window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+
+  /* set title */
+  gchar* title = g_strdup_printf("WebInspector (%s) - jumanji", webkit_web_view_get_uri(wv));
+  gtk_window_set_title(GTK_WINDOW(window), title);
+  g_free(title);
+
+  /* create view */
+  webview = webkit_web_view_new();
+
+  gtk_container_add(GTK_CONTAINER(window), webview);
+  gtk_widget_show_all(window);
+
+  return WEBKIT_WEB_VIEW(webview);
 }
 
 gboolean
