@@ -365,6 +365,7 @@ void sc_search(Argument*);
 void sc_toggle_proxy(Argument*);
 void sc_toggle_statusbar(Argument*);
 void sc_toggle_sourcecode(Argument*);
+void sc_toggle_tabbar(Argument*);
 void sc_quit(Argument*);
 void sc_yank(Argument*);
 void sc_zoom(Argument*);
@@ -687,6 +688,12 @@ init_look()
   gtk_widget_modify_base(GTK_WIDGET(Jumanji.UI.inputbar), GTK_STATE_NORMAL, &(Jumanji.Style.inputbar_bg));
   gtk_widget_modify_text(GTK_WIDGET(Jumanji.UI.inputbar), GTK_STATE_NORMAL, &(Jumanji.Style.inputbar_fg));
   gtk_widget_modify_font(GTK_WIDGET(Jumanji.UI.inputbar),                     Jumanji.Style.font);
+
+  /* tabbar */
+  if(show_tabbar)
+    gtk_widget_show(GTK_WIDGET(Jumanji.UI.tabbar));
+  else
+    gtk_widget_hide(GTK_WIDGET(Jumanji.UI.tabbar));
 }
 
 void
@@ -1356,6 +1363,7 @@ create_completion_row(GtkBox* results, char* command, char* description, gboolea
   gtk_container_add(GTK_CONTAINER(row), GTK_WIDGET(col));
 
   gtk_box_pack_start(results, GTK_WIDGET(row), FALSE, FALSE, 0);
+  gtk_widget_show_all(GTK_WIDGET(row));
 
   return row;
 }
@@ -1804,6 +1812,15 @@ sc_toggle_sourcecode(Argument* argument)
 }
 
 void
+sc_toggle_tabbar(Argument* argument)
+{
+  if(GTK_WIDGET_VISIBLE(GTK_WIDGET(Jumanji.UI.tabbar)))
+    gtk_widget_hide(GTK_WIDGET(Jumanji.UI.tabbar));
+  else
+    gtk_widget_show(GTK_WIDGET(Jumanji.UI.tabbar));
+}
+
+void
 sc_quit(Argument* argument)
 {
   cb_destroy(NULL, NULL);
@@ -2041,7 +2058,7 @@ isc_completion(Argument* argument)
     }
 
     gtk_box_pack_start(Jumanji.UI.box, GTK_WIDGET(results), FALSE, FALSE, 0);
-    gtk_widget_show_all(GTK_WIDGET(Jumanji.UI.window));
+    gtk_widget_show(GTK_WIDGET(results));
 
     current_item = (argument->n == NEXT) ? -1 : 0;
   }
@@ -3480,6 +3497,8 @@ int main(int argc, char* argv[])
 
   if(!show_statusbar)
     gtk_widget_hide(GTK_WIDGET(Jumanji.UI.statusbar));
+  if(!show_tabbar)
+    gtk_widget_hide(GTK_WIDGET(Jumanji.UI.tabbar));
 
   gtk_main();
 
