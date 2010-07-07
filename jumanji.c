@@ -199,7 +199,7 @@ typedef struct
   void* variable;
   char* webkitvar;
   char  type;
-  gboolean reinit;
+  gboolean init_only;
   gboolean reload;
   char* description;
 } Setting;
@@ -327,7 +327,6 @@ void init_data();
 void init_directories();
 void init_jumanji();
 void init_keylist();
-void init_look();
 void init_settings();
 void notify(int, char*);
 void new_window(char*);
@@ -630,82 +629,6 @@ eval_marker(int id)
 }
 
 void
-init_look()
-{
-  /* parse  */
-  gdk_color_parse(default_fgcolor,        &(Jumanji.Style.default_fg));
-  gdk_color_parse(default_bgcolor,        &(Jumanji.Style.default_bg));
-  gdk_color_parse(inputbar_fgcolor,       &(Jumanji.Style.inputbar_fg));
-  gdk_color_parse(inputbar_bgcolor,       &(Jumanji.Style.inputbar_bg));
-  gdk_color_parse(statusbar_fgcolor,      &(Jumanji.Style.statusbar_fg));
-  gdk_color_parse(statusbar_bgcolor,      &(Jumanji.Style.statusbar_bg));
-  gdk_color_parse(statusbar_ssl_fgcolor,  &(Jumanji.Style.statusbar_ssl_fg));
-  gdk_color_parse(statusbar_ssl_bgcolor,  &(Jumanji.Style.statusbar_ssl_bg));
-  gdk_color_parse(tabbar_fgcolor,         &(Jumanji.Style.tabbar_fg));
-  gdk_color_parse(tabbar_bgcolor,         &(Jumanji.Style.tabbar_bg));
-  gdk_color_parse(tabbar_focus_fgcolor,   &(Jumanji.Style.tabbar_focus_fg));
-  gdk_color_parse(tabbar_focus_bgcolor,   &(Jumanji.Style.tabbar_focus_bg));
-  gdk_color_parse(tabbar_separator_color, &(Jumanji.Style.tabbar_separator));
-  gdk_color_parse(completion_fgcolor,     &(Jumanji.Style.completion_fg));
-  gdk_color_parse(completion_bgcolor,     &(Jumanji.Style.completion_bg));
-  gdk_color_parse(completion_g_fgcolor,   &(Jumanji.Style.completion_g_fg));
-  gdk_color_parse(completion_g_fgcolor,   &(Jumanji.Style.completion_g_fg));
-  gdk_color_parse(completion_hl_fgcolor,  &(Jumanji.Style.completion_hl_fg));
-  gdk_color_parse(completion_hl_bgcolor,  &(Jumanji.Style.completion_hl_bg));
-  gdk_color_parse(notification_e_fgcolor, &(Jumanji.Style.notification_e_fg));
-  gdk_color_parse(notification_e_bgcolor, &(Jumanji.Style.notification_e_bg));
-  gdk_color_parse(notification_w_fgcolor, &(Jumanji.Style.notification_w_fg));
-  gdk_color_parse(notification_w_bgcolor, &(Jumanji.Style.notification_w_bg));
-  Jumanji.Style.font = pango_font_description_from_string(font);
-
-  /* statusbar */
-  gchar* link = NULL;
-  if(gtk_notebook_get_n_pages(Jumanji.UI.view) < 0)
-    link = (gchar*) webkit_web_view_get_uri(GET_CURRENT_TAB());
-  gboolean ssl = link ? g_str_has_prefix(link, "https://") : FALSE;
-
-  if(ssl)
-  {
-    gtk_widget_modify_bg(GTK_WIDGET(Jumanji.UI.statusbar), GTK_STATE_NORMAL, &(Jumanji.Style.statusbar_bg));
-
-    gtk_widget_modify_fg(GTK_WIDGET(Jumanji.Statusbar.text),     GTK_STATE_NORMAL, &(Jumanji.Style.statusbar_fg));
-    gtk_widget_modify_fg(GTK_WIDGET(Jumanji.Statusbar.buffer),   GTK_STATE_NORMAL, &(Jumanji.Style.statusbar_fg));
-    gtk_widget_modify_fg(GTK_WIDGET(Jumanji.Statusbar.tabs),     GTK_STATE_NORMAL, &(Jumanji.Style.statusbar_fg));
-    gtk_widget_modify_fg(GTK_WIDGET(Jumanji.Statusbar.position), GTK_STATE_NORMAL, &(Jumanji.Style.statusbar_fg));
-  }
-  else
-  {
-    gtk_widget_modify_bg(GTK_WIDGET(Jumanji.UI.statusbar), GTK_STATE_NORMAL, &(Jumanji.Style.statusbar_ssl_bg));
-
-    gtk_widget_modify_fg(GTK_WIDGET(Jumanji.Statusbar.text),     GTK_STATE_NORMAL, &(Jumanji.Style.statusbar_ssl_fg));
-    gtk_widget_modify_fg(GTK_WIDGET(Jumanji.Statusbar.buffer),   GTK_STATE_NORMAL, &(Jumanji.Style.statusbar_ssl_fg));
-    gtk_widget_modify_fg(GTK_WIDGET(Jumanji.Statusbar.tabs),     GTK_STATE_NORMAL, &(Jumanji.Style.statusbar_ssl_fg));
-    gtk_widget_modify_fg(GTK_WIDGET(Jumanji.Statusbar.position), GTK_STATE_NORMAL, &(Jumanji.Style.statusbar_ssl_fg));
-  }
-
-  gtk_widget_modify_font(GTK_WIDGET(Jumanji.Statusbar.text),     Jumanji.Style.font);
-  gtk_widget_modify_font(GTK_WIDGET(Jumanji.Statusbar.buffer),   Jumanji.Style.font);
-  gtk_widget_modify_font(GTK_WIDGET(Jumanji.Statusbar.tabs),     Jumanji.Style.font);
-  gtk_widget_modify_font(GTK_WIDGET(Jumanji.Statusbar.position), Jumanji.Style.font);
-
-  if(show_statusbar)
-    gtk_widget_show(GTK_WIDGET(Jumanji.UI.statusbar));
-  else
-    gtk_widget_hide(GTK_WIDGET(Jumanji.UI.statusbar));
-
-  /* inputbar */
-  gtk_widget_modify_base(GTK_WIDGET(Jumanji.UI.inputbar), GTK_STATE_NORMAL, &(Jumanji.Style.inputbar_bg));
-  gtk_widget_modify_text(GTK_WIDGET(Jumanji.UI.inputbar), GTK_STATE_NORMAL, &(Jumanji.Style.inputbar_fg));
-  gtk_widget_modify_font(GTK_WIDGET(Jumanji.UI.inputbar),                     Jumanji.Style.font);
-
-  /* tabbar */
-  if(show_tabbar)
-    gtk_widget_show(GTK_WIDGET(Jumanji.UI.tabbar));
-  else
-    gtk_widget_hide(GTK_WIDGET(Jumanji.UI.tabbar));
-}
-
-void
 init_data()
 {
   /* read bookmarks */
@@ -809,7 +732,53 @@ init_keylist()
 void
 init_settings()
 {
+  /* parse colors */
+  gdk_color_parse(default_fgcolor,        &(Jumanji.Style.default_fg));
+  gdk_color_parse(default_bgcolor,        &(Jumanji.Style.default_bg));
+  gdk_color_parse(inputbar_fgcolor,       &(Jumanji.Style.inputbar_fg));
+  gdk_color_parse(inputbar_bgcolor,       &(Jumanji.Style.inputbar_bg));
+  gdk_color_parse(statusbar_fgcolor,      &(Jumanji.Style.statusbar_fg));
+  gdk_color_parse(statusbar_bgcolor,      &(Jumanji.Style.statusbar_bg));
+  gdk_color_parse(statusbar_ssl_fgcolor,  &(Jumanji.Style.statusbar_ssl_fg));
+  gdk_color_parse(statusbar_ssl_bgcolor,  &(Jumanji.Style.statusbar_ssl_bg));
+  gdk_color_parse(tabbar_fgcolor,         &(Jumanji.Style.tabbar_fg));
+  gdk_color_parse(tabbar_bgcolor,         &(Jumanji.Style.tabbar_bg));
+  gdk_color_parse(tabbar_focus_fgcolor,   &(Jumanji.Style.tabbar_focus_fg));
+  gdk_color_parse(tabbar_focus_bgcolor,   &(Jumanji.Style.tabbar_focus_bg));
+  gdk_color_parse(tabbar_separator_color, &(Jumanji.Style.tabbar_separator));
+  gdk_color_parse(completion_fgcolor,     &(Jumanji.Style.completion_fg));
+  gdk_color_parse(completion_bgcolor,     &(Jumanji.Style.completion_bg));
+  gdk_color_parse(completion_g_fgcolor,   &(Jumanji.Style.completion_g_fg));
+  gdk_color_parse(completion_g_fgcolor,   &(Jumanji.Style.completion_g_fg));
+  gdk_color_parse(completion_hl_fgcolor,  &(Jumanji.Style.completion_hl_fg));
+  gdk_color_parse(completion_hl_bgcolor,  &(Jumanji.Style.completion_hl_bg));
+  gdk_color_parse(notification_e_fgcolor, &(Jumanji.Style.notification_e_fg));
+  gdk_color_parse(notification_e_bgcolor, &(Jumanji.Style.notification_e_bg));
+  gdk_color_parse(notification_w_fgcolor, &(Jumanji.Style.notification_w_fg));
+  gdk_color_parse(notification_w_bgcolor, &(Jumanji.Style.notification_w_bg));
+  Jumanji.Style.font = pango_font_description_from_string(font);
+
+  /* statusbar */
+  gtk_widget_modify_bg(GTK_WIDGET(Jumanji.UI.statusbar),       GTK_STATE_NORMAL, &(Jumanji.Style.statusbar_ssl_bg));
+  gtk_widget_modify_fg(GTK_WIDGET(Jumanji.Statusbar.text),     GTK_STATE_NORMAL, &(Jumanji.Style.statusbar_ssl_fg));
+  gtk_widget_modify_fg(GTK_WIDGET(Jumanji.Statusbar.buffer),   GTK_STATE_NORMAL, &(Jumanji.Style.statusbar_ssl_fg));
+  gtk_widget_modify_fg(GTK_WIDGET(Jumanji.Statusbar.tabs),     GTK_STATE_NORMAL, &(Jumanji.Style.statusbar_ssl_fg));
+  gtk_widget_modify_fg(GTK_WIDGET(Jumanji.Statusbar.position), GTK_STATE_NORMAL, &(Jumanji.Style.statusbar_ssl_fg));
+
+  gtk_widget_modify_font(GTK_WIDGET(Jumanji.Statusbar.text),     Jumanji.Style.font);
+  gtk_widget_modify_font(GTK_WIDGET(Jumanji.Statusbar.buffer),   Jumanji.Style.font);
+  gtk_widget_modify_font(GTK_WIDGET(Jumanji.Statusbar.tabs),     Jumanji.Style.font);
+  gtk_widget_modify_font(GTK_WIDGET(Jumanji.Statusbar.position), Jumanji.Style.font);
+
+  /* inputbar */
+  gtk_widget_modify_base(GTK_WIDGET(Jumanji.UI.inputbar), GTK_STATE_NORMAL, &(Jumanji.Style.inputbar_bg));
+  gtk_widget_modify_text(GTK_WIDGET(Jumanji.UI.inputbar), GTK_STATE_NORMAL, &(Jumanji.Style.inputbar_fg));
+  gtk_widget_modify_font(GTK_WIDGET(Jumanji.UI.inputbar),                     Jumanji.Style.font);
+
+  /* set window size */
   gtk_window_set_default_size(GTK_WINDOW(Jumanji.UI.window), default_width, default_height);
+
+  /* set proxy */
   sc_toggle_proxy(NULL);
 }
 
@@ -2709,16 +2678,23 @@ cmd_set(int argc, char** argv)
           g_object_set(G_OBJECT(browser_settings), settings[i].webkitvar, value, NULL);
       }
 
-      /* re-init */
-      if(settings[i].reinit)
-        init_look();
-
       /* reload */
       if(settings[i].reload)
         if(gtk_notebook_get_current_page(Jumanji.UI.view) >= 0)
           webkit_web_view_reload(GET_CURRENT_TAB());
     }
   }
+
+  /* check specific settings */
+  if(show_statusbar)
+    gtk_widget_show(GTK_WIDGET(Jumanji.UI.statusbar));
+  else
+    gtk_widget_hide(GTK_WIDGET(Jumanji.UI.statusbar));
+
+  if(show_tabbar)
+    gtk_widget_show(GTK_WIDGET(Jumanji.UI.tabbar));
+  else
+    gtk_widget_hide(GTK_WIDGET(Jumanji.UI.tabbar));
 
   update_status();
   return TRUE;
@@ -2879,7 +2855,8 @@ cc_set(char* input)
   for(i = 0; i < LENGTH(settings); i++)
   {
     if( (input_length <= strlen(settings[i].name)) &&
-          !strncmp(input, settings[i].name, input_length) )
+        !strncmp(input, settings[i].name, input_length) &&
+        !settings[i].init_only)
     {
       completion_group_add_element(group, settings[i].name, settings[i].description);
     }
@@ -3537,7 +3514,6 @@ int main(int argc, char* argv[])
   init_keylist();
   read_configuration();
   init_settings();
-  init_look();
 
   /* init autosave */
   if(auto_save_interval)
