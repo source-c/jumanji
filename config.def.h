@@ -57,6 +57,7 @@ char* notification_w_fgcolor = "#000000";
 /* additional settings */
 gboolean show_scrollbars = FALSE;
 gboolean show_statusbar  = TRUE;
+gboolean show_tabbar     = TRUE;
 gboolean next_to_current = TRUE;
 
 #define GDK_COSHIFT_MASK GDK_CONTROL_MASK | GDK_SHIFT_MASK
@@ -110,6 +111,7 @@ Shortcut shortcuts[] = {
   {0,                  GDK_N,             sc_search,            NORMAL,              { BACKWARD } },
   {GDK_CONTROL_MASK,   GDK_p,             sc_toggle_proxy,      NORMAL,              {0} },
   {GDK_CONTROL_MASK,   GDK_m,             sc_toggle_statusbar,  NORMAL,              {0} },
+  {GDK_CONTROL_MASK,   GDK_n,             sc_toggle_tabbar,     NORMAL,              {0} },
   {GDK_CONTROL_MASK,   GDK_s,             sc_toggle_sourcecode, NORMAL,              {0} },
   {GDK_CONTROL_MASK,   GDK_q,             sc_quit,              ALL,                 {0} },
   {0,                  GDK_y,             sc_yank,              NORMAL,              {0} },
@@ -247,7 +249,7 @@ Setting settings[] = {
   {"scroll_step",            &(scroll_step),            NULL,                           'f',  1, 0, "Scroll step"},
   {"scrollbars",             &(show_scrollbars),        NULL,                           'b',  1, 0, "Show scrollbars"},
   {"serif_font",             NULL,                      "serif-font-family",            's',  0, 1, "Serif font family"},
-  {"show_statusbar",         &(show_statusbar),         NULL,                           'b',  1, 0, "Show statusbar"},
+  {"statusbar",              &(show_statusbar),         NULL,                           'b',  1, 0, "Show statusbar"},
   {"spell_checking",         NULL,                      "enable-spell-checking",        'b',  0, 1, "Enable spell checking while typing"},
   {"spell_checking_lang",    NULL,                      "spell-checking-languages",     's',  0, 1, "Spell checking languages"},
   {"statusbar_bgcolor",      &(statusbar_bgcolor),      NULL,                           's',  1, 0, "Statusbar background color"},
@@ -255,6 +257,7 @@ Setting settings[] = {
   {"statusbar_ssl_fgcolor",  &(statusbar_ssl_bgcolor),  NULL,                           's',  1, 0, "Statusbar (SSL) background color"},
   {"statusbar_ssl_fgcolor",  &(statusbar_ssl_fgcolor),  NULL,                           's',  1, 0, "Statusbar (SSL) foreground color"},
   {"stylesheet",             NULL,                      "user-stylesheet-uri",          's',  0, 1, "Custom stylesheet"},
+  {"tabbar",                 &(show_tabbar),            NULL,                           'b',  1, 0, "Show tabbar"},
   {"tabbar_bgcolor",         &(tabbar_bgcolor),         NULL,                           's',  1, 0, "Tabbar background color"},
   {"tabbar_fgcolor",         &(tabbar_fgcolor),         NULL,                           's',  1, 0, "Tabbar foreground color"},
   {"tabbar_focus_bgcolor",   &(tabbar_focus_bgcolor),   NULL,                           's',  1, 0, "Tabbar (focus) background color"},
