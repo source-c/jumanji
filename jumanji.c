@@ -321,7 +321,7 @@ struct
 void add_marker(int);
 gboolean auto_save(gpointer);
 void change_mode(int);
-void create_tab(char*, gboolean);
+GtkWidget* create_tab(char*, gboolean);
 void eval_marker(int);
 void init_data();
 void init_directories();
@@ -330,6 +330,7 @@ void init_keylist();
 void init_look();
 void init_settings();
 void notify(int, char*);
+void new_window(char*);
 void out_of_memory();
 void open_uri(WebKitWebView*, char*);
 void read_configuration();
@@ -413,7 +414,7 @@ gboolean cb_inputbar_activate(GtkEntry*, gpointer);
 gboolean cb_tab_kb_pressed(GtkWidget*, GdkEventKey*, gpointer);
 GtkWidget* cb_wv_block_plugin(WebKitWebView*, gchar*, gchar*, GHashTable*, gpointer);
 gboolean cb_wv_console(WebKitWebView*, char*, int, char*, gpointer);
-gboolean cb_wv_create_web_view(WebKitWebView*, WebKitWebFrame*, gpointer);
+GtkWidget* cb_wv_create_web_view(WebKitWebView*, WebKitWebFrame*, gpointer);
 gboolean cb_wv_download_request(WebKitWebView*, WebKitDownload*, gpointer);
 gboolean cb_wv_event(GtkWidget*, GdkEvent*, gpointer);
 gboolean cb_wv_hover_link(WebKitWebView*, char*, char*, gpointer);
@@ -422,6 +423,7 @@ gboolean cb_wv_notify_progress(WebKitWebView*, GParamSpec*, gpointer);
 gboolean cb_wv_notify_title(WebKitWebView*, GParamSpec*, gpointer);
 gboolean cb_wv_nav_policy_decision(WebKitWebView*, WebKitWebFrame*, WebKitNetworkRequest*, WebKitWebNavigationAction*, WebKitWebPolicyDecision*, gpointer);
 gboolean cb_wv_unblock_plugin(GtkWidget*, GdkEventButton*, gpointer);
+gboolean cb_wv_window_policy_decision(WebKitWebView*, WebKitWebFrame*, WebKitNetworkRequest*, WebKitWebNavigationAction*, WebKitWebPolicyDecision*, gpointer);
 
 /* configuration */
 #include "config.h"
@@ -511,14 +513,14 @@ change_mode(int mode)
   notify(DEFAULT, mode_text);
 }
 
-void
+GtkWidget*
 create_tab(char* uri, gboolean background)
 {
   GtkWidget *tab = gtk_scrolled_window_new(NULL, NULL);
   GtkWidget *wv  = webkit_web_view_new();
 
   if(!tab || !wv)
-    return;
+    return NULL;
 
   int number_of_tabs = gtk_notebook_get_current_page(Jumanji.UI.view);
   int position       = (next_to_current) ? (number_of_tabs + 1) : -1;
@@ -542,7 +544,7 @@ create_tab(char* uri, gboolean background)
   g_signal_connect(G_OBJECT(wv),  "hovering-over-link",                   G_CALLBACK(cb_wv_hover_link),               NULL);
   g_signal_connect(G_OBJECT(wv),  "mime-type-policy-decision-requested",  G_CALLBACK(cb_wv_mimetype_policy_decision), NULL);
   g_signal_connect(G_OBJECT(wv),  "navigation-policy-decision-requested", G_CALLBACK(cb_wv_nav_policy_decision),      NULL);
-  g_signal_connect(G_OBJECT(wv),  "new-window-policy-decision-requested", G_CALLBACK(cb_wv_nav_policy_decision),      NULL);
+  g_signal_connect(G_OBJECT(wv),  "new-window-policy-decision-requested", G_CALLBACK(cb_wv_window_policy_decision),   NULL);
   g_signal_connect(G_OBJECT(wv),  "notify::progress",                     G_CALLBACK(cb_wv_notify_progress),          NULL);
   g_signal_connect(G_OBJECT(wv),  "notify::title",                        G_CALLBACK(cb_wv_notify_title),             NULL);
   g_signal_connect(G_OBJECT(tab), "key-press-event",                      G_CALLBACK(cb_tab_kb_pressed),              NULL);
@@ -591,6 +593,8 @@ create_tab(char* uri, gboolean background)
   gtk_widget_grab_focus(GTK_WIDGET(GET_CURRENT_TAB_WIDGET()));
 
   update_status();
+
+  return wv;
 }
 
 
@@ -932,6 +936,31 @@ init_jumanji()
 
   /* libsoup session */
   Jumanji.Soup.session = webkit_get_default_session();
+}
+
+void
+new_window(char* uri)
+{
+  if(!uri)
+    return;
+
+  char* nargv[6];
+  if(Jumanji.UI.embed)
+  {
+    nargv[0] = *(Jumanji.Global.arguments);
+    nargv[1] = "-e";
+    nargv[2] = Jumanji.UI.winid;
+    nargv[3] = uri;
+    nargv[4] = NULL;
+  }
+  else
+  {
+    nargv[0] = *(Jumanji.Global.arguments);
+    nargv[1] = uri;
+    nargv[2] = NULL;
+  }
+
+  g_spawn_async(NULL, nargv, NULL, G_SPAWN_SEARCH_PATH, NULL, NULL, NULL, NULL);
 }
 
 void
@@ -2731,23 +2760,7 @@ cmd_winopen(int argc, char** argv)
     uri = g_string_append(uri, argv[i]);
   }
 
-  char* nargv[6];
-  if(Jumanji.UI.embed)
-  {
-    nargv[0] = *(Jumanji.Global.arguments);
-    nargv[1] = "-e";
-    nargv[2] = Jumanji.UI.winid;
-    nargv[3] = uri->str;
-    nargv[4] = NULL;
-  }
-  else
-  {
-    nargv[0] = *(Jumanji.Global.arguments);
-    nargv[1] = uri->str;
-    nargv[2] = NULL;
-  }
-
-  g_spawn_async(NULL, nargv, NULL, G_SPAWN_SEARCH_PATH, NULL, NULL, NULL, NULL);
+  new_window(uri->str);
 
   g_string_free(uri, FALSE);
 
@@ -3274,13 +3287,13 @@ cb_wv_console(WebKitWebView* wv, char* message, int line, char* source, gpointer
   return TRUE;
 }
 
-gboolean
+GtkWidget*
 cb_wv_create_web_view(WebKitWebView* wv, WebKitWebFrame* frame, gpointer data)
 {
   char* uri = (char*) webkit_web_view_get_uri(wv);
-  create_tab(uri, TRUE);
+  GtkWidget* tab = create_tab(uri, TRUE);
 
-  return TRUE;
+  return tab;
 }
 
 gboolean
@@ -3441,6 +3454,20 @@ cb_wv_unblock_plugin(GtkWidget* widget, GdkEventButton* event, gpointer data)
   webkit_web_view_reload(WEBKIT_WEB_VIEW(parent));
 
   free(plugin);
+
+  return FALSE;
+}
+
+gboolean
+cb_wv_window_policy_decision(WebKitWebView* wv, WebKitWebFrame* frame, WebKitNetworkRequest* request,
+    WebKitWebNavigationAction* action, WebKitWebPolicyDecision* decision, gpointer data)
+{
+  if(webkit_web_navigation_action_get_reason(action) == WEBKIT_WEB_NAVIGATION_REASON_LINK_CLICKED)
+  {
+    webkit_web_policy_decision_ignore(decision);
+    new_window((char*) webkit_network_request_get_uri(request));
+    return TRUE;
+  }
 
   return FALSE;
 }
