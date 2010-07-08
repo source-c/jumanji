@@ -1626,7 +1626,7 @@ sc_follow_link(Argument* argument)
         if(open_mode == -1)
           open_uri(GET_CURRENT_TAB(), value + 5);
         else
-          create_tab(value + 5, FALSE);
+          create_tab(value + 5, TRUE);
       }
 
       sc_abort(NULL);
@@ -1650,7 +1650,7 @@ sc_follow_link(Argument* argument)
           if(open_mode == -1)
             open_uri(GET_CURRENT_TAB(), value + 5);
           else
-            create_tab(value + 5, FALSE);
+            create_tab(value + 5, TRUE);
         }
 
         sc_abort(NULL);
