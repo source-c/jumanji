@@ -350,7 +350,6 @@ GDKKey gdk_keys[] = {
   {"<Return>",    GDK_Return},
   {"<Right>",     GDK_Right},
   {"<Space>",     GDK_space},
-  {"<Super>",     GDK_Super_L},
   {"<Tab>",       GDK_Tab},
   {"<Up>",        GDK_Up},
 };
