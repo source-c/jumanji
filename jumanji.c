@@ -754,7 +754,7 @@ init_settings()
   gdk_color_parse(completion_fgcolor,     &(Jumanji.Style.completion_fg));
   gdk_color_parse(completion_bgcolor,     &(Jumanji.Style.completion_bg));
   gdk_color_parse(completion_g_fgcolor,   &(Jumanji.Style.completion_g_fg));
-  gdk_color_parse(completion_g_fgcolor,   &(Jumanji.Style.completion_g_fg));
+  gdk_color_parse(completion_g_bgcolor,   &(Jumanji.Style.completion_g_bg));
   gdk_color_parse(completion_hl_fgcolor,  &(Jumanji.Style.completion_hl_fg));
   gdk_color_parse(completion_hl_bgcolor,  &(Jumanji.Style.completion_hl_bg));
   gdk_color_parse(notification_e_fgcolor, &(Jumanji.Style.notification_e_fg));
