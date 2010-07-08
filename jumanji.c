@@ -426,6 +426,7 @@ gboolean cb_wv_notify_title(WebKitWebView*, GParamSpec*, gpointer);
 gboolean cb_wv_nav_policy_decision(WebKitWebView*, WebKitWebFrame*, WebKitNetworkRequest*, WebKitWebNavigationAction*, WebKitWebPolicyDecision*, gpointer);
 gboolean cb_wv_unblock_plugin(GtkWidget*, GdkEventButton*, gpointer);
 gboolean cb_wv_window_policy_decision(WebKitWebView*, WebKitWebFrame*, WebKitNetworkRequest*, WebKitWebNavigationAction*, WebKitWebPolicyDecision*, gpointer);
+gboolean cb_wv_window_object_cleared(WebKitWebView*, WebKitWebFrame*, gpointer, gpointer, gpointer);
 
 /* configuration */
 #include "config.h"
@@ -549,6 +550,7 @@ create_tab(char* uri, gboolean background)
   g_signal_connect(G_OBJECT(wv),  "new-window-policy-decision-requested", G_CALLBACK(cb_wv_window_policy_decision),   NULL);
   g_signal_connect(G_OBJECT(wv),  "notify::progress",                     G_CALLBACK(cb_wv_notify_progress),          NULL);
   g_signal_connect(G_OBJECT(wv),  "notify::title",                        G_CALLBACK(cb_wv_notify_title),             NULL);
+  g_signal_connect(G_OBJECT(wv),  "window-object-cleared",                G_CALLBACK(cb_wv_window_object_cleared),    NULL);
   g_signal_connect(G_OBJECT(tab), "key-press-event",                      G_CALLBACK(cb_tab_kb_pressed),              NULL);
 
   /* apply browser setting */
@@ -2717,7 +2719,6 @@ gboolean
 cmd_stop(int argc, char** argv)
 {
   webkit_web_view_stop_loading(GET_CURRENT_TAB());
-  load_all_scripts();
   return TRUE;
 }
 
@@ -3441,10 +3442,6 @@ cb_wv_notify_progress(WebKitWebView* wv, GParamSpec* pspec, gpointer data)
   if(wv == GET_CURRENT_TAB())
     update_status();
 
-  /* load all added scripts */
-  if(webkit_web_view_get_progress(wv) == 1.0)
-    load_all_scripts();
-
   return TRUE;
 }
 
@@ -3492,6 +3489,14 @@ cb_wv_window_policy_decision(WebKitWebView* wv, WebKitWebFrame* frame, WebKitNet
   }
 
   return FALSE;
+}
+
+gboolean
+cb_wv_window_object_cleared(WebKitWebView* wv, WebKitWebFrame* frame, gpointer context, gpointer window_object, gpointer data)
+{
+  /* load all added scripts */
+  load_all_scripts();
+  return TRUE;
 }
 
 /* main function */
