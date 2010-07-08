@@ -1,4 +1,4 @@
-/* settings */
+2/* settings */
 int   default_width      = 800;
 int   default_height     = 600;
 float zoom_step          = 10;
