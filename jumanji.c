@@ -328,6 +328,7 @@ void init_directories();
 void init_jumanji();
 void init_keylist();
 void init_settings();
+void load_all_scripts();
 void notify(int, char*);
 void new_window(char*);
 void out_of_memory();
@@ -781,6 +782,17 @@ init_settings()
 
   /* set proxy */
   sc_toggle_proxy(NULL);
+}
+
+void
+load_all_scripts()
+{
+  ScriptList* sl = Jumanji.Global.scripts;
+  while(sl)
+  {
+    run_script(sl->content, NULL, NULL);
+    sl = sl->next;
+  }
 }
 
 void notify(int level, char* message)
@@ -2705,6 +2717,7 @@ gboolean
 cmd_stop(int argc, char** argv)
 {
   webkit_web_view_stop_loading(GET_CURRENT_TAB());
+  load_all_scripts();
   return TRUE;
 }
 
@@ -3430,14 +3443,7 @@ cb_wv_notify_progress(WebKitWebView* wv, GParamSpec* pspec, gpointer data)
 
   /* load all added scripts */
   if(webkit_web_view_get_progress(wv) == 1.0)
-  {
-    ScriptList* sl = Jumanji.Global.scripts;
-    while(sl)
-    {
-      run_script(sl->content, NULL, NULL);
-      sl = sl->next;
-    }
-  }
+    load_all_scripts();
 
   return TRUE;
 }
