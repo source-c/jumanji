@@ -2953,7 +2953,7 @@ bcmd_zoom(char* buffer, Argument* argument)
   else if(argument->n == ZOOM_OUT)
     webkit_web_view_set_zoom_level(GET_CURRENT_TAB(), zoom_level - (float) (zoom_step / 100));
   else if(argument->n == ZOOM_ORIGINAL)
-    webkit_web_view_set_zoom_level(GET_CURRENT_TAB(), 100.0f);
+    webkit_web_view_set_zoom_level(GET_CURRENT_TAB(), 1.0f);
   else if(argument->n == SPECIFIC)
   {
     char* number = g_strndup(buffer, strlen(buffer) - 1);
