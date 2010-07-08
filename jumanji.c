@@ -401,6 +401,7 @@ Completion* cc_set(char*);
 /* buffer command declarations */
 void bcmd_goto(char*, Argument*);
 void bcmd_nav_tabs(char*, Argument*);
+void bcmd_quit(char*, Argument*);
 void bcmd_scroll(char*, Argument*);
 void bcmd_zoom(char*, Argument*);
 
@@ -2914,6 +2915,12 @@ bcmd_nav_tabs(char* buffer, Argument* argument)
 
   gtk_notebook_set_current_page(Jumanji.UI.view, new_tab);
   update_status();
+}
+
+void
+bcmd_quit(char* buffer, Argument* argument)
+{
+  cmd_quitall(0, NULL);
 }
 
 void
