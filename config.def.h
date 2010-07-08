@@ -218,7 +218,7 @@ Setting settings[] = {
   {"default_fgcolor",        &(default_fgcolor),        NULL,                           's',  1, 0, "Default foreground color"},
   {"developer_extras",       NULL,                      "enable-developer-extras",      'b',  0, 1, "Enable webkit developer extensions"},
   {"download_dir",           &(download_dir),           NULL,                           's',  0, 0, "The default download directory"},
-  {"downoad_command",        &(download_command),       NULL,                           's',  0, 0, "Command for downloading files"},
+  {"download_command",       &(download_command),       NULL,                           's',  0, 0, "Command for downloading files"},
   {"encoding",               NULL,                      "default-encoding",             's',  0, 1, "The default encoding to display text"},
   {"fantasy_font",           NULL,                      "fantasy-font-family",          's',  0, 1, "The default fantasy font family"},
   {"font",                   &(font),                   NULL,                           's',  1, 0, "The used font" },
