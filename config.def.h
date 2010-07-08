@@ -184,6 +184,7 @@ BufferCommand buffer_commands[] = {
   {"^gT$",         bcmd_nav_tabs,  { PREVIOUS } },
   {"^[0-9]+gt$",   bcmd_nav_tabs,  { SPECIFIC } },
   {"^[0-9]+gT$",   bcmd_nav_tabs,  { SPECIFIC } },
+  {"^ZZ$",         bcmd_quit,      {0} },
   {"^[0-9]+%$",    bcmd_scroll,    {0} },
   {"^[0-9]+G$",    bcmd_scroll,    {0} },
   {"^zI$",         bcmd_zoom,      { ZOOM_IN } },
