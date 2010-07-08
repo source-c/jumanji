@@ -388,6 +388,7 @@ gboolean cmd_quitall(int, char**);
 gboolean cmd_script(int, char**);
 gboolean cmd_search_engine(int, char**);
 gboolean cmd_set(int, char**);
+gboolean cmd_stop(int, char**);
 gboolean cmd_tabopen(int, char**);
 gboolean cmd_winopen(int, char**);
 gboolean cmd_write(int, char**);
@@ -2697,6 +2698,13 @@ cmd_set(int argc, char** argv)
     gtk_widget_hide(GTK_WIDGET(Jumanji.UI.tabbar));
 
   update_status();
+  return TRUE;
+}
+
+gboolean
+cmd_stop(int argc, char** argv)
+{
+  webkit_web_view_stop_loading(GET_CURRENT_TAB());
   return TRUE;
 }
 
