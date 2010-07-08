@@ -1,4 +1,4 @@
-2/* settings */
+/* settings */
 int   default_width      = 800;
 int   default_height     = 600;
 float zoom_step          = 10;
@@ -167,8 +167,9 @@ Command commands[] = {
   {"plugin",    0,              cmd_plugintype,      0,            "Allow plugin type" },
   {"quit",      "q",            cmd_quit,            0,            "Quit current tab" },
   {"quitall",   0,              cmd_quitall,         0,            "Quit jumanji" },
-  {"set",       "s",            cmd_set,             cc_set,       "Set an option" },
   {"script",    0,              cmd_script,          0,            "Load a javascript file" },
+  {"set",       "s",            cmd_set,             cc_set,       "Set an option" },
+  {"stop",      "st",           cmd_stop,            0,            "Stop loading the current page" },
   {"tabopen",   "t",            cmd_tabopen,         cc_open,      "Open URI in a new tab" },
   {"winopen",   "w",            cmd_winopen,         cc_open,      "Open URI in a new window" },
   {"write",     "w",            cmd_write,           0,            "Write bookmark and history file" },
