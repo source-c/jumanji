@@ -10,6 +10,7 @@
 #include <libgen.h>
 #include <math.h>
 #include <libsoup/soup.h>
+#include <unique/unique.h>
 
 #include <gtk/gtk.h>
 #include <gdk/gdkkeysyms.h>
@@ -427,6 +428,7 @@ void bcmd_zoom(char*, Argument*);
 gboolean scmd_search(char*, Argument*);
 
 /* callback declarations */
+UniqueResponse cb_app_message_received(UniqueApp*, gint, UniqueMessageData*, guint, gpointer);
 gboolean cb_blank();
 gboolean cb_destroy(GtkWidget*, gpointer);
 gboolean cb_inputbar_kb_pressed(GtkWidget*, GdkEventKey*, gpointer);
@@ -538,6 +540,9 @@ change_mode(int mode)
 GtkWidget*
 create_tab(char* uri, gboolean background)
 {
+  if(!uri)
+    return NULL;
+
   GtkWidget *tab = gtk_scrolled_window_new(NULL, NULL);
   GtkWidget *wv  = webkit_web_view_new();
 
@@ -3136,6 +3141,15 @@ scmd_search(char* input, Argument* argument)
 }
 
 /* callback implementation */
+UniqueResponse
+cb_app_message_received(UniqueApp* application, gint command, UniqueMessageData* message_data, guint time, gpointer data)
+{
+  if(message_data)
+    create_tab(unique_message_data_get_text(message_data), FALSE);
+
+  return UNIQUE_RESPONSE_OK;
+}
+
 gboolean
 cb_blank()
 {
@@ -3704,6 +3718,29 @@ int main(int argc, char* argv[])
   init_keylist();
   read_configuration();
 
+  /* single instance */
+  if(single_instance)
+  {
+    UniqueApp* application = unique_app_new_with_commands("pwmt.jumanji", NULL, "open", 1, NULL);
+
+    if(unique_app_is_running(application))
+    {
+      for(; i < argc; i++)
+      {
+        UniqueMessageData* data = unique_message_data_new();
+        unique_message_data_set_text(data, argv[i], strlen(argv[i]));
+
+        unique_app_send_message(application, 1, data);
+        unique_message_data_free(data);
+      }
+
+      g_object_unref(application);
+      return 0;
+    }
+    else
+      g_signal_connect(G_OBJECT(application), "message-received", G_CALLBACK(cb_app_message_received), NULL);
+  }
+
   /* init jumanji and read configuration */
   init_ui();
   init_settings();
@@ -3717,7 +3754,8 @@ int main(int argc, char* argv[])
   if(argc < 2)
     create_tab(home_page, FALSE);
   else
-    create_tab(argv[i], FALSE);
+    for(; i < argc; i++)
+      create_tab(argv[i], FALSE);
 
   gtk_widget_show_all(GTK_WIDGET(Jumanji.UI.window));
   gtk_widget_grab_focus(GTK_WIDGET(GET_CURRENT_TAB_WIDGET()));
