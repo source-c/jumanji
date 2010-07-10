@@ -6,9 +6,9 @@ on the libwebkit web content engine and the gtk+ toolkit.
 Requirements
 ------------
 gtk2 (2.18.6)
-glib2 (2.22.4)
 libsoup (2.30.2)
 libwebkit (1.2.1)
+libunique (1.1.6)
 
 Configuration
 -------------
