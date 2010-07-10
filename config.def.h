@@ -160,6 +160,7 @@ Mouse mouse[] = {
 Command commands[] = {
   /* command,   abbreviation,   function,            completion,   description  */
   {"back",      0,              cmd_back,            0,            "Go back in the browser history" },
+  {"bmap",      0,              cmd_bmap,            0,            "Map a buffered command" },
   {"bmark",     "b",            cmd_bookmark,        0,            "Add a bookmark" },
   {"forward",   "f",            cmd_forward,         0,            "Go forward in the browser history" },
   {"map",       "m",            cmd_map,             0,            "Map a key sequence" },
@@ -291,6 +292,15 @@ ShortcutName shortcut_names[] = {
   {"quit",              sc_quit},
   {"yank",              sc_yank},
   {"zoom",              sc_zoom},
+};
+
+/* buffer command names */
+BufferCommandName buffer_command_name[] = {
+  {"goto",       bcmd_goto},
+  {"nav_tabs",   bcmd_nav_tabs},
+  {"quit",       bcmd_quit},
+  {"scroll",     bcmd_scroll},
+  {"zoom",       bcmd_zoom},
 };
 
 /* argument names */
