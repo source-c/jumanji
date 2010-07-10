@@ -257,6 +257,7 @@ Setting settings[] = {
   {"scroll_step",            &(scroll_step),            NULL,                           'f',  1, 0, "Scroll step"},
   {"scrollbars",             &(show_scrollbars),        NULL,                           'b',  0, 0, "Show scrollbars"},
   {"serif_font",             NULL,                      "serif-font-family",            's',  0, 1, "Serif font family"},
+  {"single_instance",        &(single_instance),        NULL,                           'b',  0, 0, "Allow only one instance"},
   {"statusbar",              &(show_statusbar),         NULL,                           'b',  0, 0, "Show statusbar"},
   {"spell_checking",         NULL,                      "enable-spell-checking",        'b',  0, 1, "Enable spell checking while typing"},
   {"spell_checking_lang",    NULL,                      "spell-checking-languages",     's',  0, 1, "Spell checking languages"},
