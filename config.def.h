@@ -59,6 +59,7 @@ gboolean show_scrollbars = FALSE;
 gboolean show_statusbar  = TRUE;
 gboolean show_tabbar     = TRUE;
 gboolean next_to_current = TRUE;
+gboolean single_instance = TRUE;
 
 #define GDK_COSHIFT_MASK GDK_CONTROL_MASK | GDK_SHIFT_MASK
 
