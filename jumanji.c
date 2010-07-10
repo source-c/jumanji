@@ -140,6 +140,12 @@ typedef struct
 
 typedef struct
 {
+  char* name;
+  void (*function)(char*, Argument*);
+} BufferCommandName;
+
+typedef struct
+{
   int mask;
   int key;
   void (*function)(Argument*);
@@ -161,6 +167,14 @@ typedef struct
   void (*function)(char*, Argument*);
   Argument argument;
 } BufferCommand;
+
+struct BCList
+{
+  BufferCommand  element;
+  struct BCList *next;
+};
+
+typedef struct BCList BufferCommandList;
 
 typedef struct
 {
@@ -313,6 +327,7 @@ struct
   struct
   {
     ShortcutList  *sclist;
+    BufferCommandList *bcmdlist;
   } Bindings;
 
 } Jumanji;
@@ -379,6 +394,7 @@ void isc_string_manipulation(Argument*);
 
 /* command declarations */
 gboolean cmd_back(int, char**);
+gboolean cmd_bmap(int, char**);
 gboolean cmd_bookmark(int, char**);
 gboolean cmd_forward(int, char**);
 gboolean cmd_map(int, char**);
@@ -712,6 +728,7 @@ init_directories()
 void
 init_keylist()
 {
+  /* init shortcuts */
   ShortcutList* e = NULL;
   ShortcutList* p = NULL;
 
@@ -731,6 +748,27 @@ init_keylist()
       p->next = e;
 
     p = e;
+  }
+
+  /* init buffered commands */
+  BufferCommandList *b = NULL;
+  BufferCommandList *f = NULL;
+
+  for(i = 0; i < LENGTH(buffer_commands); i++)
+  {
+    b = malloc(sizeof(BufferCommandList));
+    if(!b)
+      out_of_memory();
+
+    b->element = buffer_commands[i];
+    b->next    = NULL;
+
+    if(!Jumanji.Bindings.bcmdlist)
+      Jumanji.Bindings.bcmdlist = b;
+    if(f)
+      f->next = b;
+
+    f = b;
   }
 }
 
@@ -842,6 +880,8 @@ init_jumanji()
   Jumanji.Global.history             = NULL;
   Jumanji.Global.allowed_plugins     = NULL;
   Jumanji.Global.allowed_plugin_uris = NULL;
+  Jumanji.Bindings.sclist            = NULL;
+  Jumanji.Bindings.bcmdlist          = NULL;
 
   /* window */
   if(Jumanji.UI.embed)
@@ -1180,6 +1220,8 @@ read_configuration()
           cmd_set(length - 1, tokens + 1);
         else if(!strcmp(tokens[0], "map"))
           cmd_map(length - 1, tokens + 1);
+        else if(!strcmp(tokens[0], "bmap"))
+          cmd_bmap(length - 1, tokens + 1);
         else if(!strcmp(tokens[0], "searchengine"))
           cmd_search_engine(length - 1, tokens + 1);
         else if(!strcmp(tokens[0], "script"))
@@ -2220,6 +2262,90 @@ cmd_back(int argc, char** argv)
 }
 
 gboolean
+cmd_bmap(int argc, char** argv)
+{
+  if(argc < 2)
+    return TRUE;
+
+  /* search for the right buffered command function mapping */
+  int bc_id = -1;
+  int bc_c;
+
+  for(bc_c = 0; bc_c < LENGTH(buffer_command_name); bc_c++)
+  {
+    if(!strcmp(argv[1], buffer_command_name[bc_c].name))
+    {
+      bc_id = bc_c;
+      break;
+    }
+  }
+
+  if(bc_id == -1)
+  {
+    notify(WARNING, "No such buffered command function exists");
+    return FALSE;
+  }
+
+  /* parse argument */
+  Argument arg = {0, 0};
+
+  if(argc >= 3)
+  {
+    int arg_id = -1;
+
+    /* compare argument with given argument names... */
+    int arg_c;
+    for(arg_c = 0; arg_c < LENGTH(argument_names); arg_c++)
+    {
+      if(!strcmp(argv[2], argument_names[arg_c].name))
+      {
+        arg_id = argument_names[arg_c].argument;
+        break;
+      }
+    }
+
+    /* if not, save it do .data */
+    if(arg_id == -1)
+      arg.data = argv[2];
+    else
+      arg.n = arg_id;
+  }
+
+  /* search for existing buffered command to overwrite it */
+  BufferCommandList* bc = Jumanji.Bindings.bcmdlist;
+  while(bc && bc->next != NULL)
+  {
+    if(!strcmp(bc->element.regex, argv[0]))
+    {
+      bc->element.function = buffer_command_name[bc_id].function;
+      bc->element.argument = arg;
+      return TRUE;
+    }
+
+    bc = bc->next;
+  }
+
+  /* create new entry */
+  BufferCommandList* entry = malloc(sizeof(BufferCommandList));
+  if(!entry)
+    out_of_memory();
+
+  entry->element.regex    = argv[0];
+  entry->element.function = buffer_command_name[bc_id].function;
+  entry->element.argument = arg;
+  entry->next             = NULL;
+
+  /* append to list */
+  if(!Jumanji.Bindings.bcmdlist)
+    Jumanji.Bindings.bcmdlist = entry;
+
+  if(bc)
+    bc->next = entry;
+
+  return TRUE;
+}
+
+gboolean
 cmd_bookmark(int argc, char** argv)
 {
   char* bookmark;
@@ -3223,25 +3349,27 @@ cb_tab_kb_pressed(GtkWidget *widget, GdkEventKey *event, gpointer data)
   /* search buffer commands */
   if(Jumanji.Global.buffer)
   {
-    int i;
-    for(i = 0; i < LENGTH(buffer_commands); i++)
+    BufferCommandList* bc = Jumanji.Bindings.bcmdlist;
+    while(bc)
     {
       regex_t regex;
       int     status;
 
-      regcomp(&regex, buffer_commands[i].regex, REG_EXTENDED);
+      regcomp(&regex, bc->element.regex, REG_EXTENDED);
       status = regexec(&regex, Jumanji.Global.buffer->str, (size_t) 0, NULL, 0);
       regfree(&regex);
 
       if(status == 0)
       {
-        buffer_commands[i].function(Jumanji.Global.buffer->str, &(buffer_commands[i].argument));
+        bc->element.function(Jumanji.Global.buffer->str, &(bc->element.argument));
         g_string_free(Jumanji.Global.buffer, TRUE);
         Jumanji.Global.buffer = NULL;
         gtk_label_set_markup((GtkLabel*) Jumanji.Statusbar.buffer, "");
 
         return TRUE;
       }
+
+      bc = bc->next;
     }
   }
 
