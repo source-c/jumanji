@@ -1629,7 +1629,6 @@ void
 sc_follow_link(Argument* argument)
 {
   static gboolean follow_links = FALSE;
-  static GString  *buffer      = NULL;
   static int      open_mode    = -1;
 
   /* update open mode */
@@ -1639,36 +1638,13 @@ sc_follow_link(Argument* argument)
   /* show all links */
   if(!follow_links || Jumanji.Global.mode != FOLLOW)
   {
-    if(buffer)
-    {
-      g_string_free(buffer, TRUE);
-      buffer = NULL;
-    }
-
     run_script("show_hints()", NULL, NULL);
     change_mode(FOLLOW);
     follow_links = TRUE;
     return;
   }
 
-  /* update buffer */
-  if(!buffer)
-    buffer = g_string_new("");
-
-  if(argument->n == 11)
-  {
-    if(buffer->len > 0)
-      g_string_erase(buffer, buffer->len - 1, 1);
-  }
-  else if(argument->n >= 0 && argument->n <= 9)
-    buffer = g_string_append_c(buffer, (char) (argument->n + 0x030));
-
-  /* update inputbar */
-  gchar* inputbar_text = g_strdup_printf("Follow hint: %d", argument->n);
-  gtk_entry_set_text(Jumanji.UI.inputbar, inputbar_text);
-  g_free(inputbar_text);
-
-  if(buffer->len > 0)
+  if(Jumanji.Global.buffer->len > 0)
   {
     char* value = NULL;
     char* cmd   = NULL;
@@ -1676,7 +1652,7 @@ sc_follow_link(Argument* argument)
     /* select link */
     if(argument->n == 10)
     {
-      cmd = g_strconcat("fire(", buffer->str, ")", NULL);
+      cmd = g_strconcat("fire(", Jumanji.Global.buffer->str, ")", NULL);
       run_script(cmd, &value, NULL);
 
       if(value && !strncmp(value, "open;", 5))
@@ -1693,7 +1669,7 @@ sc_follow_link(Argument* argument)
       return;
     }
 
-    cmd = g_strconcat("update_hints(", buffer->str, ")", NULL);
+    cmd = g_strconcat("update_hints(", Jumanji.Global.buffer->str, ")", NULL);
     run_script(cmd, &value, NULL);
 
     if(value)
@@ -3344,6 +3320,14 @@ cb_tab_kb_pressed(GtkWidget *widget, GdkEventKey *event, gpointer data)
 
     Jumanji.Global.buffer = g_string_append_c(Jumanji.Global.buffer, event->keyval);
     gtk_label_set_markup((GtkLabel*) Jumanji.Statusbar.buffer, Jumanji.Global.buffer->str);
+  }
+
+  /* follow hints */
+  if(Jumanji.Global.mode == FOLLOW)
+  {
+    Argument argument = {0, 0};
+    sc_follow_link(&argument);
+    return TRUE;
   }
 
   /* search buffer commands */
