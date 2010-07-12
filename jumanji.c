@@ -609,6 +609,7 @@ create_tab(char* uri, gboolean background)
 
   /* add to tabbar */
   gtk_box_pack_start(GTK_BOX(Jumanji.UI.tabbar), tev_box, TRUE, TRUE, 0);
+  gtk_box_reorder_child(GTK_BOX(Jumanji.UI.tabbar), tev_box, position);
   gtk_widget_show_all(tev_box);
 
   /* add reference to tab */
