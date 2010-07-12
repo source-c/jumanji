@@ -26,7 +26,7 @@ int auto_save_interval    = 0;
 
 /* download settings */
 char* download_dir     = "~/dl/";
-char* download_command = "xterm -e sh -c \"wget --load-cookies ~/.config/jumanji/cookies '%s' -O %s\"";
+char* download_command = "xterm -e sh -c \"wget --load-cookies ~/.config/jumanji/cookies '%s' -O '%s'\"";
 
 /* look */
 char* font                   = "monospace normal 9";
@@ -164,6 +164,9 @@ Command commands[] = {
   {"plugin",    0,              cmd_plugintype,      0,            "Allow plugin type" },
   {"quit",      "q",            cmd_quit,            0,            "Quit current tab" },
   {"quitall",   0,              cmd_quitall,         0,            "Quit jumanji" },
+  {"reload",    0,              cmd_reload,          0,            "Reload the current web page" },
+  {"reloadall", 0,              cmd_reload_all,      0,            "Reload all tab pages" },
+  {"saveas",    0,              cmd_saveas,          0,            "Save current document to disk" },
   {"script",    0,              cmd_script,          0,            "Load a javascript file" },
   {"set",       "s",            cmd_set,             cc_set,       "Set an option" },
   {"stop",      "st",           cmd_stop,            0,            "Stop loading the current page" },
@@ -185,6 +188,7 @@ BufferCommand buffer_commands[] = {
   {"^[0-9]+gt$",   bcmd_nav_tabs,  { SPECIFIC } },
   {"^[0-9]+gT$",   bcmd_nav_tabs,  { SPECIFIC } },
   {"^ZZ$",         bcmd_quit,      {0} },
+  {"^ZQ$",         bcmd_quit,      {0} },
   {"^[0-9]+%$",    bcmd_scroll,    {0} },
   {"^[0-9]+G$",    bcmd_scroll,    {0} },
   {"^gg$",         bcmd_scroll,    { TOP } },
