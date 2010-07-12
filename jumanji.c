@@ -3019,6 +3019,8 @@ bcmd_nav_tabs(char* buffer, Argument* argument)
   }
 
   gtk_notebook_set_current_page(Jumanji.UI.view, new_tab);
+  gtk_widget_grab_focus(GTK_WIDGET(GET_CURRENT_TAB_WIDGET()));
+  
   update_status();
 }
 
