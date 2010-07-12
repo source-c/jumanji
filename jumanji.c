@@ -64,13 +64,14 @@ enum {
 };
 
 /* define modes */
-#define ALL          (1 << 0)
-#define INSERT       (1 << 1)
-#define VISUAL       (1 << 2)
-#define FOLLOW       (1 << 3)
-#define ADD_MARKER   (1 << 4)
-#define EVAL_MARKER  (1 << 5)
-#define PASS_THROUGH (1 << 6)
+#define ALL               (1 << 0)
+#define INSERT            (1 << 1)
+#define VISUAL            (1 << 2)
+#define FOLLOW            (1 << 3)
+#define ADD_MARKER        (1 << 4)
+#define EVAL_MARKER       (1 << 5)
+#define PASS_THROUGH      (1 << 6)
+#define PASS_THROUGH_NEXT (1 << 7)
 
 /* typedefs */
 struct CElement
@@ -411,6 +412,8 @@ Completion* cc_set(char*);
 
 /* buffer command declarations */
 void bcmd_goto(char*, Argument*);
+void bcmd_close_tab(char*, Argument*);
+void bcmd_nav_history(char*, Argument*);
 void bcmd_nav_tabs(char*, Argument*);
 void bcmd_quit(char*, Argument*);
 void bcmd_scroll(char*, Argument*);
@@ -517,6 +520,9 @@ change_mode(int mode)
       break;
     case PASS_THROUGH:
       mode_text = "-- PASS THROUGH --";
+      break;
+    case PASS_THROUGH_NEXT:
+      mode_text = "-- PASS THROUGH (next)--";
       break;
     default:
       mode_text = "";
@@ -2997,6 +3003,18 @@ bcmd_goto(char* buffer, Argument* argument)
 }
 
 void
+bcmd_close_tab(char* buffer, Argument* argument)
+{
+  sc_close_tab(argument);
+}
+
+void
+bcmd_nav_history(char* buffer, Argument* argument)
+{
+  sc_nav_history(argument);
+}
+
+void
 bcmd_nav_tabs(char* buffer, Argument* argument)
 {
   int current_tab     = gtk_notebook_get_current_page(Jumanji.UI.view);
@@ -3296,6 +3314,12 @@ cb_tab_kb_pressed(GtkWidget *widget, GdkEventKey *event, gpointer data)
 
   if(Jumanji.Global.mode == PASS_THROUGH)
     return FALSE;
+
+  if(Jumanji.Global.mode == PASS_THROUGH_NEXT)
+  {
+    change_mode(NORMAL);
+    return FALSE;
+  }
 
   if(Jumanji.Global.mode == ADD_MARKER)
   {
