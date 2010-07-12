@@ -50,6 +50,7 @@ enum {
   NEXT_GROUP,
   NEW_TAB,
   NORMAL,
+  OPEN_EXTERNAL,
   PREVIOUS,
   PREVIOUS_CHAR,
   PREVIOUS_GROUP,
@@ -422,6 +423,7 @@ void bcmd_nav_tabs(char*, Argument*);
 void bcmd_paste(char*, Argument*);
 void bcmd_quit(char*, Argument*);
 void bcmd_scroll(char*, Argument*);
+void bcmd_toggle_sourcecode(char*, Argument*);
 void bcmd_zoom(char*, Argument*);
 
 /* special command delcarations */
@@ -3188,6 +3190,22 @@ bcmd_scroll(char* buffer, Argument* argument)
 }
 
 void
+bcmd_toggle_sourcecode(char* buffer, Argument* argument)
+{
+  if(argument->n == OPEN_EXTERNAL)
+  {
+    gchar* uri    = (gchar*) webkit_web_view_get_uri(GET_CURRENT_TAB());
+    char* command = g_strdup_printf(spawn_editor, uri);
+
+    g_spawn_command_line_async(command, NULL);
+
+    g_free(command);
+  }
+  else
+    sc_toggle_sourcecode(argument);
+}
+
+void
 bcmd_zoom(char* buffer, Argument* argument)
 {
   float zoom_level = webkit_web_view_get_zoom_level(GET_CURRENT_TAB());
@@ -3597,8 +3615,8 @@ cb_wv_download_request(WebKitWebView* wv, WebKitDownload* download, gpointer dat
   g_free(download_path);
 
   /* download file */
-  char* file      = g_strconcat(download_dir, filename ? filename : uri, NULL);
-  char* command   = g_strdup_printf(download_command, uri, file);
+   char* file      = g_strconcat(download_dir, filename ? filename : uri, NULL);
+   char* command   = g_strdup_printf(download_command, uri, file);
 
   g_spawn_command_line_async(command, NULL);
 

@@ -27,6 +27,7 @@ int auto_save_interval    = 0;
 /* download settings */
 char* download_dir     = "~/dl/";
 char* download_command = "xterm -e sh -c \"wget --load-cookies ~/.config/jumanji/cookies '%s' -O '%s'\"";
+char* spawn_editor = "xterm -e -sh -c \"vim %s\"";
 
 /* look */
 char* font                   = "monospace normal 9";
@@ -177,26 +178,28 @@ Command commands[] = {
 
 /* buffer commands */
 BufferCommand buffer_commands[] = {
-  /* regex,        function,       argument */
-  {"^gh$",         bcmd_go_home,   {0} },
-  {"^gH$",         bcmd_go_home,   { NEW_TAB } },
-  {"^[0-9]*gu$",   bcmd_go_parent, {0} },
-  {"^gU$",         bcmd_go_parent, {0} },
-  {"^gt$",         bcmd_nav_tabs,  { NEXT } },
-  {"^gT$",         bcmd_nav_tabs,  { PREVIOUS } },
-  {"^gP$",         bcmd_paste,     { NEW_TAB } },
-  {"^[0-9]+gt$",   bcmd_nav_tabs,  { SPECIFIC } },
-  {"^[0-9]+gT$",   bcmd_nav_tabs,  { SPECIFIC } },
-  {"^ZZ$",         bcmd_quit,      {0} },
-  {"^ZQ$",         bcmd_quit,      {0} },
-  {"^[0-9]+%$",    bcmd_scroll,    {0} },
-  {"^[0-9]+G$",    bcmd_scroll,    {0} },
-  {"^gg$",         bcmd_scroll,    { TOP } },
-  {"^G$",          bcmd_scroll,    { BOTTOM } },
-  {"^zI$",         bcmd_zoom,      { ZOOM_IN } },
-  {"^zO$",         bcmd_zoom,      { ZOOM_OUT } },
-  {"^z0$",         bcmd_zoom,      { ZOOM_ORIGINAL } },
-  {"^[0-9]+Z$",    bcmd_zoom,      { SPECIFIC } },
+  /* regex,        function,               argument */
+  {"^gh$",         bcmd_go_home,           {0} },
+  {"^gH$",         bcmd_go_home,           { NEW_TAB } },
+  {"^[0-9]*gu$",   bcmd_go_parent,         {0} },
+  {"^gU$",         bcmd_go_parent,         {0} },
+  {"^gt$",         bcmd_nav_tabs,          { NEXT } },
+  {"^gT$",         bcmd_nav_tabs,          { PREVIOUS } },
+  {"^gP$",         bcmd_paste,             { NEW_TAB } },
+  {"^[0-9]+gt$",   bcmd_nav_tabs,          { SPECIFIC } },
+  {"^[0-9]+gT$",   bcmd_nav_tabs,          { SPECIFIC } },
+  {"^ZZ$",         bcmd_quit,              {0} },
+  {"^ZQ$",         bcmd_quit,              {0} },
+  {"^[0-9]+%$",    bcmd_scroll,            {0} },
+  {"^[0-9]+G$",    bcmd_scroll,            {0} },
+  {"^gg$",         bcmd_scroll,            { TOP } },
+  {"^G$",          bcmd_scroll,            { BOTTOM } },
+  {"^gf$",         bcmd_toggle_sourcecode, {0} },
+  {"^gF$",         bcmd_toggle_sourcecode, { OPEN_EXTERNAL } },
+  {"^zI$",         bcmd_zoom,              { ZOOM_IN } },
+  {"^zO$",         bcmd_zoom,              { ZOOM_OUT } },
+  {"^z0$",         bcmd_zoom,              { ZOOM_ORIGINAL } },
+  {"^[0-9]+Z$",    bcmd_zoom,              { SPECIFIC } },
 };
 
 /* special commands */
@@ -220,13 +223,13 @@ Setting settings[] = {
   {"completion_g_fgcolor",   &(completion_g_fgcolor),   NULL,                           's',  1, 0, "Completion (group) foreground color"},
   {"completion_hl_bgcolor",  &(completion_hl_bgcolor),  NULL,                           's',  1, 0, "Completion (highlight) background color"},
   {"completion_hl_fgcolor",  &(completion_hl_fgcolor),  NULL,                           's',  1, 0, "Completion (highlight) foreground color"},
-  {"n_completion_items",     &(n_completion_items),     NULL,                           'i',  0, 0, "Number of completion items"},
   {"cursive_font",           NULL,                      "cursive-font-family",          's',  0, 1, "Default cursive font family to display text"},
   {"default_bgcolor",        &(default_bgcolor),        NULL,                           's',  1, 0, "Default background color"},
   {"default_fgcolor",        &(default_fgcolor),        NULL,                           's',  1, 0, "Default foreground color"},
   {"developer_extras",       NULL,                      "enable-developer-extras",      'b',  0, 1, "Enable webkit developer extensions"},
-  {"download_dir",           &(download_dir),           NULL,                           's',  0, 0, "The default download directory"},
   {"download_command",       &(download_command),       NULL,                           's',  0, 0, "Command for downloading files"},
+  {"download_dir",           &(download_dir),           NULL,                           's',  0, 0, "The default download directory"},
+  {"editor",                 &(spawn_editor),           NULL,                           's',  0, 0, "Command to spawn the default editor"},
   {"encoding",               NULL,                      "default-encoding",             's',  0, 1, "The default encoding to display text"},
   {"fantasy_font",           NULL,                      "fantasy-font-family",          's',  0, 1, "The default fantasy font family"},
   {"font",                   &(font),                   NULL,                           's',  1, 0, "The used font" },
@@ -241,6 +244,7 @@ Setting settings[] = {
   {"minimum_font_size",      NULL,                      "minimum-font-size",            'i',  0, 1, "Minimum font-size"},
   {"monospace_font",         NULL,                      "monospace-font-family",        's',  0, 1, "Monospace font family"},
   {"monospace_font_size",    NULL,                      "default-monospace-font-size",  'i',  0, 1, "The default font size to display monospace text"},
+  {"n_completion_items",     &(n_completion_items),     NULL,                           'i',  0, 0, "Number of completion items"},
   {"next_to_current",        &(next_to_current),        NULL,                           'b',  0, 0, "Open new tab next to the current one"},
   {"notification_e_bgcolor", &(notification_e_bgcolor), NULL,                           's',  1, 0, "Notification (error) background color"},
   {"notification_e_fgcolor", &(notification_e_fgcolor), NULL,                           's',  1, 0, "Notification (error) foreground color"},
@@ -257,9 +261,9 @@ Setting settings[] = {
   {"scroll_step",            &(scroll_step),            NULL,                           'f',  1, 0, "Scroll step"},
   {"scrollbars",             &(show_scrollbars),        NULL,                           'b',  0, 0, "Show scrollbars"},
   {"serif_font",             NULL,                      "serif-font-family",            's',  0, 1, "Serif font family"},
-  {"statusbar",              &(show_statusbar),         NULL,                           'b',  0, 0, "Show statusbar"},
   {"spell_checking",         NULL,                      "enable-spell-checking",        'b',  0, 1, "Enable spell checking while typing"},
   {"spell_checking_lang",    NULL,                      "spell-checking-languages",     's',  0, 1, "Spell checking languages"},
+  {"statusbar",              &(show_statusbar),         NULL,                           'b',  0, 0, "Show statusbar"},
   {"statusbar_bgcolor",      &(statusbar_bgcolor),      NULL,                           's',  1, 0, "Statusbar background color"},
   {"statusbar_fgcolor",      &(statusbar_fgcolor),      NULL,                           's',  1, 0, "Statusbar foreground color"},
   {"statusbar_ssl_fgcolor",  &(statusbar_ssl_bgcolor),  NULL,                           's',  1, 0, "Statusbar (SSL) background color"},
