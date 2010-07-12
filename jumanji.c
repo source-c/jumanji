@@ -398,6 +398,9 @@ gboolean cmd_open(int, char**);
 gboolean cmd_plugintype(int, char**);
 gboolean cmd_quit(int, char**);
 gboolean cmd_quitall(int, char**);
+gboolean cmd_reload(int, char**);
+gboolean cmd_reload_all(int, char**);
+gboolean cmd_saveas(int, char**);
 gboolean cmd_script(int, char**);
 gboolean cmd_search_engine(int, char**);
 gboolean cmd_set(int, char**);
@@ -1532,6 +1535,9 @@ sc_abort(Argument* argument)
   char* cmd = "clear()";
   run_script(cmd, NULL, NULL);
 
+  /* Stop loading website */
+  cmd_stop(0, NULL);
+
   /* Set back to normal mode */
   change_mode(NORMAL);
 
@@ -2579,6 +2585,49 @@ gboolean
 cmd_quitall(int argc, char** argv)
 {
   cb_destroy(NULL, NULL);
+  return TRUE;
+}
+
+gboolean
+cmd_reload(int argc, char** argv)
+{
+  Argument argument = {0, 0};
+  sc_reload(&argument);
+
+  return TRUE;
+}
+
+gboolean
+cmd_reload_all(int argc, char** argv)
+{
+  int number_of_tabs = gtk_notebook_get_n_pages(Jumanji.UI.view);
+  int i;
+
+  for(i = 0; i < number_of_tabs; i++)
+    webkit_web_view_reload_bypass_cache(GET_NTH_TAB(i));
+
+  return TRUE;
+}
+
+gboolean
+cmd_saveas(int argc, char** argv)
+{
+  char* filename;
+
+  if(argc > 0)
+    filename = argv[0];
+  else
+    filename = (char*) webkit_web_view_get_title(GET_CURRENT_TAB());
+
+  char* uri       = (char*) webkit_web_view_get_uri(GET_CURRENT_TAB());
+  char* file      = g_strconcat(download_dir, filename ? filename : uri, NULL);
+  char* command   = g_strdup_printf(download_command, uri, file);
+
+  g_spawn_command_line_async(command, NULL);
+
+  g_free(command);
+  g_free(file);
+
   return TRUE;
 }
 
