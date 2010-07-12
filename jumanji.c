@@ -1,4 +1,4 @@
-/* See LICENSE file for license and copyright information */
+
 
 #define _BSD_SOURCE || _XOPEN_SOURCE >= 500
 
@@ -135,14 +135,9 @@ typedef struct
 typedef struct
 {
   char* name;
-  void (*function)(Argument*);
-} ShortcutName;
-
-typedef struct
-{
-  char* name;
-  void (*function)(char*, Argument*);
-} BufferCommandName;
+  void (*sc)(Argument*);
+  void (*bcmd)(char*, Argument*);
+} FunctionName;
 
 typedef struct
 {
@@ -2248,9 +2243,9 @@ cmd_bmap(int argc, char** argv)
   int bc_id = -1;
   int bc_c;
 
-  for(bc_c = 0; bc_c < LENGTH(buffer_command_name); bc_c++)
+  for(bc_c = 0; bc_c < LENGTH(function_names); bc_c++)
   {
-    if(!strcmp(argv[1], buffer_command_name[bc_c].name))
+    if(!strcmp(argv[1], function_names[bc_c].name) && function_names[bc_c].bcmd)
     {
       bc_id = bc_c;
       break;
@@ -2294,7 +2289,7 @@ cmd_bmap(int argc, char** argv)
   {
     if(!strcmp(bc->element.regex, argv[0]))
     {
-      bc->element.function = buffer_command_name[bc_id].function;
+      bc->element.function = function_names[bc_id].bcmd;
       bc->element.argument = arg;
       return TRUE;
     }
@@ -2308,7 +2303,7 @@ cmd_bmap(int argc, char** argv)
     out_of_memory();
 
   entry->element.regex    = argv[0];
-  entry->element.function = buffer_command_name[bc_id].function;
+  entry->element.function = function_names[bc_id].bcmd;
   entry->element.argument = arg;
   entry->next             = NULL;
 
@@ -2365,9 +2360,9 @@ cmd_map(int argc, char** argv)
   int sc_id = -1;
 
   int sc_c;
-  for(sc_c = 0; sc_c < LENGTH(shortcut_names); sc_c++)
+  for(sc_c = 0; sc_c < LENGTH(function_names); sc_c++)
   {
-    if(!strcmp(argv[1], shortcut_names[sc_c].name))
+    if(!strcmp(argv[1], function_names[sc_c].name) && function_names[sc_c].sc)
     {
       sc_id = sc_c;
       break;
@@ -2497,7 +2492,7 @@ cmd_map(int argc, char** argv)
     if(sc->element.key == key && sc->element.mask == mask
         && sc->element.mode == mode)
     {
-      sc->element.function = shortcut_names[sc_id].function;
+      sc->element.function = function_names[sc_id].sc;
       sc->element.argument = arg;
       return TRUE;
     }
@@ -2512,7 +2507,7 @@ cmd_map(int argc, char** argv)
 
   entry->element.mask     = mask;
   entry->element.key      = key;
-  entry->element.function = shortcut_names[sc_id].function;
+  entry->element.function = function_names[sc_id].sc;
   entry->element.mode     = mode;
   entry->element.argument = arg;
   entry->next             = NULL;

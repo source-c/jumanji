@@ -266,35 +266,27 @@ Setting settings[] = {
 };
 
 /* shortcut names */
-ShortcutName shortcut_names[] = {
-  {"abort",             sc_abort},
-  {"change_buffer",     sc_change_buffer},
-  {"change_mode",       sc_change_mode},
-  {"close_tab",         sc_close_tab},
-  {"focus_inputbar",    sc_focus_inputbar},
-  {"follow_link",       sc_follow_link},
-  {"nav_history",       sc_nav_history},
-  {"nav_tabs",          sc_nav_tabs},
-  {"paste",             sc_paste},
-  {"proxy",             sc_toggle_proxy},
-  {"reload",            sc_reload},
-  {"script",            sc_run_script},
-  {"scroll",            sc_scroll},
-  {"search",            sc_search},
-  {"toggle_statusbar",  sc_toggle_statusbar},
-  {"toggle_sourcecode", sc_toggle_sourcecode},
-  {"quit",              sc_quit},
-  {"yank",              sc_yank},
-  {"zoom",              sc_zoom},
-};
-
-/* buffer command names */
-BufferCommandName buffer_command_name[] = {
-  {"goto",       bcmd_goto},
-  {"nav_tabs",   bcmd_nav_tabs},
-  {"quit",       bcmd_quit},
-  {"scroll",     bcmd_scroll},
-  {"zoom",       bcmd_zoom},
+FunctionName function_names[] = {
+  {"abort",             sc_abort,              NULL},
+  {"change_buffer",     sc_change_buffer,      NULL},
+  {"change_mode",       sc_change_mode,        NULL},
+  {"close_tab",         sc_close_tab,          NULL},
+  {"focus_inputbar",    sc_focus_inputbar,     NULL},
+  {"follow_link",       sc_follow_link,        NULL},
+  {"goto",              NULL,                  bcmd_goto},
+  {"nav_history",       sc_nav_history,        NULL},
+  {"nav_tabs",          sc_nav_tabs,           bcmd_nav_tabs},
+  {"paste",             sc_paste,              NULL},
+  {"proxy",             sc_toggle_proxy,       NULL},
+  {"reload",            sc_reload,             NULL},
+  {"script",            sc_run_script,         NULL},
+  {"scroll",            sc_scroll,             bcmd_scroll},
+  {"search",            sc_search,             NULL},
+  {"toggle_statusbar",  sc_toggle_statusbar,   NULL},
+  {"toggle_sourcecode", sc_toggle_sourcecode,  NULL},
+  {"quit",              sc_quit,               bcmd_quit},
+  {"yank",              sc_yank,               NULL},
+  {"zoom",              sc_zoom,               bcmd_zoom},
 };
 
 /* argument names */
