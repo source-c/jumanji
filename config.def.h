@@ -114,6 +114,8 @@ Shortcut shortcuts[] = {
   {GDK_CONTROL_MASK,   GDK_b,             sc_scroll,            NORMAL,              { FULL_UP } },
   {0,                  GDK_space,         sc_scroll,            NORMAL,              { FULL_DOWN } },
   {GDK_SHIFT_MASK,     GDK_space,         sc_scroll,            NORMAL,              { FULL_UP } },
+  {0,                  GDK_0,             sc_scroll,            NORMAL,              { LEFT_MAX } },
+  {0,                  GDK_dollar,        sc_scroll,            NORMAL,              { RIGHT_MAX } },
   {0,                  GDK_n,             sc_search,            NORMAL,              { FORWARD } },
   {0,                  GDK_N,             sc_search,            NORMAL,              { BACKWARD } },
   {GDK_CONTROL_MASK,   GDK_p,             sc_toggle_proxy,      NORMAL,              {0} },

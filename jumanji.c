@@ -45,6 +45,7 @@ enum {
   HIDE,
   HIGHLIGHT,
   LEFT,
+  LEFT_MAX,
   NEXT,
   NEXT_CHAR,
   NEXT_GROUP,
@@ -55,6 +56,7 @@ enum {
   PREVIOUS_CHAR,
   PREVIOUS_GROUP,
   RIGHT,
+  RIGHT_MAX,
   SPECIFIC,
   TOP,
   UP,
@@ -1753,7 +1755,7 @@ sc_scroll(Argument* argument)
 {
   GtkAdjustment* adjustment;
 
-  if( (argument->n == LEFT) || (argument->n == RIGHT) )
+  if( (argument->n == LEFT) || (argument->n == RIGHT) || (argument->n == LEFT_MAX) || (argument->n == RIGHT_MAX) )
     adjustment = gtk_scrolled_window_get_hadjustment(GET_CURRENT_TAB_WIDGET());
   else
     adjustment = gtk_scrolled_window_get_vadjustment(GET_CURRENT_TAB_WIDGET());
@@ -1772,9 +1774,9 @@ sc_scroll(Argument* argument)
     gtk_adjustment_set_value(adjustment, (value + (view_size / 2)) > max ? max : (value + (view_size / 2)));
   else if((argument->n == LEFT) || (argument->n == UP))
     gtk_adjustment_set_value(adjustment, (value - scroll_step) < 0 ? 0 : (value - scroll_step));
-  else if(argument->n == TOP)
+  else if(argument->n == TOP || argument->n == LEFT_MAX)
     gtk_adjustment_set_value(adjustment, 0);
-  else if(argument->n == BOTTOM)
+  else if(argument->n == BOTTOM || argument->n == RIGHT_MAX)
     gtk_adjustment_set_value(adjustment, max);
   else
     gtk_adjustment_set_value(adjustment, (value + scroll_step) > max ? max : (value + scroll_step));
