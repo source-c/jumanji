@@ -411,10 +411,12 @@ Completion* cc_open(char*);
 Completion* cc_set(char*);
 
 /* buffer command declarations */
-void bcmd_goto(char*, Argument*);
 void bcmd_close_tab(char*, Argument*);
+void bcmd_go_home(char*, Argument*);
+void bcmd_go_parent(char*, Argument*);
 void bcmd_nav_history(char*, Argument*);
 void bcmd_nav_tabs(char*, Argument*);
+void bcmd_paste(char*, Argument*);
 void bcmd_quit(char*, Argument*);
 void bcmd_scroll(char*, Argument*);
 void bcmd_zoom(char*, Argument*);
@@ -1067,6 +1069,7 @@ open_uri(WebKitWebView* web_view, char* uri)
     Jumanji.Global.history = g_list_append(Jumanji.Global.history, g_strdup(new_uri));
   }
 
+  g_strfreev(tokens);
   g_free(new_uri);
 
   update_status();
@@ -2997,15 +3000,77 @@ cc_set(char* input)
 
 /* buffer command implementation */
 void
-bcmd_goto(char* buffer, Argument* argument)
-{
-  sc_scroll(argument);
-}
-
-void
 bcmd_close_tab(char* buffer, Argument* argument)
 {
   sc_close_tab(argument);
+}
+
+void
+bcmd_go_home(char* buffer, Argument* argument)
+{
+  if(argument->n == NEW_TAB)
+    create_tab(home_page, FALSE);
+  else
+    open_uri(GET_CURRENT_TAB(), home_page);
+}
+
+void
+bcmd_go_parent(char* buffer, Argument* argument)
+{
+  char* current_uri = (char*) webkit_web_view_get_uri(GET_CURRENT_TAB());
+  if(!current_uri)
+    return;
+
+  /* calcuate root */
+  int   o = g_str_has_prefix(current_uri, "https://") ? 8 : 7;
+  int  rl = 0;
+  char* r = current_uri + o;
+
+  while(r && *r != '/')
+    rl++, r++;
+
+  char* root = g_strndup(current_uri, o + rl + 1);
+
+  /* go to the root of the website */
+  if(!strcmp(buffer, "gU"))
+    open_uri(GET_CURRENT_TAB(), root);
+  else
+  {
+    int count = 1;
+
+    if(strlen(buffer) > 2)
+      count = atoi(g_strndup(buffer, strlen(buffer) - 2));
+
+    if(count <= 0)
+      count = 1;
+
+    char* directories = g_strndup(current_uri + strlen(root), strlen(current_uri) - strlen(root));
+
+    if(strlen(directories) <= 0)
+      open_uri(GET_CURRENT_TAB(), root);
+    else
+    {
+      gchar **tokens = g_strsplit(directories, "/", -1);
+      int     length = g_strv_length(tokens) - 1;
+
+      GString* tmp = g_string_new("");
+
+      int i;
+      for(i = 0; i < length - count; i++)
+        g_string_append(tmp, tokens[i]);
+
+      char* new_uri = g_strconcat(root, tmp->str, NULL);
+      open_uri(GET_CURRENT_TAB(), new_uri);
+
+      g_free(new_uri);
+      g_string_free(tmp, TRUE);
+      g_strfreev(tokens);
+    }
+
+    g_free(directories);
+  }
+
+  g_free(root);
 }
 
 void
@@ -3034,8 +3099,14 @@ bcmd_nav_tabs(char* buffer, Argument* argument)
 
   gtk_notebook_set_current_page(Jumanji.UI.view, new_tab);
   gtk_widget_grab_focus(GTK_WIDGET(GET_CURRENT_TAB_WIDGET()));
-  
+
   update_status();
+}
+
+void
+bcmd_paste(char* buffer, Argument* argument)
+{
+  sc_paste(argument);
 }
 
 void
@@ -3047,6 +3118,12 @@ bcmd_quit(char* buffer, Argument* argument)
 void
 bcmd_scroll(char* buffer, Argument* argument)
 {
+  if(argument->n == TOP || argument->n == BOTTOM)
+  {
+    sc_scroll(argument);
+    return;
+  }
+
   GtkAdjustment* adjustment = gtk_scrolled_window_get_vadjustment(GET_CURRENT_TAB_WIDGET());
 
   gdouble view_size = gtk_adjustment_get_page_size(adjustment);
@@ -3282,6 +3359,7 @@ cb_inputbar_activate(GtkEntry* entry, gpointer data)
   isc_completion(&arg);
 
   gtk_widget_grab_focus(GTK_WIDGET(GET_CURRENT_TAB_WIDGET()));
+  g_strfreev(tokens);
 
   return TRUE;
 }
