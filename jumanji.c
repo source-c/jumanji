@@ -3643,6 +3643,7 @@ cb_wv_event(GtkWidget* widget, GdkEvent* event, gpointer data)
         )
       {
         mouse[i].function(&(mouse[i].argument));
+        return TRUE;
       }
      }
   }
