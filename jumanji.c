@@ -580,6 +580,9 @@ create_tab(char* uri, gboolean background)
   g_signal_connect(G_OBJECT(wv),  "window-object-cleared",                G_CALLBACK(cb_wv_window_object_cleared),    NULL);
   g_signal_connect(G_OBJECT(tab), "key-press-event",                      G_CALLBACK(cb_tab_kb_pressed),              NULL);
 
+  /* set default values */
+  g_object_set_data(G_OBJECT(wv), "loaded_scripts", 0);
+
   /* apply browser setting */
   webkit_web_view_set_settings(WEBKIT_WEB_VIEW(wv), webkit_web_settings_copy(Jumanji.Global.browser_settings));
 
@@ -839,12 +842,19 @@ init_settings()
 void
 load_all_scripts()
 {
-  ScriptList* sl = Jumanji.Global.scripts;
-  while(sl)
+  int ls = g_object_get_data(G_OBJECT(GET_CURRENT_TAB()), "loaded_scripts");
+
+  if(!ls)
   {
-    run_script(sl->content, NULL, NULL);
-    sl = sl->next;
+    ScriptList* sl = Jumanji.Global.scripts;
+    while(sl)
+    {
+      run_script(sl->content, NULL, NULL);
+      sl = sl->next;
+    }
   }
+
+  g_object_set_data(G_OBJECT(GET_CURRENT_TAB()), "loaded_scripts",  (gpointer) 1);
 }
 
 void notify(int level, char* message)
@@ -1154,7 +1164,8 @@ update_status()
   int number_of_tabs  = gtk_notebook_get_n_pages(Jumanji.UI.view);
 
   gchar* tabs = g_strdup_printf("[%d/%d]", current_tab + 1, number_of_tabs);
-  gtk_label_set_markup((GtkLabel*) Jumanji.Statusbar.tabs, tabs);
+  char* s = g_markup_escape_text(tabs, -1);
+  gtk_label_set_markup((GtkLabel*) Jumanji.Statusbar.tabs, s);
   g_free(tabs);
 
   /* update tabbar */
@@ -1179,7 +1190,8 @@ update_status()
     const gchar* tab_title = webkit_web_view_get_title(GET_WEBVIEW(tab));
     int progress = webkit_web_view_get_progress(GET_WEBVIEW(tab)) * 100;
     gchar* markup = g_strdup_printf("%d | %s", tc + 1, tab_title ? tab_title : ((progress == 100) ? "Loading..." : "(Untitled)"));
-    gtk_label_set_markup((GtkLabel*) tab_label, markup);
+    char* s = g_markup_escape_text(markup, -1);
+    gtk_label_set_markup((GtkLabel*) tab_label, s);
   }
 
   /* update position */
