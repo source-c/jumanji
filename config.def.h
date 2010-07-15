@@ -268,7 +268,7 @@ Setting settings[] = {
   {"statusbar",              &(show_statusbar),         NULL,                           'b',  0, 0, "Show statusbar"},
   {"statusbar_bgcolor",      &(statusbar_bgcolor),      NULL,                           's',  1, 0, "Statusbar background color"},
   {"statusbar_fgcolor",      &(statusbar_fgcolor),      NULL,                           's',  1, 0, "Statusbar foreground color"},
-  {"statusbar_ssl_fgcolor",  &(statusbar_ssl_bgcolor),  NULL,                           's',  1, 0, "Statusbar (SSL) background color"},
+  {"statusbar_ssl_bgcolor",  &(statusbar_ssl_bgcolor),  NULL,                           's',  1, 0, "Statusbar (SSL) background color"},
   {"statusbar_ssl_fgcolor",  &(statusbar_ssl_fgcolor),  NULL,                           's',  1, 0, "Statusbar (SSL) foreground color"},
   {"stylesheet",             NULL,                      "user-stylesheet-uri",          's',  0, 1, "Custom stylesheet"},
   {"tabbar",                 &(show_tabbar),            NULL,                           'b',  0, 0, "Show tabbar"},
