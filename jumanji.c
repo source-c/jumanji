@@ -842,7 +842,7 @@ init_settings()
 void
 load_all_scripts()
 {
-  int ls = g_object_get_data(G_OBJECT(GET_CURRENT_TAB()), "loaded_scripts");
+  int ls = (size_t) g_object_get_data(G_OBJECT(GET_CURRENT_TAB()), "loaded_scripts");
 
   if(!ls)
   {
