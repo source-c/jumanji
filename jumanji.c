@@ -1672,7 +1672,7 @@ sc_follow_link(Argument* argument)
     return;
   }
 
-  if(Jumanji.Global.buffer->len > 0)
+  if(Jumanji.Global.buffer && Jumanji.Global.buffer->len > 0)
   {
     char* value = NULL;
     char* cmd   = NULL;
