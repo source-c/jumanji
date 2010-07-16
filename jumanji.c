@@ -1554,7 +1554,8 @@ sc_abort(Argument* argument)
   run_script(cmd, NULL, NULL);
 
   /* Stop loading website */
-  cmd_stop(0, NULL);
+  if(webkit_web_view_get_progress(GET_CURRENT_TAB()) == 1.0)
+    cmd_stop(0, NULL);
 
   /* Set back to normal mode */
   change_mode(NORMAL);
@@ -1673,7 +1674,7 @@ sc_follow_link(Argument* argument)
     return;
   }
 
-  if(Jumanji.Global.buffer->len > 0)
+  if(Jumanji.Global.buffer && Jumanji.Global.buffer->len > 0)
   {
     char* value = NULL;
     char* cmd   = NULL;
