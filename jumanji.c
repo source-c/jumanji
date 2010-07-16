@@ -1,4 +1,4 @@
-
+/* See LICENSE file for license and copyright information */
 
 #define _BSD_SOURCE || _XOPEN_SOURCE >= 500
 
@@ -10,6 +10,7 @@
 #include <libgen.h>
 #include <math.h>
 #include <libsoup/soup.h>
+#include <unique/unique.h>
 
 #include <gtk/gtk.h>
 #include <gdk/gdkkeysyms.h>
@@ -309,6 +310,7 @@ struct
     SearchEngineList  *search_engines;
     ScriptList        *scripts;
     WebKitWebSettings *browser_settings;
+    gboolean init_ui;
   } Global;
 
   struct
@@ -343,6 +345,7 @@ void init_directories();
 void init_jumanji();
 void init_keylist();
 void init_settings();
+void init_ui();
 void load_all_scripts();
 void notify(int, char*);
 void new_window(char*);
@@ -433,6 +436,7 @@ void bcmd_zoom(char*, Argument*);
 gboolean scmd_search(char*, Argument*);
 
 /* callback declarations */
+UniqueResponse cb_app_message_received(UniqueApp*, gint, UniqueMessageData*, guint, gpointer);
 gboolean cb_blank();
 gboolean cb_destroy(GtkWidget*, gpointer);
 gboolean cb_inputbar_kb_pressed(GtkWidget*, GdkEventKey*, gpointer);
@@ -547,6 +551,9 @@ change_mode(int mode)
 GtkWidget*
 create_tab(char* uri, gboolean background)
 {
+  if(!uri)
+    return NULL;
+
   GtkWidget *tab = gtk_scrolled_window_new(NULL, NULL);
   GtkWidget *wv  = webkit_web_view_new();
 
@@ -839,6 +846,14 @@ init_settings()
 
   /* set proxy */
   sc_toggle_proxy(NULL);
+
+  /* apply user agent */
+  char* current_user_agent = NULL;
+  g_object_get(G_OBJECT(Jumanji.Global.browser_settings), "user-agent", &current_user_agent, NULL);
+
+  char* new_user_agent = g_strconcat(current_user_agent, " ", user_agent, NULL);
+  g_object_set(G_OBJECT(Jumanji.Global.browser_settings), "user-agent", new_user_agent, NULL);
+  g_free(new_user_agent);
 }
 
 void
@@ -859,53 +874,8 @@ load_all_scripts()
   g_object_set_data(G_OBJECT(GET_CURRENT_TAB()), "loaded_scripts",  (gpointer) 1);
 }
 
-void notify(int level, char* message)
+void init_ui()
 {
-  if(!message || strlen(message) <= 0)
-  {
-    gtk_widget_hide(GTK_WIDGET(Jumanji.UI.inputbar));
-    return;
-  }
-
-  if(!(GTK_WIDGET_VISIBLE(GTK_WIDGET(Jumanji.UI.inputbar))))
-    gtk_widget_show(GTK_WIDGET(Jumanji.UI.inputbar));
-
-  switch(level)
-  {
-    case ERROR:
-      gtk_widget_modify_base(GTK_WIDGET(Jumanji.UI.inputbar), GTK_STATE_NORMAL, &(Jumanji.Style.notification_e_bg));
-      gtk_widget_modify_text(GTK_WIDGET(Jumanji.UI.inputbar), GTK_STATE_NORMAL, &(Jumanji.Style.notification_e_fg));
-      break;
-    case WARNING:
-      gtk_widget_modify_base(GTK_WIDGET(Jumanji.UI.inputbar), GTK_STATE_NORMAL, &(Jumanji.Style.notification_w_bg));
-      gtk_widget_modify_text(GTK_WIDGET(Jumanji.UI.inputbar), GTK_STATE_NORMAL, &(Jumanji.Style.notification_w_fg));
-      break;
-    default:
-      gtk_widget_modify_base(GTK_WIDGET(Jumanji.UI.inputbar), GTK_STATE_NORMAL, &(Jumanji.Style.inputbar_bg));
-      gtk_widget_modify_text(GTK_WIDGET(Jumanji.UI.inputbar), GTK_STATE_NORMAL, &(Jumanji.Style.inputbar_fg));
-      break;
-  }
-
-  if(message)
-    gtk_entry_set_text(Jumanji.UI.inputbar, message);
-}
-
-void
-init_jumanji()
-{
-  /* other */
-  Jumanji.Global.mode                = NORMAL;
-  Jumanji.Global.search_engines      = NULL;
-  Jumanji.Global.command_history     = NULL;
-  Jumanji.Global.scripts             = NULL;
-  Jumanji.Global.markers             = NULL;
-  Jumanji.Global.bookmarks           = NULL;
-  Jumanji.Global.history             = NULL;
-  Jumanji.Global.allowed_plugins     = NULL;
-  Jumanji.Global.allowed_plugin_uris = NULL;
-  Jumanji.Bindings.sclist            = NULL;
-  Jumanji.Bindings.bcmdlist          = NULL;
-
   /* window */
   if(Jumanji.UI.embed)
     Jumanji.UI.window = gtk_plug_new(Jumanji.UI.embed);
@@ -976,16 +946,72 @@ init_jumanji()
   gtk_box_pack_start(Jumanji.UI.box, GTK_WIDGET(Jumanji.UI.statusbar), FALSE, FALSE, 0);
   gtk_box_pack_end(  Jumanji.UI.box, GTK_WIDGET(Jumanji.UI.inputbar),  FALSE, FALSE, 0);
 
+  Jumanji.Global.init_ui = TRUE;
+}
+
+void notify(int level, char* message)
+{
+  if(!Jumanji.Global.init_ui)
+  {
+    if(message)
+    {
+      /* print error message to stdout while the ui has not been loaded */
+      char* dmessage = g_strconcat("jumanjirc: ", message, NULL);
+      printf("%s\n", dmessage);
+      g_free(dmessage);
+    }
+
+    return;
+  }
+
+  if(!message || strlen(message) <= 0)
+  {
+    gtk_widget_hide(GTK_WIDGET(Jumanji.UI.inputbar));
+    return;
+  }
+
+  if(!(GTK_WIDGET_VISIBLE(GTK_WIDGET(Jumanji.UI.inputbar))))
+    gtk_widget_show(GTK_WIDGET(Jumanji.UI.inputbar));
+
+  switch(level)
+  {
+    case ERROR:
+      gtk_widget_modify_base(GTK_WIDGET(Jumanji.UI.inputbar), GTK_STATE_NORMAL, &(Jumanji.Style.notification_e_bg));
+      gtk_widget_modify_text(GTK_WIDGET(Jumanji.UI.inputbar), GTK_STATE_NORMAL, &(Jumanji.Style.notification_e_fg));
+      break;
+    case WARNING:
+      gtk_widget_modify_base(GTK_WIDGET(Jumanji.UI.inputbar), GTK_STATE_NORMAL, &(Jumanji.Style.notification_w_bg));
+      gtk_widget_modify_text(GTK_WIDGET(Jumanji.UI.inputbar), GTK_STATE_NORMAL, &(Jumanji.Style.notification_w_fg));
+      break;
+    default:
+      gtk_widget_modify_base(GTK_WIDGET(Jumanji.UI.inputbar), GTK_STATE_NORMAL, &(Jumanji.Style.inputbar_bg));
+      gtk_widget_modify_text(GTK_WIDGET(Jumanji.UI.inputbar), GTK_STATE_NORMAL, &(Jumanji.Style.inputbar_fg));
+      break;
+  }
+
+  if(message)
+    gtk_entry_set_text(Jumanji.UI.inputbar, message);
+}
+
+void
+init_jumanji()
+{
+  /* other */
+  Jumanji.Global.mode                = NORMAL;
+  Jumanji.Global.search_engines      = NULL;
+  Jumanji.Global.command_history     = NULL;
+  Jumanji.Global.scripts             = NULL;
+  Jumanji.Global.markers             = NULL;
+  Jumanji.Global.bookmarks           = NULL;
+  Jumanji.Global.history             = NULL;
+  Jumanji.Global.allowed_plugins     = NULL;
+  Jumanji.Global.allowed_plugin_uris = NULL;
+  Jumanji.Global.init_ui             = FALSE;
+  Jumanji.Bindings.sclist            = NULL;
+  Jumanji.Bindings.bcmdlist          = NULL;
+
   /* webkit settings */
   Jumanji.Global.browser_settings = webkit_web_settings_new();
-
-  /* apply user agent */
-  char* current_user_agent = NULL;
-  g_object_get(G_OBJECT(Jumanji.Global.browser_settings), "user-agent", &current_user_agent, NULL);
-
-  char* new_user_agent = g_strconcat(current_user_agent, " ", user_agent, NULL);
-  g_object_set(G_OBJECT(Jumanji.Global.browser_settings), "user-agent", new_user_agent, NULL);
-  g_free(new_user_agent);
 
   /* libsoup session */
   Jumanji.Soup.session = webkit_get_default_session();
@@ -1097,7 +1123,7 @@ open_uri(WebKitWebView* web_view, char* uri)
 void
 update_status()
 {
-  if(!gtk_notebook_get_n_pages(Jumanji.UI.view))
+  if(!Jumanji.UI.view || !gtk_notebook_get_n_pages(Jumanji.UI.view))
     return;
 
   /* update uri */
@@ -1831,14 +1857,17 @@ sc_toggle_proxy(Argument* argument)
   if(enable)
   {
     g_object_set(Jumanji.Soup.session, "proxy-uri", NULL, NULL);
-    notify(DEFAULT, "Proxy deactivated");
+
+    if(Jumanji.Global.init_ui)
+      notify(DEFAULT, "Proxy deactivated");
   }
   else
   {
-    char* purl = (proxy) ? proxy : (char*) g_getenv("HTTP_PROXY");
+    char* purl = (proxy) ? proxy : (char*) g_getenv("http_proxy");
     if(!purl)
     {
-      notify(DEFAULT, "No proxy defined");
+      if(Jumanji.Global.init_ui)
+        notify(DEFAULT, "No proxy defined");
       return;
     }
 
@@ -1850,7 +1879,8 @@ sc_toggle_proxy(Argument* argument)
     soup_uri_free(proxy_uri);
     g_free(uri);
 
-    notify(DEFAULT, "Proxy activated");
+    if(Jumanji.Global.init_ui)
+      notify(DEFAULT, "Proxy activated");
   }
 
   enable = !enable;
@@ -2748,9 +2778,15 @@ cmd_set(int argc, char** argv)
     return TRUE;
 
   /* get webkit settings */
-  WebKitWebSettings* browser_settings = (gtk_notebook_get_current_page(Jumanji.UI.view) < 0) ?
-    Jumanji.Global.browser_settings : webkit_web_view_get_settings(GET_CURRENT_TAB());
-  WebKitWebView* current_wv = (gtk_notebook_get_current_page(Jumanji.UI.view) < 0) ? NULL : GET_CURRENT_TAB();
+  WebKitWebSettings* browser_settings;
+  if(Jumanji.UI.view && gtk_notebook_get_current_page(Jumanji.UI.view) >= 0)
+    browser_settings = webkit_web_view_get_settings(GET_CURRENT_TAB());
+  else
+    browser_settings = Jumanji.Global.browser_settings;
+
+  WebKitWebView* current_wv = NULL;
+  if(Jumanji.UI.view && gtk_notebook_get_current_page(Jumanji.UI.view) >= 0)
+    current_wv = GET_CURRENT_TAB();
 
   int i;
   for(i = 0; i < LENGTH(settings); i++)
@@ -2876,22 +2912,28 @@ cmd_set(int argc, char** argv)
       }
 
       /* reload */
-      if(settings[i].reload)
+      if(settings[i].reload && Jumanji.UI.view)
         if(gtk_notebook_get_current_page(Jumanji.UI.view) >= 0)
           webkit_web_view_reload(GET_CURRENT_TAB());
     }
   }
 
   /* check specific settings */
-  if(show_statusbar)
-    gtk_widget_show(GTK_WIDGET(Jumanji.UI.statusbar));
-  else
-    gtk_widget_hide(GTK_WIDGET(Jumanji.UI.statusbar));
+  if(Jumanji.UI.statusbar)
+  {
+    if(show_statusbar)
+      gtk_widget_show(GTK_WIDGET(Jumanji.UI.statusbar));
+    else
+      gtk_widget_hide(GTK_WIDGET(Jumanji.UI.statusbar));
+  }
 
-  if(show_tabbar)
-    gtk_widget_show(GTK_WIDGET(Jumanji.UI.tabbar));
-  else
-    gtk_widget_hide(GTK_WIDGET(Jumanji.UI.tabbar));
+  if(Jumanji.UI.tabbar)
+  {
+    if(show_tabbar)
+      gtk_widget_show(GTK_WIDGET(Jumanji.UI.tabbar));
+    else
+      gtk_widget_hide(GTK_WIDGET(Jumanji.UI.tabbar));
+  }
 
   update_status();
   return TRUE;
@@ -3258,6 +3300,15 @@ scmd_search(char* input, Argument* argument)
 }
 
 /* callback implementation */
+UniqueResponse
+cb_app_message_received(UniqueApp* application, gint command, UniqueMessageData* message_data, guint time, gpointer data)
+{
+  if(message_data)
+    create_tab(unique_message_data_get_text(message_data), FALSE);
+
+  return UNIQUE_RESPONSE_OK;
+}
+
 gboolean
 cb_blank()
 {
@@ -3836,13 +3887,39 @@ int main(int argc, char* argv[])
     }
   }
 
-  /* init jumanji and read configuration */
+  /* init webkit settings and read configuration */
   init_jumanji();
   init_directories();
-  init_data();
   init_keylist();
   read_configuration();
+
+  /* single instance */
+  if(single_instance)
+  {
+    UniqueApp* application = unique_app_new_with_commands("pwmt.jumanji", NULL, "open", 1, NULL);
+
+    if(unique_app_is_running(application))
+    {
+      for(; i < argc; i++)
+      {
+        UniqueMessageData* data = unique_message_data_new();
+        unique_message_data_set_text(data, argv[i], strlen(argv[i]));
+
+        unique_app_send_message(application, 1, data);
+        unique_message_data_free(data);
+      }
+
+      g_object_unref(application);
+      return 0;
+    }
+    else
+      g_signal_connect(G_OBJECT(application), "message-received", G_CALLBACK(cb_app_message_received), NULL);
+  }
+
+  /* init jumanji and read configuration */
+  init_ui();
   init_settings();
+  init_data();
 
   /* init autosave */
   if(auto_save_interval)
@@ -3852,7 +3929,8 @@ int main(int argc, char* argv[])
   if(argc < 2)
     create_tab(home_page, FALSE);
   else
-    create_tab(argv[i], FALSE);
+    for(; i < argc; i++)
+      create_tab(argv[i], FALSE);
 
   gtk_widget_show_all(GTK_WIDGET(Jumanji.UI.window));
   gtk_widget_grab_focus(GTK_WIDGET(GET_CURRENT_TAB_WIDGET()));
