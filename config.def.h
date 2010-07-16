@@ -61,6 +61,7 @@ gboolean show_scrollbars = FALSE;
 gboolean show_statusbar  = TRUE;
 gboolean show_tabbar     = TRUE;
 gboolean next_to_current = TRUE;
+gboolean single_instance = TRUE;
 
 #define GDK_COSHIFT_MASK GDK_CONTROL_MASK | GDK_SHIFT_MASK
 
@@ -272,6 +273,7 @@ Setting settings[] = {
   {"statusbar_fgcolor",      &(statusbar_fgcolor),      NULL,                           's',  1, 0, 0, "Statusbar foreground color"},
   {"statusbar_ssl_bgcolor",  &(statusbar_ssl_bgcolor),  NULL,                           's',  1, 0, 0, "Statusbar (SSL) background color"},
   {"statusbar_ssl_fgcolor",  &(statusbar_ssl_fgcolor),  NULL,                           's',  1, 0, 0, "Statusbar (SSL) foreground color"},
+  {"single_instance",        &(single_instance),        NULL,                           'b',  0, 0, 0, "Allow only one instance"},
   {"stylesheet",             NULL,                      "user-stylesheet-uri",          's',  0, 1, 0, "Custom stylesheet"},
   {"tabbar",                 &(show_tabbar),            NULL,                           'b',  0, 0, 0, "Show tabbar"},
   {"tabbar_bgcolor",         &(tabbar_bgcolor),         NULL,                           's',  1, 0, 0, "Tabbar background color"},
