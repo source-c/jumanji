@@ -214,6 +214,7 @@ typedef struct
   char  type;
   gboolean init_only;
   gboolean reload;
+  gboolean webkitview;
   char* description;
 } Setting;
 
@@ -582,6 +583,7 @@ create_tab(char* uri, gboolean background)
 
   /* set default values */
   g_object_set_data(G_OBJECT(wv), "loaded_scripts", 0);
+  g_object_set(G_OBJECT(wv), "full-content-zoom", full_content_zoom, NULL);
 
   /* apply browser setting */
   webkit_web_view_set_settings(WEBKIT_WEB_VIEW(wv), webkit_web_settings_copy(Jumanji.Global.browser_settings));
@@ -2747,6 +2749,7 @@ cmd_set(int argc, char** argv)
   /* get webkit settings */
   WebKitWebSettings* browser_settings = (gtk_notebook_get_current_page(Jumanji.UI.view) < 0) ?
     Jumanji.Global.browser_settings : webkit_web_view_get_settings(GET_CURRENT_TAB());
+  WebKitWebView* current_wv = (gtk_notebook_get_current_page(Jumanji.UI.view) < 0) ? NULL : GET_CURRENT_TAB();
 
   int i;
   for(i = 0; i < LENGTH(settings); i++)
@@ -2778,6 +2781,8 @@ cmd_set(int argc, char** argv)
         /* check browser settings */
         if(settings[i].webkitvar)
           g_object_set(G_OBJECT(browser_settings), settings[i].webkitvar, value, NULL);
+        if(settings[i].webkitview)
+          g_object_set(G_OBJECT(current_wv), settings[i].webkitvar, value, NULL);
       }
       else if(settings[i].type == 'i')
       {
