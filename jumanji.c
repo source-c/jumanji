@@ -1552,7 +1552,8 @@ sc_abort(Argument* argument)
   run_script(cmd, NULL, NULL);
 
   /* Stop loading website */
-  cmd_stop(0, NULL);
+  if(webkit_web_view_get_progress(GET_CURRENT_TAB()) == 1.0)
+    cmd_stop(0, NULL);
 
   /* Set back to normal mode */
   change_mode(NORMAL);
