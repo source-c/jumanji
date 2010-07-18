@@ -1089,7 +1089,7 @@ open_uri(WebKitWebView* web_view, char* uri)
   /* prepend http */
 
   /* no dot, default searchengine */
-  if(!new_uri && !strchr(uri, '.'))
+  if(!new_uri && !strchr(uri, '.') && !strchr(uri, ':'))
   {
     if(Jumanji.Global.search_engines)
       new_uri = g_strdup_printf(Jumanji.Global.search_engines->uri, uri);
