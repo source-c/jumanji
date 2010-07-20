@@ -1220,6 +1220,8 @@ update_status()
     gchar* markup = g_strdup_printf("%d | %s", tc + 1, tab_title ? tab_title : ((progress == 100) ? "Loading..." : "(Untitled)"));
     char* s = g_markup_escape_text(markup, -1);
     gtk_label_set_markup((GtkLabel*) tab_label, s);
+    g_free(s);
+    g_free(markup);
   }
 
   /* update position */
@@ -1686,6 +1688,7 @@ sc_follow_link(Argument* argument)
 {
   static gboolean follow_links = FALSE;
   static int      open_mode    = -1;
+  GdkEventKey *key = (GdkEventKey*)argument->data;
 
   /* update open mode */
   if(argument->n < 0)
@@ -1700,52 +1703,31 @@ sc_follow_link(Argument* argument)
     return;
   }
 
-  if(Jumanji.Global.buffer && Jumanji.Global.buffer->len > 0)
+  char* value = NULL;
+  char* cmd   = NULL;
+
+  if (argument && argument->n == 10) 
+    cmd = g_strdup("get_active()");
+  else if (key && key->keyval == GDK_Tab) {
+    if ( key->state & GDK_CONTROL_MASK) 
+      cmd = g_strdup("focus_prev()");
+    else 
+      cmd = g_strdup("focus_next()");
+  }
+  else if(Jumanji.Global.buffer && Jumanji.Global.buffer->len > 0) 
+    cmd = g_strconcat("update_hints(\"", Jumanji.Global.buffer->str, "\")", NULL);
+
+  run_script(cmd, &value, NULL);
+  g_free(cmd);
+
+  if(value && strcmp(value, "undefined"))
   {
-    char* value = NULL;
-    char* cmd   = NULL;
+    if(open_mode == -1)
+      open_uri(GET_CURRENT_TAB(), value);
+    else
+      create_tab(value, TRUE);
 
-    /* select link */
-    if(argument->n == 10)
-    {
-      cmd = g_strconcat("fire(", Jumanji.Global.buffer->str, ")", NULL);
-      run_script(cmd, &value, NULL);
-
-      if(value && !strncmp(value, "open;", 5))
-      {
-        if(open_mode == -1)
-          open_uri(GET_CURRENT_TAB(), value + 5);
-        else
-          create_tab(value + 5, TRUE);
-      }
-
-      sc_abort(NULL);
-      follow_links = FALSE;
-
-      return;
-    }
-
-    cmd = g_strconcat("update_hints(", Jumanji.Global.buffer->str, ")", NULL);
-    run_script(cmd, &value, NULL);
-
-    if(value)
-    {
-      if(!strncmp(value, "fire;", 5))
-      {
-        cmd = g_strconcat("fire(", value + 5, ")", NULL);
-        run_script(cmd, &value, NULL);
-
-        if(value && !strncmp(value, "open;", 5))
-        {
-          if(open_mode == -1)
-            open_uri(GET_CURRENT_TAB(), value + 5);
-          else
-            create_tab(value + 5, TRUE);
-        }
-
-        sc_abort(NULL);
-      }
-    }
+    sc_abort(NULL);
   }
 }
 
@@ -3563,7 +3545,7 @@ cb_tab_kb_pressed(GtkWidget *widget, GdkEventKey *event, gpointer data)
   /* follow hints */
   if(Jumanji.Global.mode == FOLLOW)
   {
-    Argument argument = {0, 0};
+    Argument argument = {0, event};
     sc_follow_link(&argument);
     return TRUE;
   }
@@ -3856,6 +3838,18 @@ gboolean
 cb_wv_window_object_cleared(WebKitWebView* wv, WebKitWebFrame* frame, gpointer context, gpointer window_object, gpointer data)
 {
   /* load all added scripts */
+
+  JSStringRef script; 
+  JSValueRef exc;
+  GString *buffer = g_string_new(NULL);
+
+  for (ScriptList *l = Jumanji.Global.scripts; l; l=l->next) {
+    g_string_append(buffer, l->content);
+  }
+  script = JSStringCreateWithUTF8CString(buffer->str);
+  JSEvaluateScript((JSContextRef)context, script, JSContextGetGlobalObject((JSContextRef)context), NULL, 0, &exc);
+  JSStringRelease(script);
+  g_string_free(buffer, true);
   load_all_scripts();
   return TRUE;
 }
