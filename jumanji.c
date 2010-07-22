@@ -3699,6 +3699,7 @@ cb_wv_event(GtkWidget* widget, GdkEvent* event, gpointer data)
      }
   }
 
+  update_status();
   return FALSE;
 }
 
