@@ -3762,9 +3762,7 @@ cb_wv_nav_policy_decision(WebKitWebView* wv, WebKitWebFrame* frame, WebKitNetwor
   switch(webkit_web_navigation_action_get_button(action))
   {
     case 1: /* left mouse button */
-      open_uri(GET_CURRENT_TAB(), (char*) webkit_network_request_get_uri(request));
-      webkit_web_policy_decision_ignore(decision);
-      return TRUE;
+      return FALSE;
     case 2: /* middle mouse button */
       create_tab((char*) webkit_network_request_get_uri(request), TRUE);
       webkit_web_policy_decision_ignore(decision);
