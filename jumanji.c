@@ -1087,7 +1087,8 @@ open_uri(WebKitWebView* web_view, char* uri)
     new_uri = g_strconcat("file://", uri, NULL);
   }
   /* no dot, default searchengine */
-  if(!new_uri && !strchr(uri, '.') && !strchr(uri, ':') && !strchr(uri, '/'))
+  if(!new_uri && !strchr(uri, '.') && !strchr(uri, ':') && !strchr(uri, '/')
+     && strcmp(uri, "localhost"))
   {
     if(Jumanji.Global.search_engines)
       new_uri = g_strdup_printf(Jumanji.Global.search_engines->uri, uri);
@@ -1704,15 +1705,15 @@ sc_follow_link(Argument* argument)
   char* value = NULL;
   char* cmd   = NULL;
 
-  if (argument && argument->n == 10) 
+  if (argument && argument->n == 10)
     cmd = g_strdup("get_active()");
   else if (key && key->keyval == GDK_Tab) {
-    if ( key->state & GDK_CONTROL_MASK) 
+    if ( key->state & GDK_CONTROL_MASK)
       cmd = g_strdup("focus_prev()");
-    else 
+    else
       cmd = g_strdup("focus_next()");
   }
-  else if(Jumanji.Global.buffer && Jumanji.Global.buffer->len > 0) 
+  else if(Jumanji.Global.buffer && Jumanji.Global.buffer->len > 0)
     cmd = g_strconcat("update_hints(\"", Jumanji.Global.buffer->str, "\")", NULL);
 
   run_script(cmd, &value, NULL);
@@ -3836,7 +3837,7 @@ cb_wv_window_object_cleared(WebKitWebView* wv, WebKitWebFrame* frame, gpointer c
 {
   /* load all added scripts */
 
-  JSStringRef script; 
+  JSStringRef script;
   JSValueRef exc;
   GString *buffer = g_string_new(NULL);
 
