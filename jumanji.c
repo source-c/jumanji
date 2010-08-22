@@ -1106,19 +1106,18 @@ open_uri(WebKitWebView* web_view, char* uri)
   /* update history */
   if(!private_browsing)
   {
-    /* we verify that new_uri isn't already in the list */
-    gboolean already_in_list = FALSE;
-    for(GList* l = Jumanji.Global.history; l; l = g_list_next(l))
+    /* we verify if the new_uri is already present in the list*/
+    GList* l = g_list_find_custom(Jumanji.Global.history, new_uri, (GCompareFunc)strcmp);
+    if (l)
     {
-      if(!strcmp(new_uri, (char*) l->data))
-      {
- already_in_list = TRUE;
- break;
-      }
+      /* new_uri is already present : new move it to the end of the list */
+      Jumanji.Global.history = g_list_remove_link(Jumanji.Global.history, l);
+      Jumanji.Global.history = g_list_concat(Jumanji.Global.history, l);
     }
-
-    if(!already_in_list)
+    else
+    {
       Jumanji.Global.history = g_list_append(Jumanji.Global.history, g_strdup(new_uri));
+    }
   }
 
   g_strfreev(tokens);
