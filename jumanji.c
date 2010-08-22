@@ -62,6 +62,9 @@ enum {
   TOP,
   UP,
   WARNING,
+  XA_PRIMARY,
+  XA_SECONDARY,
+  XA_CLIPBOARD,
   ZOOM_IN,
   ZOOM_ORIGINAL,
   ZOOM_OUT
@@ -1908,7 +1911,12 @@ void
 sc_yank(Argument* argument)
 {
   gchar* uri = (gchar*) webkit_web_view_get_uri(GET_CURRENT_TAB());
-  gtk_clipboard_set_text(gtk_clipboard_get(GDK_SELECTION_PRIMARY), uri, -1);
+  if (argument->n == XA_CLIPBOARD)
+    gtk_clipboard_set_text(gtk_clipboard_get(GDK_SELECTION_CLIPBOARD), uri, -1);
+  else if (argument->n == XA_SECONDARY)
+    gtk_clipboard_set_text(gtk_clipboard_get(GDK_SELECTION_SECONDARY), uri, -1);
+  else
+    gtk_clipboard_set_text(gtk_clipboard_get(GDK_SELECTION_PRIMARY), uri, -1);
 
   gchar* message = g_strdup_printf("Yanked %s", uri);
   notify(DEFAULT, message);

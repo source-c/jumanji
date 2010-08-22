@@ -126,6 +126,7 @@ Shortcut shortcuts[] = {
   {GDK_CONTROL_MASK,   GDK_s,             sc_toggle_sourcecode, NORMAL,              {0} },
   {GDK_CONTROL_MASK,   GDK_q,             sc_quit,              ALL,                 {0} },
   {0,                  GDK_y,             sc_yank,              NORMAL,              {0} },
+  {0,                  GDK_Y,             sc_yank,              NORMAL,              { XA_SECONDARY } },
   {0,                  GDK_plus,          sc_zoom,              NORMAL,              { ZOOM_IN } },
   {0,                  GDK_minus,         sc_zoom,              NORMAL,              { ZOOM_OUT } },
   {0,                  GDK_Return,        sc_follow_link,       FOLLOW,              {10} },
