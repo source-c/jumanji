@@ -3019,12 +3019,14 @@ cmd_write(int argc, char** argv)
   /* save history */
   GString *history_list = g_string_new("");
 
-  GList* h;
-  for(h = Jumanji.Global.history; h; h = g_list_next(h))
+  int h_counter = 0;
+  for(GList* h = Jumanji.Global.history; h && (!history_limit || h_counter < history_limit); h = g_list_next(h))
   {
     char* uri = g_strconcat((char*) h->data, "\n", NULL);
     history_list = g_string_append(history_list, uri);
     g_free(uri);
+
+    h_counter += 1;
   }
 
   char* history_file = g_strdup_printf("%s/%s/%s", g_get_home_dir(), JUMANJI_DIR, JUMANJI_HISTORY);
