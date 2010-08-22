@@ -1063,19 +1063,19 @@ open_uri(WebKitWebView* web_view, char* uri)
   while (*uri == ' ')
     uri++;
 
-  gchar **tokens = g_strsplit(uri, " ", -1);
-  int     length = g_strv_length(tokens);
   gchar* new_uri = NULL;
 
-  /* check search engine */
-  if(length > 1)
+  /* multiple argument given
+   * -> check search engine
+   */
+  if(strchr(uri, ' '))
   {
     SearchEngineList* se = Jumanji.Global.search_engines;
     while(se)
     {
-      if(!strcmp(tokens[0], se->name))
+      if(!strncmp(uri, se->name, strlen(se->name)))
       {
-        char* searchitem = uri + strlen(tokens[0]) + 1;
+        char* searchitem = uri + strlen(se->name) + 1;
         new_uri   = g_strdup_printf(se->uri, searchitem);
         break;
       }
@@ -1083,26 +1083,37 @@ open_uri(WebKitWebView* web_view, char* uri)
       se = se->next;
     }
   }
-  /* no arguemnt given */
+  /* no argument given */
   else if(strlen(uri) == 0)
     new_uri = g_strdup(home_page);
-  /* file path */
-  else if(strcspn(uri, "/") == 0 || strcspn(uri, "./") == 0)
-  {
-    new_uri = g_strconcat("file://", uri, NULL);
-  }
 
-  /* no dot, default searchengine */
-  if(!new_uri && !strchr(uri, '.') && !strchr(uri, ':') && !strchr(uri, '/')
-     && strcmp(uri, "localhost"))
+  if (!new_uri)
   {
-    if(Jumanji.Global.search_engines)
-      new_uri = g_strdup_printf(Jumanji.Global.search_engines->uri, uri);
+    /* uri reformating to get new_uri match
+     * ^http://.*$
+     * or
+     * ^file://.*$
+     */
+
+    /* file path */
+    if(uri[0] == '/' || strncmp(uri, "./", 2) == 0)
+    {
+      new_uri = g_strconcat("file://", uri, NULL);
+    }
+    /* uri does contain any ".", ":" or "/"
+     * nor it start with "localhost"
+     * -> default searchengine
+     */
+    else if(!strpbrk(uri, ".:/") && strncmp(uri, "localhost", 9))
+    {
+      if(Jumanji.Global.search_engines)
+        new_uri = g_strdup_printf(Jumanji.Global.search_engines->uri, uri);
+      else
+        new_uri = g_strconcat("http://", uri, NULL);
+    }
     else
-      new_uri = g_strconcat("http://", uri, NULL);
+      new_uri = strstr(uri, "://") ? g_strdup(uri) : g_strconcat("http://", uri, NULL);
   }
-  else if(!new_uri)
-    new_uri = strstr(uri, "://") ? g_strdup(uri) : g_strconcat("http://", uri, NULL);
 
   webkit_web_view_load_uri(web_view, new_uri);
 
@@ -1123,7 +1134,6 @@ open_uri(WebKitWebView* web_view, char* uri)
     }
   }
 
-  g_strfreev(tokens);
   g_free(new_uri);
 
   update_status();
