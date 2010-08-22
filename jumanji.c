@@ -3425,8 +3425,7 @@ cb_inputbar_kb_pressed(GtkWidget* UNUSED(widget), GdkEventKey* event, gpointer U
   for(unsigned int i = 0; i < LENGTH(inputbar_shortcuts); i++)
   {
     if(event->keyval == inputbar_shortcuts[i].key &&
-      (((event->state & inputbar_shortcuts[i].mask) == inputbar_shortcuts[i].mask)
-       || inputbar_shortcuts[i].mask == 0))
+       event->state  == inputbar_shortcuts[i].mask)
     {
       inputbar_shortcuts[i].function(&(inputbar_shortcuts[i].argument));
       return TRUE;
