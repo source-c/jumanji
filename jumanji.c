@@ -2231,7 +2231,12 @@ isc_completion(Argument* argument)
 
     previous_command   = (command_mode) ? rows[current_item].command : current_command;
     previous_parameter = (command_mode) ? current_parameter : rows[current_item].command;
-    previous_length    = strlen(previous_command) + ((command_mode) ? (length - current_command_length) : (strlen(previous_parameter) + 1));
+    previous_length    = strlen(previous_command);
+    if(command_mode)
+      previous_length += length - current_command_length;
+    else
+      previous_length += strlen(previous_parameter) + 1;
+
     previous_id        = rows[current_item].command_id;
   }
 }
