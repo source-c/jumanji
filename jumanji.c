@@ -729,6 +729,8 @@ init_data()
 
         Jumanji.Global.history = g_list_prepend(Jumanji.Global.history, lines[i]);
       }
+
+      Jumanji.Global.history = g_list_reverse(Jumanji.Global.history);
     }
   }
 
@@ -1112,11 +1114,11 @@ open_uri(WebKitWebView* web_view, char* uri)
     {
       /* new_uri is already present : new move it to the end of the list */
       Jumanji.Global.history = g_list_remove_link(Jumanji.Global.history, l);
-      Jumanji.Global.history = g_list_concat(Jumanji.Global.history, l);
+      Jumanji.Global.history = g_list_concat(l, Jumanji.Global.history);
     }
     else
     {
-      Jumanji.Global.history = g_list_append(Jumanji.Global.history, g_strdup(new_uri));
+      Jumanji.Global.history = g_list_prepend(Jumanji.Global.history, g_strdup(new_uri));
     }
   }
 
