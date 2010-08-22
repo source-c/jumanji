@@ -24,6 +24,7 @@ gboolean private_browsing  = FALSE;
 gboolean plugin_blocker    = TRUE;
 gboolean full_content_zoom = FALSE;
 int auto_save_interval     = 0;
+int history_limit          = 0;
 
 /* download settings */
 char* download_dir     = "~/dl/";
@@ -219,6 +220,7 @@ Setting settings[] = {
   /* name,                   variable,                  webkit-setting,                 type, i, r, s, description */
   {"96dpi",                  NULL,                      "enforce-96-dpi",               'b',  0, 1, 0, "Enforce a resolution of 96 DPI"},
   {"auto_save",              &(auto_save_interval),     NULL,                           'i',  1, 0, 0, "Autosave bookmarks and history"},
+  {"history_limit",          &(history_limit),          NULL,                           'i',  1, 0, 0, "Limit history length"},
   {"auto_shrink_images",     NULL,                      "auto-shrink-images",           'b',  0, 1, 0, "Shrink standalone images to fit"},
   {"background",             NULL,                      "print-backgrounds",            'b',  0, 1, 0, "Print background images"},
   {"caret_browsing",         NULL,                      "enable-caret-browsing",        'b',  0, 1, 0, "Wheter to enable caret browsing mode"},
