@@ -905,7 +905,7 @@ void init_ui()
 
   /* window */
   gtk_window_set_title(GTK_WINDOW(Jumanji.UI.window), "jumanji");
-  GdkGeometry hints = { 1, 1 };
+  GdkGeometry hints = { 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0};
   gtk_window_set_geometry_hints(GTK_WINDOW(Jumanji.UI.window), NULL, &hints, GDK_HINT_MIN_SIZE);
   g_signal_connect(G_OBJECT(Jumanji.UI.window), "destroy", G_CALLBACK(cb_destroy), NULL);
 
@@ -1958,7 +1958,7 @@ sc_zoom(Argument* argument)
 void
 isc_abort(Argument* UNUSED(argument))
 {
-  Argument arg = { HIDE };
+  Argument arg = { HIDE, NULL };
   isc_completion(&arg);
 
   notify(DEFAULT, "");
@@ -3509,7 +3509,7 @@ cb_inputbar_activate(GtkEntry* entry, gpointer UNUSED(data))
   if(!succ)
     notify(ERROR, "Unknown command.");
 
-  Argument arg = { HIDE };
+  Argument arg = { HIDE, NULL };
   isc_completion(&arg);
 
   gtk_widget_grab_focus(GTK_WIDGET(GET_CURRENT_TAB_WIDGET()));
