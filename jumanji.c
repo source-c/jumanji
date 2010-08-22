@@ -27,6 +27,15 @@
 #define GET_NTH_TAB(n) GET_WEBVIEW(gtk_notebook_get_nth_page(Jumanji.UI.view, n))
 #define GET_WEBVIEW(x) WEBKIT_WEB_VIEW(gtk_bin_get_child(GTK_BIN(x)))
 
+#ifdef UNUSED
+#elif defined(__GNUC__)
+# define UNUSED(x) UNUSED_ ## x __attribute__((unused))
+#elif defined(__LCLINT__)
+# define UNUSED(x) /*@unused@*/ x
+#else
+# define UNUSED(x) x
+#endif
+
 /* enums */
 enum {
   APPEND_URL = 1,
@@ -506,7 +515,7 @@ add_marker(int id)
 }
 
 gboolean
-auto_save(gpointer data)
+auto_save(gpointer UNUSED(data))
 {
   cmd_write(0, NULL);
 
@@ -1424,7 +1433,7 @@ set_completion_row_color(GtkBox* results, int mode, int id)
 }
 
 void
-switch_view(GtkWidget* widget)
+switch_view(GtkWidget* UNUSED(widget))
 {
   /*GtkWidget* child = gtk_bin_get_child(GTK_BIN(Jumanji.UI.viewport));*/
   /*if(child)*/
@@ -1586,7 +1595,7 @@ void completion_group_add_element(CompletionGroup* group, char* name, char* desc
 
 /* shortcut implementation */
 void
-sc_abort(Argument* argument)
+sc_abort(Argument* UNUSED(argument))
 {
   /* Clear buffer */
   if(Jumanji.Global.buffer)
@@ -1650,7 +1659,7 @@ sc_change_mode(Argument* argument)
 }
 
 void
-sc_close_tab(Argument* argument)
+sc_close_tab(Argument* UNUSED(argument))
 {
   int current_tab      = gtk_notebook_get_current_page(Jumanji.UI.view);
   GtkWidget* tab       = GTK_WIDGET(GET_NTH_TAB_WIDGET(current_tab));
@@ -1851,7 +1860,7 @@ sc_search(Argument* argument)
 }
 
 void
-sc_toggle_proxy(Argument* argument)
+sc_toggle_proxy(Argument* UNUSED(argument))
 {
   static gboolean enable = FALSE;
 
@@ -1888,7 +1897,7 @@ sc_toggle_proxy(Argument* argument)
 }
 
 void
-sc_toggle_statusbar(Argument* argument)
+sc_toggle_statusbar(Argument* UNUSED(argument))
 {
   if(GTK_WIDGET_VISIBLE(GTK_WIDGET(Jumanji.UI.statusbar)))
     gtk_widget_hide(GTK_WIDGET(Jumanji.UI.statusbar));
@@ -1897,7 +1906,7 @@ sc_toggle_statusbar(Argument* argument)
 }
 
 void
-sc_toggle_sourcecode(Argument* argument)
+sc_toggle_sourcecode(Argument* UNUSED(argument))
 {
   gchar* uri = (char*) webkit_web_view_get_uri(GET_CURRENT_TAB());
 
@@ -1910,7 +1919,7 @@ sc_toggle_sourcecode(Argument* argument)
 }
 
 void
-sc_toggle_tabbar(Argument* argument)
+sc_toggle_tabbar(Argument* UNUSED(argument))
 {
   if(GTK_WIDGET_VISIBLE(GTK_WIDGET(Jumanji.UI.tabbar)))
     gtk_widget_hide(GTK_WIDGET(Jumanji.UI.tabbar));
@@ -1919,7 +1928,7 @@ sc_toggle_tabbar(Argument* argument)
 }
 
 void
-sc_quit(Argument* argument)
+sc_quit(Argument* UNUSED(argument))
 {
   cb_destroy(NULL, NULL);
 }
@@ -1948,7 +1957,7 @@ sc_zoom(Argument* argument)
 
 /* inputbar shortcut declarations */
 void
-isc_abort(Argument* argument)
+isc_abort(Argument* UNUSED(argument))
 {
   Argument arg = { HIDE };
   isc_completion(&arg);
@@ -2294,7 +2303,7 @@ isc_string_manipulation(Argument* argument)
 
 /* command implementation */
 gboolean
-cmd_back(int argc, char** argv)
+cmd_back(int UNUSED(argc), char** UNUSED(argv))
 {
   Argument argument;
   argument.n = PREVIOUS;
@@ -2416,7 +2425,7 @@ cmd_bookmark(int argc, char** argv)
 }
 
 gboolean
-cmd_forward(int argc, char** argv)
+cmd_forward(int UNUSED(argc), char** UNUSED(argv))
 {
   Argument argument;
   argument.n = NEXT;
@@ -2637,21 +2646,21 @@ cmd_plugintype(int argc, char** argv)
 }
 
 gboolean
-cmd_quit(int argc, char** argv)
+cmd_quit(int UNUSED(argc), char** UNUSED(argv))
 {
   sc_close_tab(NULL);
   return TRUE;
 }
 
 gboolean
-cmd_quitall(int argc, char** argv)
+cmd_quitall(int UNUSED(argc), char** UNUSED(argv))
 {
   cb_destroy(NULL, NULL);
   return TRUE;
 }
 
 gboolean
-cmd_reload(int argc, char** argv)
+cmd_reload(int UNUSED(argc), char** UNUSED(argv))
 {
   Argument argument = {0, 0};
   sc_reload(&argument);
@@ -2660,7 +2669,7 @@ cmd_reload(int argc, char** argv)
 }
 
 gboolean
-cmd_reload_all(int argc, char** argv)
+cmd_reload_all(int UNUSED(argc), char** UNUSED(argv))
 {
   int number_of_tabs = gtk_notebook_get_n_pages(Jumanji.UI.view);
   int i;
@@ -2953,7 +2962,7 @@ cmd_set(int argc, char** argv)
 }
 
 gboolean
-cmd_stop(int argc, char** argv)
+cmd_stop(int UNUSED(argc), char** UNUSED(argv))
 {
   webkit_web_view_stop_loading(GET_CURRENT_TAB());
   return TRUE;
@@ -3008,7 +3017,7 @@ cmd_winopen(int argc, char** argv)
 }
 
 gboolean
-cmd_write(int argc, char** argv)
+cmd_write(int UNUSED(argc), char** UNUSED(argv))
 {
   /* save bookmarks */
   GString *bookmark_list = g_string_new("");
@@ -3127,13 +3136,13 @@ cc_set(char* input)
 
 /* buffer command implementation */
 void
-bcmd_close_tab(char* buffer, Argument* argument)
+bcmd_close_tab(char* UNUSED(buffer), Argument* argument)
 {
   sc_close_tab(argument);
 }
 
 void
-bcmd_go_home(char* buffer, Argument* argument)
+bcmd_go_home(char* UNUSED(buffer), Argument* argument)
 {
   if(argument->n == NEW_TAB)
     create_tab(home_page, FALSE);
@@ -3142,7 +3151,7 @@ bcmd_go_home(char* buffer, Argument* argument)
 }
 
 void
-bcmd_go_parent(char* buffer, Argument* argument)
+bcmd_go_parent(char* buffer, Argument* UNUSED(argument))
 {
   char* current_uri = (char*) webkit_web_view_get_uri(GET_CURRENT_TAB());
   if(!current_uri)
@@ -3201,7 +3210,7 @@ bcmd_go_parent(char* buffer, Argument* argument)
 }
 
 void
-bcmd_nav_history(char* buffer, Argument* argument)
+bcmd_nav_history(char* UNUSED(buffer), Argument* argument)
 {
   sc_nav_history(argument);
 }
@@ -3236,13 +3245,13 @@ bcmd_nav_tabs(char* buffer, Argument* argument)
 }
 
 void
-bcmd_paste(char* buffer, Argument* argument)
+bcmd_paste(char* UNUSED(buffer), Argument* argument)
 {
   sc_paste(argument);
 }
 
 void
-bcmd_quit(char* buffer, Argument* argument)
+bcmd_quit(char* UNUSED(buffer), Argument* UNUSED(argument))
 {
   cmd_quitall(0, NULL);
 }
@@ -3271,7 +3280,7 @@ bcmd_scroll(char* buffer, Argument* argument)
 }
 
 void
-bcmd_toggle_sourcecode(char* buffer, Argument* argument)
+bcmd_toggle_sourcecode(char* UNUSED(buffer), Argument* argument)
 {
   if(argument->n == OPEN_EXTERNAL)
   {
@@ -3320,7 +3329,7 @@ scmd_search(char* input, Argument* argument)
 
 /* callback implementation */
 UniqueResponse
-cb_app_message_received(UniqueApp* application, gint command, UniqueMessageData* message_data, guint time, gpointer data)
+cb_app_message_received(UniqueApp* UNUSED(application), gint UNUSED(command), UniqueMessageData* message_data, guint UNUSED(time), gpointer UNUSED(data))
 {
   if(message_data)
     create_tab(unique_message_data_get_text(message_data), FALSE);
@@ -3335,7 +3344,7 @@ cb_blank()
 }
 
 gboolean
-cb_destroy(GtkWidget* widget, gpointer data)
+cb_destroy(GtkWidget* UNUSED(widget), gpointer UNUSED(data))
 {
   pango_font_description_free(Jumanji.Style.font);
 
@@ -3417,7 +3426,7 @@ cb_destroy(GtkWidget* widget, gpointer data)
 }
 
 gboolean
-cb_inputbar_kb_pressed(GtkWidget *widget, GdkEventKey *event, gpointer data)
+cb_inputbar_kb_pressed(GtkWidget* UNUSED(widget), GdkEventKey* event, gpointer UNUSED(data))
 {
   int i;
 
@@ -3450,7 +3459,7 @@ cb_inputbar_kb_pressed(GtkWidget *widget, GdkEventKey *event, gpointer data)
 }
 
 gboolean
-cb_inputbar_activate(GtkEntry* entry, gpointer data)
+cb_inputbar_activate(GtkEntry* entry, gpointer UNUSED(data))
 {
   gchar  *input  = gtk_editable_get_chars(GTK_EDITABLE(entry), 1, -1);
   gchar **tokens = g_strsplit(input, " ", -1);
@@ -3520,7 +3529,7 @@ cb_inputbar_activate(GtkEntry* entry, gpointer data)
 }
 
 gboolean
-cb_tab_kb_pressed(GtkWidget *widget, GdkEventKey *event, gpointer data)
+cb_tab_kb_pressed(GtkWidget* UNUSED(widget), GdkEventKey* event, gpointer UNUSED(data))
 {
   ShortcutList* sc = Jumanji.Bindings.sclist;
   while(sc)
@@ -3616,7 +3625,8 @@ cb_tab_kb_pressed(GtkWidget *widget, GdkEventKey *event, gpointer data)
 }
 
 GtkWidget*
-cb_wv_block_plugin(WebKitWebView* wv, gchar* mime_type, gchar* uri, GHashTable* param, gpointer data)
+cb_wv_block_plugin(WebKitWebView* UNUSED(wv), gchar* mime_type, gchar* uri,
+    GHashTable* UNUSED(param), gpointer UNUSED(data))
 {
   if(!plugin_blocker)
     return NULL;
@@ -3658,7 +3668,8 @@ cb_wv_block_plugin(WebKitWebView* wv, gchar* mime_type, gchar* uri, GHashTable* 
 
 
 gboolean
-cb_wv_console(WebKitWebView* wv, char* message, int line, char* source, gpointer data)
+cb_wv_console(WebKitWebView* UNUSED(wv), char* message, int UNUSED(line),
+    char* UNUSED(source), gpointer UNUSED(data))
 {
   if(!strcmp(message, "hintmode_off") || !strcmp(message, "insertmode_off"))
     change_mode(NORMAL);
@@ -3669,7 +3680,7 @@ cb_wv_console(WebKitWebView* wv, char* message, int line, char* source, gpointer
 }
 
 GtkWidget*
-cb_wv_create_web_view(WebKitWebView* wv, WebKitWebFrame* frame, gpointer data)
+cb_wv_create_web_view(WebKitWebView* wv, WebKitWebFrame* UNUSED(frame), gpointer UNUSED(data))
 {
   char* uri = (char*) webkit_web_view_get_uri(wv);
   GtkWidget* tab = create_tab(uri, TRUE);
@@ -3678,7 +3689,7 @@ cb_wv_create_web_view(WebKitWebView* wv, WebKitWebFrame* frame, gpointer data)
 }
 
 gboolean
-cb_wv_download_request(WebKitWebView* wv, WebKitDownload* download, gpointer data)
+cb_wv_download_request(WebKitWebView* UNUSED(wv), WebKitDownload* download, gpointer UNUSED(data))
 {
   const char* uri      = webkit_download_get_uri(download);
   const char* filename = webkit_download_get_suggested_filename(download);
@@ -3715,7 +3726,7 @@ cb_wv_download_request(WebKitWebView* wv, WebKitDownload* download, gpointer dat
 }
 
 gboolean
-cb_wv_event(GtkWidget* widget, GdkEvent* event, gpointer data)
+cb_wv_event(GtkWidget* UNUSED(widget), GdkEvent* event, gpointer UNUSED(data))
 {
   if(event->type == GDK_BUTTON_RELEASE)
   {
@@ -3739,8 +3750,9 @@ cb_wv_event(GtkWidget* widget, GdkEvent* event, gpointer data)
 }
 
 gboolean
-cb_wv_mimetype_policy_decision(WebKitWebView* wv, WebKitWebFrame* frame, WebKitNetworkRequest* request,
-    char* mimetype, WebKitWebPolicyDecision* decision, gpointer data)
+cb_wv_mimetype_policy_decision(WebKitWebView* wv, WebKitWebFrame* UNUSED(frame),
+    WebKitNetworkRequest* UNUSED(request), char* mimetype, WebKitWebPolicyDecision* decision,
+    gpointer UNUSED(data))
 {
   if(!webkit_web_view_can_show_mime_type(wv, mimetype))
   {
@@ -3752,7 +3764,7 @@ cb_wv_mimetype_policy_decision(WebKitWebView* wv, WebKitWebFrame* frame, WebKitN
 }
 
 gboolean
-cb_wv_hover_link(WebKitWebView* wv, char* title, char* link, gpointer data)
+cb_wv_hover_link(WebKitWebView* UNUSED(wv), char* UNUSED(title), char* link, gpointer UNUSED(data))
 {
   if(link)
     link = g_strconcat("Link: ", link, NULL);
@@ -3766,7 +3778,7 @@ cb_wv_hover_link(WebKitWebView* wv, char* title, char* link, gpointer data)
 }
 
 WebKitWebView*
-cb_wv_inspector_view(WebKitWebInspector* inspector, WebKitWebView* wv, gpointer data)
+cb_wv_inspector_view(WebKitWebInspector* UNUSED(inspector), WebKitWebView* wv, gpointer UNUSED(data))
 {
   GtkWidget* window;
   GtkWidget* webview;
@@ -3792,8 +3804,9 @@ cb_wv_inspector_view(WebKitWebInspector* inspector, WebKitWebView* wv, gpointer 
 }
 
 gboolean
-cb_wv_nav_policy_decision(WebKitWebView* wv, WebKitWebFrame* frame, WebKitNetworkRequest* request,
-    WebKitWebNavigationAction* action, WebKitWebPolicyDecision* decision, gpointer data)
+cb_wv_nav_policy_decision(WebKitWebView* UNUSED(wv), WebKitWebFrame* UNUSED(frame),
+    WebKitNetworkRequest* request, WebKitWebNavigationAction* action,
+    WebKitWebPolicyDecision* decision, gpointer UNUSED(data))
 {
   switch(webkit_web_navigation_action_get_button(action))
   {
@@ -3811,7 +3824,7 @@ cb_wv_nav_policy_decision(WebKitWebView* wv, WebKitWebFrame* frame, WebKitNetwor
 }
 
 gboolean
-cb_wv_notify_progress(WebKitWebView* wv, GParamSpec* pspec, gpointer data)
+cb_wv_notify_progress(WebKitWebView* wv, GParamSpec* UNUSED(pspec), gpointer UNUSED(data))
 {
   if(gtk_notebook_get_current_page(Jumanji.UI.view) < 0)
     return TRUE;
