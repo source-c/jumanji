@@ -3002,8 +3002,7 @@ cmd_write(int argc, char** argv)
   /* save bookmarks */
   GString *bookmark_list = g_string_new("");
 
-  GList* l;
-  for(l = Jumanji.Global.bookmarks; l; l = g_list_next(l))
+  for(GList* l = Jumanji.Global.bookmarks; l; l = g_list_next(l))
   {
     char* bookmark = g_strconcat((char*) l->data, "\n", NULL);
     bookmark_list = g_string_append(bookmark_list, bookmark);
@@ -3333,16 +3332,15 @@ cb_destroy(GtkWidget* widget, gpointer data)
   cmd_write(0, NULL);
 
   /* clear bookmarks */
-  GList* l;
-  for(l = Jumanji.Global.bookmarks; l; l = g_list_next(l))
-    free(l->data);
+  GList* list;
+  for(list = Jumanji.Global.bookmarks; list; list = g_list_next(list))
+    free(list->data);
 
   g_list_free(Jumanji.Global.bookmarks);
 
   /* clear history */
-  GList* h;
-  for(h = Jumanji.Global.history; h; h = g_list_next(h))
-    free(h->data);
+  for(list = Jumanji.Global.history; list; list = g_list_next(list))
+    free(list->data);
 
   g_list_free(Jumanji.Global.history);
 
@@ -3379,7 +3377,6 @@ cb_destroy(GtkWidget* widget, gpointer data)
   }
 
   /* clean markers */
-  GList* list;
   for(list = Jumanji.Global.markers; list; list = g_list_next(list))
     free(list->data);
 
