@@ -136,8 +136,8 @@ typedef struct
 
 typedef struct
 {
-  int mask;
-  int key;
+  unsigned int mask;
+  unsigned int key;
   void (*function)(Argument*);
   int mode;
   Argument argument;
@@ -158,8 +158,8 @@ typedef struct
 
 typedef struct
 {
-  int mask;
-  int key;
+  unsigned int mask;
+  unsigned int key;
   void (*function)(Argument*);
   Argument argument;
 } InputbarShortcut;
@@ -206,8 +206,8 @@ typedef struct SCList ShortcutList;
 
 typedef struct
 {
-  int mask;
-  int button;
+  unsigned int mask;
+  unsigned int button;
   void (*function)(Argument*);
   int mode;
   Argument argument;
@@ -216,7 +216,7 @@ typedef struct
 typedef struct
 {
   char* identifier;
-  int   key;
+  unsigned int key;
 } GDKKey;
 
 typedef struct
@@ -769,8 +769,7 @@ init_keylist()
   ShortcutList* e = NULL;
   ShortcutList* p = NULL;
 
-  int i;
-  for(i = 0; i < LENGTH(shortcuts); i++)
+  for(unsigned int i = 0; i < LENGTH(shortcuts); i++)
   {
     e = malloc(sizeof(ShortcutList));
     if(!e)
@@ -791,7 +790,7 @@ init_keylist()
   BufferCommandList *b = NULL;
   BufferCommandList *f = NULL;
 
-  for(i = 0; i < LENGTH(buffer_commands); i++)
+  for(unsigned int i = 0; i < LENGTH(buffer_commands); i++)
   {
     b = malloc(sizeof(BufferCommandList));
     if(!b)
@@ -2066,8 +2065,7 @@ isc_completion(Argument* argument)
     {
       gboolean search_matching_command = FALSE;
 
-      int i;
-      for(i = 0; i < LENGTH(commands); i++)
+      for(unsigned int i = 0; i < LENGTH(commands); i++)
       {
         int abbr_length = commands[i].abbr ? strlen(commands[i].abbr) : 0;
         int cmd_length  = commands[i].command ? strlen(commands[i].command) : 0;
@@ -2138,14 +2136,13 @@ isc_completion(Argument* argument)
     /* create list based on commands */
     else
     {
-      int i = 0;
       command_mode = TRUE;
 
       rows = malloc(LENGTH(commands) * sizeof(CompletionRow));
       if(!rows)
         out_of_memory();
 
-      for(i = 0; i < LENGTH(commands); i++)
+      for(unsigned int i = 0; i < LENGTH(commands); i++)
       {
         int abbr_length = commands[i].abbr ? strlen(commands[i].abbr) : 0;
         int cmd_length  = commands[i].command ? strlen(commands[i].command) : 0;
@@ -2320,9 +2317,8 @@ cmd_bmap(int argc, char** argv)
 
   /* search for the right buffered command function mapping */
   int bc_id = -1;
-  int bc_c;
 
-  for(bc_c = 0; bc_c < LENGTH(function_names); bc_c++)
+  for(unsigned int bc_c = 0; bc_c < LENGTH(function_names); bc_c++)
   {
     if(!strcmp(argv[1], function_names[bc_c].name) && function_names[bc_c].bcmd)
     {
@@ -2345,8 +2341,7 @@ cmd_bmap(int argc, char** argv)
     int arg_id = -1;
 
     /* compare argument with given argument names... */
-    int arg_c;
-    for(arg_c = 0; arg_c < LENGTH(argument_names); arg_c++)
+    for(unsigned int arg_c = 0; arg_c < LENGTH(argument_names); arg_c++)
     {
       if(!strcmp(argv[2], argument_names[arg_c].name))
       {
@@ -2445,8 +2440,7 @@ cmd_map(int argc, char** argv)
   /* search for the right shortcut function */
   int sc_id = -1;
 
-  int sc_c;
-  for(sc_c = 0; sc_c < LENGTH(function_names); sc_c++)
+  for(unsigned int sc_c = 0; sc_c < LENGTH(function_names); sc_c++)
   {
     if(!strcmp(argv[1], function_names[sc_c].name) && function_names[sc_c].sc)
     {
@@ -2462,8 +2456,8 @@ cmd_map(int argc, char** argv)
   }
 
   /* parse modifier and key */
-  int mask = 0;
-  int key  = 0;
+  unsigned int mask = 0;
+  unsigned int key  = 0;
   int keyl = strlen(ks);
   int mode = NORMAL;
 
@@ -2512,8 +2506,7 @@ cmd_map(int argc, char** argv)
       specialkey = ks;
 
     /* search special key */
-    int g_c;
-    for(g_c = 0; specialkey && g_c < LENGTH(gdk_keys); g_c++)
+    for(unsigned int g_c = 0; specialkey && g_c < LENGTH(gdk_keys); g_c++)
     {
       if(!strcmp(specialkey, gdk_keys[g_c].identifier))
       {
@@ -2540,8 +2533,7 @@ cmd_map(int argc, char** argv)
     int arg_id = -1;
 
     /* compare argument with given argument names... */
-    int arg_c;
-    for(arg_c = 0; arg_c < LENGTH(argument_names); arg_c++)
+    for(unsigned int arg_c = 0; arg_c < LENGTH(argument_names); arg_c++)
     {
       if(!strcmp(argv[2], argument_names[arg_c].name))
       {
@@ -2560,8 +2552,7 @@ cmd_map(int argc, char** argv)
   /* parse mode */
   if(argc >= 4)
   {
-    int mode_c;
-    for(mode_c = 0; mode_c < LENGTH(mode_names); mode_c++)
+    for(unsigned int mode_c = 0; mode_c < LENGTH(mode_names); mode_c++)
     {
       if(!strcmp(argv[3], mode_names[mode_c].name))
       {
@@ -2810,8 +2801,7 @@ cmd_set(int argc, char** argv)
   if(Jumanji.UI.view && gtk_notebook_get_current_page(Jumanji.UI.view) >= 0)
     current_wv = GET_CURRENT_TAB();
 
-  int i;
-  for(i = 0; i < LENGTH(settings); i++)
+  for(unsigned int i = 0; i < LENGTH(settings); i++)
   {
     if(!strcmp(argv[0], settings[i].name))
     {
@@ -2849,8 +2839,7 @@ cmd_set(int argc, char** argv)
           return TRUE;
 
         int id = -1;
-        int arg_c;
-        for(arg_c = 0; arg_c < LENGTH(argument_names); arg_c++)
+        for(unsigned int arg_c = 0; arg_c < LENGTH(argument_names); arg_c++)
         {
           if(!strcmp(argv[1], argument_names[arg_c].name))
           {
@@ -3118,10 +3107,9 @@ cc_set(char* input)
 
   completion_add_group(completion, group);
 
-  int i = 0;
-  int input_length = input ? strlen(input) : 0;
+  unsigned int input_length = input ? strlen(input) : 0;
 
-  for(i = 0; i < LENGTH(settings); i++)
+  for(unsigned int i = 0; i < LENGTH(settings); i++)
   {
     if( (input_length <= strlen(settings[i].name)) &&
         !strncmp(input, settings[i].name, input_length) &&
@@ -3428,10 +3416,8 @@ cb_destroy(GtkWidget* UNUSED(widget), gpointer UNUSED(data))
 gboolean
 cb_inputbar_kb_pressed(GtkWidget* UNUSED(widget), GdkEventKey* event, gpointer UNUSED(data))
 {
-  int i;
-
   /* inputbar shortcuts */
-  for(i = 0; i < LENGTH(inputbar_shortcuts); i++)
+  for(unsigned int i = 0; i < LENGTH(inputbar_shortcuts); i++)
   {
     if(event->keyval == inputbar_shortcuts[i].key &&
       (((event->state & inputbar_shortcuts[i].mask) == inputbar_shortcuts[i].mask)
@@ -3444,7 +3430,7 @@ cb_inputbar_kb_pressed(GtkWidget* UNUSED(widget), GdkEventKey* event, gpointer U
 
   /* special commands */
   char identifier = gtk_editable_get_chars(GTK_EDITABLE(Jumanji.UI.inputbar), 0, 1)[0];
-  for(i = 0; i < LENGTH(special_commands); i++)
+  for(unsigned int i = 0; i < LENGTH(special_commands); i++)
   {
     if((identifier == special_commands[i].identifier) &&
        (special_commands[i].always == 1))
@@ -3465,7 +3451,6 @@ cb_inputbar_activate(GtkEntry* entry, gpointer UNUSED(data))
   gchar **tokens = g_strsplit(input, " ", -1);
   gchar *command = tokens[0];
   int     length = g_strv_length(tokens);
-  int          i = 0;
   gboolean  retv = FALSE;
   gboolean  succ = FALSE;
 
@@ -3482,7 +3467,7 @@ cb_inputbar_activate(GtkEntry* entry, gpointer UNUSED(data))
 
   /* special commands */
   char identifier = gtk_editable_get_chars(GTK_EDITABLE(entry), 0, 1)[0];
-  for(i = 0; i < LENGTH(special_commands); i++)
+  for(unsigned int i = 0; i < LENGTH(special_commands); i++)
   {
     if(identifier == special_commands[i].identifier)
     {
@@ -3502,7 +3487,7 @@ cb_inputbar_activate(GtkEntry* entry, gpointer UNUSED(data))
   }
 
   /* search commands */
-  for(i = 0; i < LENGTH(commands); i++)
+  for(unsigned int i = 0; i < LENGTH(commands); i++)
   {
     if((g_strcmp0(command, commands[i].command) == 0) ||
        (g_strcmp0(command, commands[i].abbr)    == 0))
@@ -3730,8 +3715,7 @@ cb_wv_event(GtkWidget* UNUSED(widget), GdkEvent* event, gpointer UNUSED(data))
 {
   if(event->type == GDK_BUTTON_RELEASE)
   {
-    int i;
-    for(i = 0; i < LENGTH(mouse); i++)
+    for(unsigned int i = 0; i < LENGTH(mouse); i++)
     {
       if( CLEAN(event->button.state) == mouse[i].mask &&
           event->button.button == mouse[i].button &&
