@@ -3202,8 +3202,13 @@ bcmd_nav_tabs(char* buffer, Argument* argument)
 
   if(argument->n == SPECIFIC)
   {
-    char* number = g_strndup(buffer, strlen(buffer) - 2);
+    int digit_end = 0;
+    while(g_ascii_isdigit(buffer[digit_end]))
+      digit_end = digit_end + 1;
+
+    char* number = g_strndup(buffer, digit_end);
     new_tab      = atoi(number) - 1;
+    g_free(number);
   }
 
   gtk_notebook_set_current_page(Jumanji.UI.view, new_tab);
