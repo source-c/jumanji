@@ -3058,33 +3058,33 @@ cc_open(char* input)
   }
 
   /* bookmarks */
-  CompletionGroup* bookmarks = completion_group_create("Bookmarks");
-  GList* l = Jumanji.Global.bookmarks;
-
-  if(l)
+  if(Jumanji.Global.bookmarks)
+  {
+    CompletionGroup* bookmarks = completion_group_create("Bookmarks");
     completion_add_group(completion, bookmarks);
 
-  for(; l; l = g_list_next(l))
-  {
-    char* bookmark = (char*) l->data;
+    for(GList* l = Jumanji.Global.bookmarks; l; l = g_list_next(l))
+    {
+      char* bookmark = (char*) l->data;
 
-    if(strstr(bookmark, input))
-      completion_group_add_element(bookmarks, bookmark, NULL);
+      if(strstr(bookmark, input))
+        completion_group_add_element(bookmarks, bookmark, NULL);
+    }
   }
 
   /* history */
-  CompletionGroup* history = completion_group_create("History");
-  GList* h = Jumanji.Global.history;
-
-  if(h)
+  if(Jumanji.Global.history)
+  {
+    CompletionGroup* history = completion_group_create("History");
     completion_add_group(completion, history);
 
-  for(; h; h = g_list_next(h))
-  {
-    char* uri = (char*) h->data;
+    for(GList* h = Jumanji.Global.history; h; h = g_list_next(h))
+    {
+      char* uri = (char*) h->data;
 
-    if(strstr(uri, input))
-      completion_group_add_element(history, uri, NULL);
+      if(strstr(uri, input))
+        completion_group_add_element(history, uri, NULL);
+    }
   }
 
   return completion;
