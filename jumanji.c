@@ -2371,14 +2371,21 @@ cmd_bookmark(int argc, char** argv)
   else
     bookmark = g_strdup(webkit_web_view_get_uri(GET_CURRENT_TAB()));
 
-  GList* l = Jumanji.Global.bookmarks;
-  for(; l; l = g_list_next(l))
+  /* at first we verify that bookmark isn't already in the list */
+  gboolean already_in_list = FALSE;
+  for(GList* l = Jumanji.Global.bookmarks; l; l = g_list_next(l))
   {
     if(!strcmp(bookmark, (char*) l->data))
-      Jumanji.Global.bookmarks = g_list_remove(Jumanji.Global.bookmarks, l->data);
+    {
+      already_in_list = TRUE;
+      break;
+    }
   }
 
-  Jumanji.Global.bookmarks = g_list_append(Jumanji.Global.bookmarks, bookmark);
+  if(already_in_list)
+    g_free(bookmark);
+  else
+    Jumanji.Global.bookmarks = g_list_append(Jumanji.Global.bookmarks, bookmark);
 
   return TRUE;
 }
