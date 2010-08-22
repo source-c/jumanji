@@ -1651,7 +1651,7 @@ sc_close_tab(Argument* argument)
 
     if(marker->tab_id == current_tab)
     {
-      Jumanji.Global.markers = g_list_remove(Jumanji.Global.markers, list->data);
+      Jumanji.Global.markers = g_list_delete_link(Jumanji.Global.markers, list);
       free(marker);
       break;
     }
