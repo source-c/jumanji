@@ -1091,6 +1091,7 @@ open_uri(WebKitWebView* web_view, char* uri)
   {
     new_uri = g_strconcat("file://", uri, NULL);
   }
+
   /* no dot, default searchengine */
   if(!new_uri && !strchr(uri, '.') && !strchr(uri, ':') && !strchr(uri, '/')
      && strcmp(uri, "localhost"))
@@ -1101,7 +1102,7 @@ open_uri(WebKitWebView* web_view, char* uri)
       new_uri = g_strconcat("http://", uri, NULL);
   }
   else if(!new_uri)
-    new_uri = g_strrstr(uri, "://") ? g_strdup(uri) : g_strconcat("http://", uri, NULL);
+    new_uri = strstr(uri, "://") ? g_strdup(uri) : g_strconcat("http://", uri, NULL);
 
   webkit_web_view_load_uri(web_view, new_uri);
 
@@ -1861,7 +1862,7 @@ sc_toggle_proxy(Argument* argument)
       return;
     }
 
-    char* uri = g_strrstr(purl, "://") ? g_strdup(purl) : g_strconcat("http://", purl, NULL);
+    char* uri = strstr(purl, "://") ? g_strdup(purl) : g_strconcat("http://", purl, NULL);
     SoupURI* proxy_uri = soup_uri_new(uri);
 
     g_object_set(Jumanji.Soup.session, "proxy-uri", proxy_uri, NULL);
