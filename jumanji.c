@@ -2614,19 +2614,13 @@ cmd_open(int argc, char** argv)
   if(argc <= 0)
     return TRUE;
 
-  int i;
-  GString *uri = g_string_new("");
+  if(argv[argc] != NULL)
+    return TRUE;
 
-  for(i = 0; i < argc; i++)
-  {
-    if(i != 0)
-      uri = g_string_append_c(uri, ' ');
+  char* uri = g_strjoinv(" ", argv);
 
-    uri = g_string_append(uri, argv[i]);
-  }
-
-  open_uri(GET_CURRENT_TAB(), uri->str);
-  g_string_free(uri, FALSE);
+  open_uri(GET_CURRENT_TAB(), uri);
+  g_free(uri);
 
   return TRUE;
 }
