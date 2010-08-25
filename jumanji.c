@@ -455,16 +455,17 @@ gboolean cb_inputbar_kb_pressed(GtkWidget*, GdkEventKey*, gpointer);
 gboolean cb_inputbar_activate(GtkEntry*, gpointer);
 gboolean cb_tab_kb_pressed(GtkWidget*, GdkEventKey*, gpointer);
 GtkWidget* cb_wv_block_plugin(WebKitWebView*, gchar*, gchar*, GHashTable*, gpointer);
+gboolean cb_wv_button_release_event(GtkWidget*, GdkEvent*, gpointer);
 gboolean cb_wv_console(WebKitWebView*, char*, int, char*, gpointer);
 GtkWidget* cb_wv_create_web_view(WebKitWebView*, WebKitWebFrame*, gpointer);
 gboolean cb_wv_download_request(WebKitWebView*, WebKitDownload*, gpointer);
-gboolean cb_wv_event(GtkWidget*, GdkEvent*, gpointer);
 gboolean cb_wv_hover_link(WebKitWebView*, char*, char*, gpointer);
 WebKitWebView* cb_wv_inspector_view(WebKitWebInspector*, WebKitWebView*, gpointer);
 gboolean cb_wv_mimetype_policy_decision(WebKitWebView*, WebKitWebFrame*, WebKitNetworkRequest*, char*, WebKitWebPolicyDecision*, gpointer);
 gboolean cb_wv_notify_progress(WebKitWebView*, GParamSpec*, gpointer);
 gboolean cb_wv_notify_title(WebKitWebView*, GParamSpec*, gpointer);
 gboolean cb_wv_nav_policy_decision(WebKitWebView*, WebKitWebFrame*, WebKitNetworkRequest*, WebKitWebNavigationAction*, WebKitWebPolicyDecision*, gpointer);
+gboolean cb_wv_scrolled(GtkAdjustment*, gpointer);
 gboolean cb_wv_unblock_plugin(GtkWidget*, GdkEventButton*, gpointer);
 gboolean cb_wv_window_policy_decision(WebKitWebView*, WebKitWebFrame*, WebKitNetworkRequest*, WebKitWebNavigationAction*, WebKitWebPolicyDecision*, gpointer);
 gboolean cb_wv_window_object_cleared(WebKitWebView*, WebKitWebFrame*, gpointer, gpointer, gpointer);
@@ -585,12 +586,14 @@ create_tab(char* uri, gboolean background)
     gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(tab), GTK_POLICY_NEVER, GTK_POLICY_NEVER);
   }
 
-  /* connect callbacks */
+  GtkAdjustment* adjustment = gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(tab));
+
+  /* connect webview callbacks */
   g_signal_connect(G_OBJECT(wv),  "console-message",                      G_CALLBACK(cb_wv_console),                  NULL);
   g_signal_connect(G_OBJECT(wv),  "create-plugin-widget",                 G_CALLBACK(cb_wv_block_plugin),             NULL);
   g_signal_connect(G_OBJECT(wv),  "create-web-view",                      G_CALLBACK(cb_wv_create_web_view),          NULL);
   g_signal_connect(G_OBJECT(wv),  "download-requested",                   G_CALLBACK(cb_wv_download_request),         NULL);
-  g_signal_connect(G_OBJECT(wv),  "event",                                G_CALLBACK(cb_wv_event),                    NULL);
+  g_signal_connect(G_OBJECT(wv),  "button-release-event",                 G_CALLBACK(cb_wv_button_release_event),     NULL);
   g_signal_connect(G_OBJECT(wv),  "hovering-over-link",                   G_CALLBACK(cb_wv_hover_link),               NULL);
   g_signal_connect(G_OBJECT(wv),  "mime-type-policy-decision-requested",  G_CALLBACK(cb_wv_mimetype_policy_decision), NULL);
   g_signal_connect(G_OBJECT(wv),  "navigation-policy-decision-requested", G_CALLBACK(cb_wv_nav_policy_decision),      NULL);
@@ -598,7 +601,10 @@ create_tab(char* uri, gboolean background)
   g_signal_connect(G_OBJECT(wv),  "notify::progress",                     G_CALLBACK(cb_wv_notify_progress),          NULL);
   g_signal_connect(G_OBJECT(wv),  "notify::title",                        G_CALLBACK(cb_wv_notify_title),             NULL);
   g_signal_connect(G_OBJECT(wv),  "window-object-cleared",                G_CALLBACK(cb_wv_window_object_cleared),    NULL);
-  g_signal_connect(G_OBJECT(tab), "key-press-event",                      G_CALLBACK(cb_tab_kb_pressed),              NULL);
+
+  /* connect tab callbacks */
+  g_signal_connect(G_OBJECT(tab),        "key-press-event", G_CALLBACK(cb_tab_kb_pressed), NULL);
+  g_signal_connect(G_OBJECT(adjustment), "value-changed",   G_CALLBACK(cb_wv_scrolled),    NULL);
 
   /* set default values */
   g_object_set_data(G_OBJECT(wv), "loaded_scripts", 0);
@@ -1830,8 +1836,6 @@ sc_scroll(Argument* argument)
     gtk_adjustment_set_value(adjustment, max);
   else
     gtk_adjustment_set_value(adjustment, (value + scroll_step) > max ? max : (value + scroll_step));
-
-  update_status();
 }
 
 void
@@ -3268,8 +3272,6 @@ bcmd_scroll(char* buffer, Argument* argument)
   gdouble value  = (max / 100.0f) * (float) percentage;
 
   gtk_adjustment_set_value(adjustment, value);
-
-  update_status();
 }
 
 void
@@ -3655,6 +3657,24 @@ cb_wv_block_plugin(WebKitWebView* UNUSED(wv), gchar* mime_type, gchar* uri,
   return plugin->box;
 }
 
+gboolean
+cb_wv_button_release_event(GtkWidget* UNUSED(widget), GdkEvent* event, gpointer UNUSED(data))
+{
+  for(unsigned int i = 0; i < LENGTH(mouse); i++)
+  {
+    if( CLEAN(event->button.state) == mouse[i].mask &&
+        event->button.button == mouse[i].button &&
+        ((Jumanji.Global.mode == mouse[i].mode) || (mouse[i].mode == ALL)) &&
+        mouse[i].function
+      )
+    {
+      mouse[i].function(&(mouse[i].argument));
+      return TRUE;
+    }
+  }
+
+  return FALSE;
+}
 
 gboolean
 cb_wv_console(WebKitWebView* UNUSED(wv), char* message, int UNUSED(line),
@@ -3712,29 +3732,6 @@ cb_wv_download_request(WebKitWebView* UNUSED(wv), WebKitDownload* download, gpoi
   g_free(file);
 
   return TRUE;
-}
-
-gboolean
-cb_wv_event(GtkWidget* UNUSED(widget), GdkEvent* event, gpointer UNUSED(data))
-{
-  if(event->type == GDK_BUTTON_RELEASE)
-  {
-    for(unsigned int i = 0; i < LENGTH(mouse); i++)
-    {
-      if( CLEAN(event->button.state) == mouse[i].mask &&
-          event->button.button == mouse[i].button &&
-          ((Jumanji.Global.mode == mouse[i].mode) || (mouse[i].mode == ALL)) &&
-          mouse[i].function
-        )
-      {
-        mouse[i].function(&(mouse[i].argument));
-        return TRUE;
-      }
-     }
-  }
-
-  update_status();
-  return FALSE;
 }
 
 gboolean
@@ -3833,6 +3830,13 @@ cb_wv_notify_title(WebKitWebView* wv, GParamSpec* pspec, gpointer data)
     update_status();
   }
 
+  return TRUE;
+}
+
+gboolean
+cb_wv_scrolled(GtkAdjustment* UNUSED(adjustment), gpointer UNUSED(data))
+{
+  update_status();
   return TRUE;
 }
 
