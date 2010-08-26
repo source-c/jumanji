@@ -3253,6 +3253,9 @@ bcmd_nav_tabs(char* buffer, Argument* argument)
 
   if(argument->n == SPECIFIC)
   {
+    if (argument->data)
+      buffer = argument->data;
+
     int digit_end = 0;
     while(g_ascii_isdigit(buffer[digit_end]))
       digit_end = digit_end + 1;
