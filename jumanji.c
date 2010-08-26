@@ -394,6 +394,7 @@ void sc_reload(Argument*);
 void sc_run_script(Argument*);
 void sc_scroll(Argument*);
 void sc_search(Argument*);
+void sc_spawn(Argument*);
 void sc_toggle_proxy(Argument*);
 void sc_toggle_statusbar(Argument*);
 void sc_toggle_sourcecode(Argument*);
@@ -442,6 +443,7 @@ void bcmd_nav_tabs(char*, Argument*);
 void bcmd_paste(char*, Argument*);
 void bcmd_quit(char*, Argument*);
 void bcmd_scroll(char*, Argument*);
+void bcmd_spawn(char*, Argument*);
 void bcmd_toggle_sourcecode(char*, Argument*);
 void bcmd_zoom(char*, Argument*);
 
@@ -1881,6 +1883,12 @@ sc_search(Argument* argument)
 }
 
 void
+sc_spawn(Argument* argument)
+{
+  bcmd_spawn(NULL, argument);
+}
+
+void
 sc_toggle_proxy(Argument* UNUSED(argument))
 {
   static gboolean enable = FALSE;
@@ -3302,6 +3310,17 @@ bcmd_scroll(char* buffer, Argument* argument)
   gdouble value  = (max / 100.0f) * (float) percentage;
 
   gtk_adjustment_set_value(adjustment, value);
+}
+
+void
+bcmd_spawn(char* UNUSED(buffer), Argument* argument)
+{
+  char* uri     = (char*) webkit_web_view_get_uri(GET_CURRENT_TAB());
+  char* command = g_strdup_printf(argument->data, uri);
+
+  g_spawn_command_line_async(command, NULL);
+
+  g_free(command);
 }
 
 void
