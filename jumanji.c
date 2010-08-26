@@ -1080,24 +1080,34 @@ open_uri(WebKitWebView* web_view, char* uri)
 
   gchar* new_uri = NULL;
 
-  /* multiple argument given
-   * -> check search engine
-   */
+  /* multiple argument given */
   char* uri_first_space = strchr(uri, ' ');
   if(uri_first_space)
   {
-    unsigned int first_arg_length = uri_first_space - uri;
-    SearchEngineList* se = Jumanji.Global.search_engines;
-    while(se)
+    /* first agrument contain "://"
+     * -> it's a bookmark with tag
+     */
+    if (strstr(uri, "://"))
     {
-      if(strlen(se->name) == first_arg_length && !strncmp(uri, se->name, first_arg_length))
+      new_uri = g_strndup(uri, uri_first_space - uri);
+    }
+    /* first agrument doesn't contain "://"
+     * -> check search engine
+     */
+    else
+    {
+      SearchEngineList* se = Jumanji.Global.search_engines;
+      while(se)
       {
-        char* searchitem = uri + first_arg_length + 1;
-        new_uri   = g_strdup_printf(se->uri, searchitem);
-        break;
-      }
+        if(!strncmp(uri, se->name, strlen(se->name)))
+        {
+          char* searchitem = uri + strlen(se->name) + 1;
+          new_uri   = g_strdup_printf(se->uri, searchitem);
+          break;
+        }
 
-      se = se->next;
+        se = se->next;
+      }
     }
   }
   /* no argument given */
@@ -2411,27 +2421,42 @@ cmd_bmap(int argc, char** argv)
 gboolean
 cmd_bookmark(int argc, char** argv)
 {
-  char* bookmark;
-  if(argc >= 1)
-    bookmark = g_strdup(argv[0]);
-  else
-    bookmark = g_strdup(webkit_web_view_get_uri(GET_CURRENT_TAB()));
+  char* bookmark = g_strdup(webkit_web_view_get_uri(GET_CURRENT_TAB()));
 
-  /* at first we verify that bookmark isn't already in the list */
-  gboolean already_in_list = FALSE;
+  /* at first we verify that bookmark (without tag) isn't already in the list */
+  unsigned int bookmark_length = strlen(bookmark);
   for(GList* l = Jumanji.Global.bookmarks; l; l = g_list_next(l))
   {
-    if(!strcmp(bookmark, (char*) l->data))
+    if(!strncmp(bookmark, (char*) l->data, bookmark_length))
     {
-      already_in_list = TRUE;
+      /* we remove the former bookmark so tags will be updated by the new ones */
+      g_free(l->data);
+      Jumanji.Global.bookmarks = g_list_delete_link(Jumanji.Global.bookmarks, l);
       break;
     }
   }
 
-  if(already_in_list)
-    g_free(bookmark);
-  else
-    Jumanji.Global.bookmarks = g_list_append(Jumanji.Global.bookmarks, bookmark);
+  /* I am sure argv end with NULL since it was generate by g_strsplit()
+   * in cb_inputbar_activate.
+   * Even if I know (argv[argc] == NULL) I test it since apply g_strjoinv
+   * to a non NULL terminated array would be VERY problematic.
+   * So I protect cmd_bookmark from bad cb_inputbar_activate modification.
+   */
+
+  /* if there is tags we add it to the bookmark string
+   * -> append it to the bookmark
+   */
+  if(argc >= 1 && argv[argc] == NULL)
+  {
+    char* tags = g_strjoinv(" ", argv);
+    char* bookmark_temp = bookmark;
+    bookmark = g_strjoin(" ", bookmark, tags, NULL);
+
+    g_free(bookmark_temp);
+    g_free(tags);
+  }
+
+  Jumanji.Global.bookmarks = g_list_append(Jumanji.Global.bookmarks, bookmark);
 
   return TRUE;
 }
