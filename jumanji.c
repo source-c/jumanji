@@ -1086,12 +1086,13 @@ open_uri(WebKitWebView* web_view, char* uri)
   char* uri_first_space = strchr(uri, ' ');
   if(uri_first_space)
   {
+    unsigned int first_arg_length = uri_first_space - uri;
     /* first agrument contain "://"
      * -> it's a bookmark with tag
      */
     if (strstr(uri, "://"))
     {
-      new_uri = g_strndup(uri, uri_first_space - uri);
+      new_uri = g_strndup(uri, first_arg_length);
     }
     /* first agrument doesn't contain "://"
      * -> check search engine
@@ -1101,10 +1102,22 @@ open_uri(WebKitWebView* web_view, char* uri)
       SearchEngineList* se = Jumanji.Global.search_engines;
       while(se)
       {
-        if(!strncmp(uri, se->name, strlen(se->name)))
+        if(strlen(se->name) == first_arg_length && !strncmp(uri, se->name, first_arg_length))
         {
-          char* searchitem = uri + strlen(se->name) + 1;
+          char* searchitem = uri + first_arg_length + 1;
           new_uri   = g_strdup_printf(se->uri, searchitem);
+
+          // -2 for the '%s'
+          searchitem = new_uri + strlen(se->uri) - 2;
+
+          while(*searchitem)
+          {
+            if(*searchitem == ' ')
+              *searchitem = '+';
+
+            searchitem += 1;
+          }
+
           break;
         }
 
