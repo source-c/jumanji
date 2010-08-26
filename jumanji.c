@@ -371,6 +371,7 @@ void set_completion_row_color(GtkBox*, int, int);
 void switch_view(GtkWidget*);
 void statusbar_set_text(const char*);
 void update_status();
+void update_position();
 GtkEventBox* create_completion_row(GtkBox*, char*, char*, gboolean);
 
 Completion* completion_init();
@@ -1257,7 +1258,12 @@ update_status()
     g_free(markup);
   }
 
-  /* update position */
+  update_position();
+}
+
+void
+update_position()
+{
   GtkAdjustment* adjustment = gtk_scrolled_window_get_vadjustment(GET_CURRENT_TAB_WIDGET());
   gdouble view_size         = gtk_adjustment_get_page_size(adjustment);
   gdouble value             = gtk_adjustment_get_value(adjustment);
@@ -3830,7 +3836,7 @@ cb_wv_notify_title(WebKitWebView* wv, GParamSpec* pspec, gpointer data)
 gboolean
 cb_wv_scrolled(GtkAdjustment* UNUSED(adjustment), gpointer UNUSED(data))
 {
-  update_status();
+  update_position();
   return TRUE;
 }
 
