@@ -157,7 +157,6 @@ InputbarShortcut inputbar_shortcuts[] = {
 Mouse mouse[] = {
   /* mask,             button,   function,   mode,      argument      argument data */
   {0,                  2,        NULL,       NORMAL,    { 0,          NULL } },
-  {GDK_CONTROL_MASK,   2,        NULL,       NORMAL,    { NEW_TAB,    NULL } },
 };
 
 /* commands */
