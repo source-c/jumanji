@@ -3821,7 +3821,7 @@ cb_wv_notify_progress(WebKitWebView* wv, GParamSpec* UNUSED(pspec), gpointer UNU
 }
 
 gboolean
-cb_wv_notify_title(WebKitWebView* wv, GParamSpec* pspec, gpointer data)
+cb_wv_notify_title(WebKitWebView* wv, GParamSpec* UNUSED(pspec), gpointer UNUSED(data))
 {
   const char* title = webkit_web_view_get_title(wv);
   if(title)
@@ -3841,7 +3841,7 @@ cb_wv_scrolled(GtkAdjustment* UNUSED(adjustment), gpointer UNUSED(data))
 }
 
 gboolean
-cb_wv_unblock_plugin(GtkWidget* widget, GdkEventButton* event, gpointer data)
+cb_wv_unblock_plugin(GtkWidget* UNUSED(widget), GdkEventButton* UNUSED(event), gpointer data)
 {
   Plugin* plugin = (Plugin*) data;
 
@@ -3860,8 +3860,8 @@ cb_wv_unblock_plugin(GtkWidget* widget, GdkEventButton* event, gpointer data)
 }
 
 gboolean
-cb_wv_window_policy_decision(WebKitWebView* wv, WebKitWebFrame* frame, WebKitNetworkRequest* request,
-    WebKitWebNavigationAction* action, WebKitWebPolicyDecision* decision, gpointer data)
+cb_wv_window_policy_decision(WebKitWebView* UNUSED(wv), WebKitWebFrame* UNUSED(frame), WebKitNetworkRequest* request,
+    WebKitWebNavigationAction* action, WebKitWebPolicyDecision* decision, gpointer UNUSED(data))
 {
   if(webkit_web_navigation_action_get_reason(action) == WEBKIT_WEB_NAVIGATION_REASON_LINK_CLICKED)
   {
@@ -3874,7 +3874,8 @@ cb_wv_window_policy_decision(WebKitWebView* wv, WebKitWebFrame* frame, WebKitNet
 }
 
 gboolean
-cb_wv_window_object_cleared(WebKitWebView* wv, WebKitWebFrame* frame, gpointer context, gpointer window_object, gpointer data)
+cb_wv_window_object_cleared(WebKitWebView* UNUSED(wv), WebKitWebFrame* UNUSED(frame), gpointer context,
+    gpointer UNUSED(window_object), gpointer UNUSED(data))
 {
   /* load all added scripts */
 
