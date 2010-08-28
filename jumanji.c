@@ -1106,7 +1106,7 @@ open_uri(WebKitWebView* web_view, char* uri)
       new_uri = g_strndup(uri, first_arg_length);
     }
     /* first agrument doesn't contain "://"
-     * -> check search engine
+     * -> use search engine
      */
     else
     {
@@ -1114,33 +1114,63 @@ open_uri(WebKitWebView* web_view, char* uri)
       while(se)
       {
         if(strlen(se->name) == first_arg_length && !strncmp(uri, se->name, first_arg_length))
-        {
-          char* searchitem = uri + first_arg_length + 1;
-          new_uri   = g_strdup_printf(se->uri, searchitem);
-
-          // -2 for the '%s'
-          searchitem = new_uri + strlen(se->uri) - 2;
-
-          while(*searchitem)
-          {
-            if(*searchitem == ' ')
-              *searchitem = '+';
-
-            searchitem += 1;
-          }
-
           break;
-        }
 
-        se = se->next;
+	se = se->next;
+      }
+
+      if(!se)
+        se = Jumanji.Global.search_engines;
+      else /* we remove the trailing arg since it's the se name */
+        uri = uri + first_arg_length + 1;
+
+      if(se)
+      {
+        /* there is at lease 1 search search engine */
+        new_uri = g_strdup_printf(se->uri, uri);
+
+	/* we change all the space with '+'
+	 * -2 for the '%s'
+	 */
+        char* new_uri_it = new_uri + strlen(se->uri) - 2;
+
+        while(*new_uri_it)
+        {
+          if(*new_uri_it == ' ')
+            *new_uri_it = '+';
+
+          new_uri_it++;
+        }
+      }
+      else
+      {
+        /* there is 0 search engine (a very rare case...) */
+        new_uri = g_strconcat("http://", uri, NULL);
+
+	char* nu_first_space;
+
+	/* we fill ' ' with '%20' */
+        while ((nu_first_space = strchr(new_uri, ' ')))
+	{
+          /* we break new_uri at the first ' ' */
+	  *nu_first_space = '\0';
+	  char* nu_first_part = new_uri;
+	  char* nu_second_part = nu_first_space + 1;
+
+	  new_uri = g_strconcat(nu_first_part, "%20", nu_second_part, NULL);
+
+	  g_free(nu_first_part);
+	}
       }
     }
   }
   /* no argument given */
   else if(strlen(uri) == 0)
+  {
     new_uri = g_strdup(home_page);
-
-  if (!new_uri)
+  }
+  /* only one argument given */
+  else
   {
     /* uri reformating to get new_uri match
      * ^http://.*$
@@ -1163,7 +1193,7 @@ open_uri(WebKitWebView* web_view, char* uri)
       {
         new_uri = g_strdup_printf(Jumanji.Global.search_engines->uri, uri);
 
-        // -2 for the '%s'
+        /* -2 for the '%s' */
         gchar* searchitem = new_uri + strlen(Jumanji.Global.search_engines->uri) - 2;
 
         while(*searchitem)
