@@ -887,10 +887,6 @@ init_settings()
   {
     g_object_set(G_OBJECT(Jumanji.Global.browser_settings), "user-agent", user_agent, NULL);
   }
-
-  gchar* foo = NULL;
-  g_object_get(G_OBJECT(Jumanji.Global.browser_settings), "user-agent", &foo, NULL);
-  printf("%s\n", foo);
 }
 
 void
