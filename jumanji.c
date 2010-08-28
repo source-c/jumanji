@@ -697,7 +697,7 @@ void
 init_data()
 {
   /* read bookmarks */
-  char* bookmark_file = g_strdup_printf("%s/%s/%s", g_get_home_dir(), JUMANJI_DIR, JUMANJI_BOOKMARKS);
+  char* bookmark_file = g_build_filename(g_get_home_dir(), JUMANJI_DIR, JUMANJI_BOOKMARKS, NULL);
 
   if(!bookmark_file)
     return;
@@ -727,7 +727,7 @@ init_data()
   g_free(bookmark_file);
 
   /* read history */
-  char* history_file = g_strdup_printf("%s/%s/%s", g_get_home_dir(), JUMANJI_DIR, JUMANJI_HISTORY);
+  char* history_file = g_build_filename(g_get_home_dir(), JUMANJI_DIR, JUMANJI_HISTORY, NULL);
 
   if(!history_file)
     return;
@@ -759,7 +759,7 @@ init_data()
   g_free(history_file);
 
   /* load cookies */
-  char* cookie_file        = g_strdup_printf("%s/%s/%s", g_get_home_dir(), JUMANJI_DIR, JUMANJI_COOKIES);
+  char* cookie_file        = g_build_filename(g_get_home_dir(), JUMANJI_DIR, JUMANJI_COOKIES, NULL);
   SoupCookieJar *cookiejar = soup_cookie_jar_text_new(cookie_file, FALSE);
 
   soup_session_add_feature(Jumanji.Soup.session, (SoupSessionFeature*) cookiejar);
@@ -1116,7 +1116,7 @@ open_uri(WebKitWebView* web_view, char* uri)
         if(strlen(se->name) == first_arg_length && !strncmp(uri, se->name, first_arg_length))
           break;
 
-	se = se->next;
+        se = se->next;
       }
 
       if(!se)
@@ -1129,9 +1129,9 @@ open_uri(WebKitWebView* web_view, char* uri)
         /* there is at lease 1 search search engine */
         new_uri = g_strdup_printf(se->uri, uri);
 
-	/* we change all the space with '+'
-	 * -2 for the '%s'
-	 */
+        /* we change all the space with '+'
+         * -2 for the '%s'
+         */
         char* new_uri_it = new_uri + strlen(se->uri) - 2;
 
         while(*new_uri_it)
@@ -1147,20 +1147,20 @@ open_uri(WebKitWebView* web_view, char* uri)
         /* there is 0 search engine (a very rare case...) */
         new_uri = g_strconcat("http://", uri, NULL);
 
-	char* nu_first_space;
+        char* nu_first_space;
 
-	/* we fill ' ' with '%20' */
+        /* we fill ' ' with '%20' */
         while ((nu_first_space = strchr(new_uri, ' ')))
-	{
+        {
           /* we break new_uri at the first ' ' */
-	  *nu_first_space = '\0';
-	  char* nu_first_part = new_uri;
-	  char* nu_second_part = nu_first_space + 1;
+          *nu_first_space = '\0';
+          char* nu_first_part = new_uri;
+          char* nu_second_part = nu_first_space + 1;
 
-	  new_uri = g_strconcat(nu_first_part, "%20", nu_second_part, NULL);
+          new_uri = g_strconcat(nu_first_part, "%20", nu_second_part, NULL);
 
-	  g_free(nu_first_part);
-	}
+          g_free(nu_first_part);
+        }
       }
     }
   }
@@ -1367,7 +1367,7 @@ update_position()
 void
 read_configuration()
 {
-  char* jumanjirc = g_strdup_printf("%s/%s/%s", g_get_home_dir(), JUMANJI_DIR, JUMANJI_RC);
+  char* jumanjirc = g_build_filename(g_get_home_dir(), JUMANJI_DIR, JUMANJI_RC, NULL);
 
   if(!jumanjirc)
     return;
@@ -1428,7 +1428,7 @@ read_file(const char* path)
   char* npath;
 
   if(path[0] == '~')
-    npath = g_strdup_printf("%s%s", getenv("HOME"), path + 1);
+    npath = g_build_filename(g_get_home_dir(), path + 1, NULL);
   else
     npath = g_strdup(path);
 
@@ -3029,25 +3029,19 @@ cmd_set(int argc, char** argv)
           return TRUE;
 
         /* assembly the arguments back to one string */
-        int j;
-        GString *s = g_string_new("");
-        for(j = 1; j < argc; j++)
-        {
-          if(j != 1)
-            s = g_string_append_c(s, ' ');
-
-          s = g_string_append(s, argv[j]);
-        }
+        gchar* s = g_strjoinv(" ", &(argv[1]));
 
         if(settings[i].variable)
         {
           char **x = (char**) settings[i].variable;
-          *x = s->str;
+          *x = s;
         }
 
         /* check browser settings */
         if(settings[i].webkitvar)
-          g_object_set(G_OBJECT(browser_settings), settings[i].webkitvar, s->str, NULL);
+          g_object_set(G_OBJECT(browser_settings), settings[i].webkitvar, s, NULL);
+
+        // a memory leak can append here
       }
       else if(settings[i].type == 'c')
       {
@@ -3163,7 +3157,7 @@ cmd_write(int UNUSED(argc), char** UNUSED(argv))
     g_free(bookmark);
   }
 
-  char* bookmark_file = g_strdup_printf("%s/%s/%s", g_get_home_dir(), JUMANJI_DIR, JUMANJI_BOOKMARKS);
+  char* bookmark_file = g_build_filename(g_get_home_dir(), JUMANJI_DIR, JUMANJI_BOOKMARKS, NULL);
   g_file_set_contents(bookmark_file, bookmark_list->str, -1, NULL);
 
   g_free(bookmark_file);
@@ -3182,7 +3176,7 @@ cmd_write(int UNUSED(argc), char** UNUSED(argv))
     h_counter += 1;
   }
 
-  char* history_file = g_strdup_printf("%s/%s/%s", g_get_home_dir(), JUMANJI_DIR, JUMANJI_HISTORY);
+  char* history_file = g_build_filename(g_get_home_dir(), JUMANJI_DIR, JUMANJI_HISTORY, NULL);
   g_file_set_contents(history_file, history_list->str, -1, NULL);
 
   g_free(history_file);
@@ -3883,24 +3877,21 @@ cb_wv_download_request(WebKitWebView* UNUSED(wv), WebKitDownload* download, gpoi
   /* create download directory directory */
   char* download_path = NULL;
   if(download_dir[0] == '~')
-    download_path = g_strdup_printf("%s%s", getenv("HOME"), download_dir + 1);
+    download_path = g_build_filename(g_get_home_dir(), download_dir + 1, NULL);
   else
-    download_path = g_strdup(download_path);
+    download_path = g_strdup(download_dir);
 
-  gchar *base_directory = g_build_filename(download_path, NULL);
-  g_mkdir_with_parents(base_directory,  0771);
-
-  g_free(base_directory);
-  g_free(download_path);
+  g_mkdir_with_parents(download_path,  0771);
 
   /* download file */
-   char* file      = g_strconcat(download_dir, filename ? filename : uri, NULL);
-   char* command   = g_strdup_printf(download_command, uri, file);
+  char* file      = g_build_filename(download_path, filename ? filename : uri, NULL);
+  char* command   = g_strdup_printf(download_command, uri, file);
 
   g_spawn_command_line_async(command, NULL);
 
-  g_free(command);
   g_free(file);
+  g_free(command);
+  g_free(download_path);
 
   return TRUE;
 }
