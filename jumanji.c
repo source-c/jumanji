@@ -870,12 +870,23 @@ init_settings()
   sc_toggle_proxy(NULL);
 
   /* apply user agent */
-  char* current_user_agent = NULL;
-  g_object_get(G_OBJECT(Jumanji.Global.browser_settings), "user-agent", &current_user_agent, NULL);
+  if(!user_agent && browser_name)
+  {
+    char* current_user_agent = NULL;
+    g_object_get(G_OBJECT(Jumanji.Global.browser_settings), "user-agent", &current_user_agent, NULL);
 
-  char* new_user_agent = g_strconcat(current_user_agent, " ", user_agent, NULL);
-  g_object_set(G_OBJECT(Jumanji.Global.browser_settings), "user-agent", new_user_agent, NULL);
-  g_free(new_user_agent);
+    char* new_user_agent = g_strconcat(current_user_agent, " ", browser_name, NULL);
+    g_object_set(G_OBJECT(Jumanji.Global.browser_settings), "user-agent", new_user_agent, NULL);
+    g_free(new_user_agent);
+  }
+  else if(user_agent)
+  {
+    g_object_set(G_OBJECT(Jumanji.Global.browser_settings), "user-agent", user_agent, NULL);
+  }
+
+  gchar* foo = NULL;
+  g_object_get(G_OBJECT(Jumanji.Global.browser_settings), "user-agent", &foo, NULL);
+  printf("%s\n", foo);
 }
 
 void
