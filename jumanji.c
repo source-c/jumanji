@@ -719,6 +719,8 @@ init_data()
 
         Jumanji.Global.bookmarks = g_list_append(Jumanji.Global.bookmarks, lines[i]);
       }
+
+      g_free(content);
     }
   }
 
@@ -749,6 +751,8 @@ init_data()
       }
 
       Jumanji.Global.history = g_list_reverse(Jumanji.Global.history);
+
+      g_free(content);
     }
   }
 
