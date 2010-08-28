@@ -4034,13 +4034,12 @@ int main(int argc, char* argv[])
 
   /* create tab */
   if(argc < 2)
-    create_tab(home_page, FALSE);
+    create_tab(home_page, TRUE);
   else
     for(; i < argc; i++)
-      create_tab(argv[i], FALSE);
+      create_tab(argv[i], TRUE);
 
   gtk_widget_show_all(GTK_WIDGET(Jumanji.UI.window));
-  gtk_widget_grab_focus(GTK_WIDGET(GET_CURRENT_TAB_WIDGET()));
   gtk_widget_hide(GTK_WIDGET(Jumanji.UI.inputbar));
 
   if(!show_statusbar)
