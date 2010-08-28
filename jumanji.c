@@ -1451,6 +1451,9 @@ restore_session(void) {
   gchar **lines = g_strsplit(content, "\n", -1);
   int     n     = g_strv_length(lines) - 1;
 
+  if(n <= 0)
+    return FALSE;
+
   for(int i = 0; i < n; i++)
     create_tab(lines[i], TRUE);
 
@@ -4066,9 +4069,10 @@ int main(int argc, char* argv[])
   read_configuration();
 
   /* single instance */
+  UniqueApp* application = NULL;
   if(single_instance)
   {
-    UniqueApp* application = unique_app_new_with_commands("pwmt.jumanji", NULL, "open", 1, NULL);
+    application = unique_app_new_with_commands("pwmt.jumanji", NULL, "open", 1, NULL);
 
     if(unique_app_is_running(application))
     {
@@ -4101,7 +4105,10 @@ int main(int argc, char* argv[])
   if(argc < 2)
   {
     gboolean session_restored = FALSE;
-    if(save_session)
+
+    // we restore session only if this feature is activated
+    // and the current jumanji instance is the only one
+    if(save_session && application && !unique_app_is_running(application))
       session_restored = restore_session();
 
     if(!session_restored)
