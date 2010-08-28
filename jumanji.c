@@ -1427,6 +1427,31 @@ reference_to_string(JSContextRef context, JSValueRef reference)
   return string;
 }
 
+gboolean
+restore_session(void) {
+  gchar* session_file = g_build_filename(g_get_home_dir(), JUMANJI_DIR, JUMANJI_SESSION, NULL);
+
+  if(!session_file || !g_file_test(session_file, G_FILE_TEST_IS_REGULAR))
+    return FALSE;
+
+  char* content = NULL;
+
+  if(!g_file_get_contents(session_file, &content, NULL, NULL))
+    return FALSE;
+
+  gchar **lines = g_strsplit(content, "\n", -1);
+  int     n     = g_strv_length(lines) - 1;
+
+  for(int i = 0; i < n; i++)
+    create_tab(lines[i], TRUE);
+
+  g_free(content);
+  g_strfreev(lines);
+  g_free(session_file);
+
+  return TRUE;
+}
+
 void
 run_script(char* script, char** value, char** error)
 {
@@ -3115,6 +3140,27 @@ cmd_write(int UNUSED(argc), char** UNUSED(argv))
   g_free(history_file);
   g_string_free(history_list, TRUE);
 
+  if(!save_session)
+    return TRUE;
+
+  /* save session */
+  GString *session_list = g_string_new("");
+
+  for (int i = 0; i < gtk_notebook_get_n_pages(Jumanji.UI.view); i++)
+  {
+    gchar* tab_uri_t = (gchar*) webkit_web_view_get_uri(GET_NTH_TAB(i));
+    gchar* tab_uri   = g_strconcat(tab_uri_t, "\n", NULL);
+    session_list     = g_string_append(session_list, tab_uri);
+
+    g_free(tab_uri);
+  }
+
+  gchar* session_file = g_build_filename(g_get_home_dir(), JUMANJI_DIR, JUMANJI_SESSION, NULL);
+  g_file_set_contents(session_file, session_list->str, -1, NULL);
+
+  g_free(session_file);
+  g_string_free(session_list, TRUE);
+
   return TRUE;
 }
 
@@ -4038,10 +4084,19 @@ int main(int argc, char* argv[])
 
   /* create tab */
   if(argc < 2)
-    create_tab(home_page, TRUE);
+  {
+    gboolean session_restored = FALSE;
+    if(save_session)
+      session_restored = restore_session();
+
+    if(!session_restored)
+      create_tab(home_page, TRUE);
+  }
   else
+  {
     for(; i < argc; i++)
       create_tab(argv[i], TRUE);
+  }
 
   gtk_widget_show_all(GTK_WIDGET(Jumanji.UI.window));
   gtk_widget_hide(GTK_WIDGET(Jumanji.UI.inputbar));

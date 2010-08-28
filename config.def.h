@@ -15,6 +15,7 @@ static const char JUMANJI_RC[]        = "jumanjirc";
 static const char JUMANJI_BOOKMARKS[] = "bookmarks";
 static const char JUMANJI_HISTORY[]   = "history";
 static const char JUMANJI_COOKIES[]   = "cookies";
+static const char JUMANJI_SESSION[]   = "session";
 
 /* browser specific settings */
 char* user_agent           = NULL;
@@ -24,6 +25,7 @@ char* proxy                = NULL;
 gboolean private_browsing  = FALSE;
 gboolean plugin_blocker    = TRUE;
 gboolean full_content_zoom = FALSE;
+gboolean save_session      = FALSE;
 int auto_save_interval     = 0;
 int history_limit          = 0;
 
@@ -244,7 +246,8 @@ Setting settings[] = {
   {"font",                   &(font),                   NULL,                           's',  1, 0, 0, "The used font" },
   {"font_family",            NULL,                      "default-font-family",          's',  0, 1, 0, "The default font family"},
   {"font_size",              NULL,                      "default-font-size",            'i',  0, 1, 0, "The default font size to display text"},
-  {"full_content_zoom",      &(full_content_zoom),     "full-content-zoom",             'b',  0, 0, 1, "Wheter the full content is scaled when zooming"},
+  {"full_content_zoom",      &(full_content_zoom),      "full-content-zoom",            'b',  0, 0, 1, "Wheter the full content is scaled when zooming"},
+  {"save_session",           &(save_session),           NULL,                           'b',  1, 0, 0, "Save and restore all tabs"},
   {"height",                 &(default_height),         NULL,                           'i',  1, 0, 0, "Default window height"},
   {"homepage",               &(home_page),              NULL,                           's',  0, 0, 0, "Home page"},
   {"images",                 NULL,                      "auto-load-images",             'b',  0, 1, 0, "Load images automatically"},
