@@ -17,8 +17,9 @@ static const char JUMANJI_HISTORY[]   = "history";
 static const char JUMANJI_COOKIES[]   = "cookies";
 
 /* browser specific settings */
-char* user_agent           = "jumanji/0.1";
-char* home_page            = "http://www.pwmt.org";
+char* user_agent           = NULL;
+char* browser_name         = "jumanji/0.0";
+char* home_page            = "http://pwmt.org";
 char* proxy                = NULL;
 gboolean private_browsing  = FALSE;
 gboolean plugin_blocker    = TRUE;
@@ -220,6 +221,7 @@ Setting settings[] = {
   /* name,                   variable,                  webkit-setting,                 type, i, r, s, description */
   {"96dpi",                  NULL,                      "enforce-96-dpi",               'b',  0, 1, 0, "Enforce a resolution of 96 DPI"},
   {"auto_save",              &(auto_save_interval),     NULL,                           'i',  1, 0, 0, "Autosave bookmarks and history"},
+  {"browser_name",           &(browser_name),           NULL,                           's',  1, 0, 0, "Set the name of the browser"},
   {"history_limit",          &(history_limit),          NULL,                           'i',  1, 0, 0, "Limit history length"},
   {"auto_shrink_images",     NULL,                      "auto-shrink-images",           'b',  0, 1, 0, "Shrink standalone images to fit"},
   {"background",             NULL,                      "print-backgrounds",            'b',  0, 1, 0, "Print background images"},
@@ -284,7 +286,7 @@ Setting settings[] = {
   {"tabbar_focus_bgcolor",   &(tabbar_focus_bgcolor),   NULL,                           's',  1, 0, 0, "Tabbar (focus) background color"},
   {"tabbar_focus_fgcolor",   &(tabbar_focus_fgcolor),   NULL,                           's',  1, 0, 0, "Tabbar (focus) foreground color"},
   {"tabbar_separator_color", &(tabbar_separator_color), NULL,                           's',  1, 0, 0, "Tabbar separator color"},
-  {"user_agent",             &(user_agent),             "user-agent",                   's',  1, 1, 0, "User agent"},
+  {"user_agent",             &(user_agent),             "user-agent",                   's',  1, 0, 0, "User agent"},
   {"width",                  &(default_width),          NULL,                           'i',  1, 0, 0, "Default window width"},
   {"zoom_step",              &(zoom_step),              "zoom-step",                    'f',  0, 0, 0, "Zoom step"},
 };
