@@ -1735,6 +1735,12 @@ sc_change_buffer(Argument* argument)
       Jumanji.Global.buffer = temp;
       gtk_label_set_markup((GtkLabel*) Jumanji.Statusbar.buffer, Jumanji.Global.buffer->str);
     }
+
+    if(Jumanji.Global.mode == FOLLOW)
+    {
+      Argument argument = {0, NULL};
+      sc_follow_link(&argument);
+    }
   }
 }
 
