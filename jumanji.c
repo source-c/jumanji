@@ -3,6 +3,7 @@
 #define _BSD_SOURCE || _XOPEN_SOURCE >= 500
 
 #include <regex.h>
+#include <ctype.h>
 #include <limits.h>
 #include <stdlib.h>
 #include <string.h>
@@ -20,7 +21,7 @@
 
 /* macros */
 #define LENGTH(x) sizeof(x)/sizeof((x)[0])
-#define CLEAN(m) (m & ~(GDK_MOD2_MASK) & ~(GDK_BUTTON1_MASK) & ~(GDK_BUTTON2_MASK) & ~(GDK_BUTTON3_MASK) & ~(GDK_BUTTON4_MASK) & ~(GDK_BUTTON5_MASK) & ~(GDK_LEAVE_NOTIFY_MASK))
+#define CLEAN(m) (m & (GDK_CONTROL_MASK | GDK_SHIFT_MASK | GDK_MOD1_MASK))
 #define GET_CURRENT_TAB_WIDGET() GET_NTH_TAB_WIDGET(gtk_notebook_get_current_page(Jumanji.UI.view))
 #define GET_NTH_TAB_WIDGET(n) GTK_SCROLLED_WINDOW(gtk_notebook_get_nth_page(Jumanji.UI.view, n))
 #define GET_CURRENT_TAB() GET_NTH_TAB(gtk_notebook_get_current_page(Jumanji.UI.view))
@@ -60,7 +61,6 @@ enum {
   NEXT_CHAR,
   NEXT_GROUP,
   NEW_TAB,
-  NORMAL,
   OPEN_EXTERNAL,
   PREVIOUS,
   PREVIOUS_CHAR,
@@ -80,14 +80,17 @@ enum {
 };
 
 /* define modes */
-#define ALL               (1 << 0)
-#define INSERT            (1 << 1)
-#define VISUAL            (1 << 2)
-#define FOLLOW            (1 << 3)
-#define ADD_MARKER        (1 << 4)
-#define EVAL_MARKER       (1 << 5)
-#define PASS_THROUGH      (1 << 6)
-#define PASS_THROUGH_NEXT (1 << 7)
+enum mode {
+  NORMAL             = 1 << 0,
+  INSERT             = 1 << 1,
+  VISUAL             = 1 << 2,
+  FOLLOW             = 1 << 3,
+  ADD_MARKER         = 1 << 4,
+  EVAL_MARKER        = 1 << 5,
+  PASS_THROUGH       = 1 << 6,
+  PASS_THROUGH_NEXT  = 1 << 7,
+  ALL                = 0x7fffffff
+};
 
 /* typedefs */
 struct CElement
@@ -2717,8 +2720,11 @@ cmd_map(int argc, char** argv)
   ShortcutList* sc = Jumanji.Bindings.sclist;
   while(sc && sc->next != NULL)
   {
-    if(sc->element.key == key && sc->element.mask == mask
-        && sc->element.mode == mode)
+    if(
+       sc->element.key == key
+       && sc->element.mask == mask
+       && sc->element.mode == mode
+      )
     {
       sc->element.function = function_names[sc_id].sc;
       sc->element.argument = arg;
@@ -3591,8 +3597,8 @@ cb_inputbar_kb_pressed(GtkWidget* UNUSED(widget), GdkEventKey* event, gpointer U
   /* inputbar shortcuts */
   for(unsigned int i = 0; i < LENGTH(inputbar_shortcuts); i++)
   {
-    if(event->keyval == inputbar_shortcuts[i].key &&
-       event->state  == inputbar_shortcuts[i].mask)
+    if(event->keyval == inputbar_shortcuts[i].key
+       && CLEAN(event->state) == inputbar_shortcuts[i].mask)
     {
       inputbar_shortcuts[i].function(&(inputbar_shortcuts[i].argument));
       return TRUE;
@@ -3687,53 +3693,53 @@ cb_inputbar_activate(GtkEntry* entry, gpointer UNUSED(data))
 gboolean
 cb_tab_kb_pressed(GtkWidget* UNUSED(widget), GdkEventKey* event, gpointer UNUSED(data))
 {
-  ShortcutList* sc = Jumanji.Bindings.sclist;
-  while(sc)
+  for(ShortcutList* sc = Jumanji.Bindings.sclist; sc; sc = sc->next)
   {
     if(
-       event->keyval == sc->element.key
-       && (CLEAN(event->state) == sc->element.mask || (sc->element.key >= 0x21
-       && sc->element.key <= 0x7E && CLEAN(event->state) == GDK_SHIFT_MASK))
-       && (Jumanji.Global.mode & sc->element.mode || sc->element.mode == ALL)
-       && sc->element.function
+       event->keyval == sc->element.key           /* test key */
+       && ( /* test mask */
+            CLEAN(event->state) == sc->element.mask
+            || ( /* if the key is upper case we try with SHIFT added to the mask */
+                 gdk_keyval_is_upper(event->keyval == sc->element.key)
+                 && CLEAN(event->state) == (sc->element.mask | GDK_SHIFT_MASK)
+               )
+          )
+       && Jumanji.Global.mode & sc->element.mode  /* test mode */
+       && sc->element.function /* a function have to be defined */
+       /* if the buffer isn't empty we don't launch the function
+        * exept if the sc mode is set to ALL or have a non nul mask
+        */
+       && (
+            !(Jumanji.Global.buffer && strlen(Jumanji.Global.buffer->str))
+            || sc->element.mode == ALL
+            || sc->element.mask
+          )
       )
     {
-      if(!(Jumanji.Global.buffer && strlen(Jumanji.Global.buffer->str)) || (sc->element.mask == GDK_CONTROL_MASK) ||
-         (sc->element.key <= 0x21 || sc->element.key >= 0x7E)
-        )
-      {
-        sc->element.function(&(sc->element.argument));
-        return TRUE;
-      }
+      sc->element.function(&(sc->element.argument));
+      return TRUE;
     }
-
-    sc = sc->next;
   }
 
-  if(Jumanji.Global.mode == PASS_THROUGH)
-    return FALSE;
-
-  if(Jumanji.Global.mode == PASS_THROUGH_NEXT)
+  switch(Jumanji.Global.mode)
   {
-    change_mode(NORMAL);
-    return FALSE;
-  }
-
-  if(Jumanji.Global.mode == ADD_MARKER)
-  {
-    add_marker(event->keyval);
-    change_mode(NORMAL);
-    return TRUE;
-  }
-  else if(Jumanji.Global.mode == EVAL_MARKER)
-  {
-    eval_marker(event->keyval);
-    change_mode(NORMAL);
-    return TRUE;
+    case PASS_THROUGH :
+      return FALSE;
+    case PASS_THROUGH_NEXT :
+      change_mode(NORMAL);
+      return FALSE;
+    case ADD_MARKER :
+      add_marker(event->keyval);
+      change_mode(NORMAL);
+      return TRUE;
+    case EVAL_MARKER :
+      eval_marker(event->keyval);
+      change_mode(NORMAL);
+      return TRUE;
   }
 
   /* append only numbers and characters to buffer */
-  if( (event->keyval >= 0x21) && (event->keyval <= 0x7E))
+  if(isascii(event->keyval))
   {
     if(!Jumanji.Global.buffer)
       Jumanji.Global.buffer = g_string_new("");
@@ -3827,10 +3833,11 @@ cb_wv_button_release_event(GtkWidget* UNUSED(widget), GdkEvent* event, gpointer 
 {
   for(unsigned int i = 0; i < LENGTH(mouse); i++)
   {
-    if( CLEAN(event->button.state) == mouse[i].mask &&
-        event->button.button == mouse[i].button &&
-        ((Jumanji.Global.mode == mouse[i].mode) || (mouse[i].mode == ALL)) &&
-        mouse[i].function
+    if(
+       event->button.button == mouse[i].button       /* test button */
+       && CLEAN(event->button.state) == mouse[i].mask /* test mask */
+       && Jumanji.Global.mode & mouse[i].mode        /* test mode */
+       && mouse[i].function /* a function have to be declared */ 
       )
     {
       mouse[i].function(&(mouse[i].argument));
