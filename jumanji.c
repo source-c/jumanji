@@ -953,7 +953,7 @@ void init_ui()
   gtk_misc_set_padding(GTK_MISC(Jumanji.Statusbar.position), 2.0, 4.0);
 
   gtk_label_set_use_markup(Jumanji.Statusbar.text,     TRUE);
-  gtk_label_set_use_markup(Jumanji.Statusbar.buffer,   TRUE);
+  gtk_label_set_use_markup(Jumanji.Statusbar.buffer,   FALSE);
   gtk_label_set_use_markup(Jumanji.Statusbar.tabs,     TRUE);
   gtk_label_set_use_markup(Jumanji.Statusbar.position, TRUE);
 
@@ -1725,7 +1725,7 @@ sc_abort(Argument* UNUSED(argument))
   {
     g_string_free(Jumanji.Global.buffer, TRUE);
     Jumanji.Global.buffer = NULL;
-    gtk_label_set_markup((GtkLabel*) Jumanji.Statusbar.buffer, "");
+    gtk_label_set_text((GtkLabel*) Jumanji.Statusbar.buffer, "");
   }
 
   /* Clear hints */
@@ -1762,14 +1762,14 @@ sc_change_buffer(Argument* argument)
     {
       g_string_free(Jumanji.Global.buffer, TRUE);
       Jumanji.Global.buffer = NULL;
-      gtk_label_set_markup((GtkLabel*) Jumanji.Statusbar.buffer, "");
+      gtk_label_set_text((GtkLabel*) Jumanji.Statusbar.buffer, "");
     }
     else
     {
       GString* temp = g_string_new_len(Jumanji.Global.buffer->str, buffer_length - 1);
       g_string_free(Jumanji.Global.buffer, TRUE);
       Jumanji.Global.buffer = temp;
-      gtk_label_set_markup((GtkLabel*) Jumanji.Statusbar.buffer, Jumanji.Global.buffer->str);
+      gtk_label_set_text((GtkLabel*) Jumanji.Statusbar.buffer, Jumanji.Global.buffer->str);
     }
 
     if(Jumanji.Global.mode == FOLLOW)
@@ -3745,7 +3745,7 @@ cb_tab_kb_pressed(GtkWidget* UNUSED(widget), GdkEventKey* event, gpointer UNUSED
       Jumanji.Global.buffer = g_string_new("");
 
     Jumanji.Global.buffer = g_string_append_c(Jumanji.Global.buffer, event->keyval);
-    gtk_label_set_markup((GtkLabel*) Jumanji.Statusbar.buffer, Jumanji.Global.buffer->str);
+    gtk_label_set_text((GtkLabel*) Jumanji.Statusbar.buffer, Jumanji.Global.buffer->str);
   }
 
   /* follow hints */
@@ -3774,7 +3774,7 @@ cb_tab_kb_pressed(GtkWidget* UNUSED(widget), GdkEventKey* event, gpointer UNUSED
         bc->element.function(Jumanji.Global.buffer->str, &(bc->element.argument));
         g_string_free(Jumanji.Global.buffer, TRUE);
         Jumanji.Global.buffer = NULL;
-        gtk_label_set_markup((GtkLabel*) Jumanji.Statusbar.buffer, "");
+        gtk_label_set_text((GtkLabel*) Jumanji.Statusbar.buffer, "");
 
         return TRUE;
       }
