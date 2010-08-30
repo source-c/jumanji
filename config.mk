@@ -15,10 +15,10 @@ INCS = -I. -I/usr/include ${GTK_INC}
 LIBS = -lc ${GTK_LIB} -lpthread
 
 # flags
-CFLAGS += -std=c99 -pedantic -Wall -Wno-format-zero-length $(INCS)
+CFLAGS += -std=c99 -pedantic -Wall -Wextra $(INCS)
 
 # debug
-DFLAGS = -g
+DFLAGS = -O0 -g
 
 # compiler
 CC ?= gcc
