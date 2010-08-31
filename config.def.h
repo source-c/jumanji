@@ -67,7 +67,7 @@ gboolean show_tabbar     = TRUE;
 gboolean next_to_current = TRUE;
 gboolean single_instance = TRUE;
 
-#define GDK_COSHIFT_MASK GDK_CONTROL_MASK | GDK_SHIFT_MASK
+#define GDK_COSHIFT_MASK (GDK_CONTROL_MASK | GDK_SHIFT_MASK)
 
 /* shortcuts */
 Shortcut shortcuts[] = {
@@ -83,8 +83,7 @@ Shortcut shortcuts[] = {
   {GDK_CONTROL_MASK,   GDK_w,             sc_close_tab,         NORMAL,       { 0,                  NULL } },
   {0,                  GDK_d,             sc_close_tab,         NORMAL,       { 0,                  NULL } },
   {0,                  GDK_slash,         sc_focus_inputbar,    NORMAL,       { 0,                  "/" } },
-  {GDK_SHIFT_MASK,     GDK_slash,         sc_focus_inputbar,    NORMAL,       { 0,                  "/" } },
-  {GDK_SHIFT_MASK,     GDK_question,      sc_focus_inputbar,    NORMAL,       { 0,                  "?" } },
+  {0,                  GDK_question,      sc_focus_inputbar,    NORMAL,       { 0,                  "?" } },
   {0,                  GDK_colon,         sc_focus_inputbar,    NORMAL,       { 0,                  ":" } },
   {0,                  GDK_o,             sc_focus_inputbar,    NORMAL,       { 0,                  ":open " } },
   {0,                  GDK_O,             sc_focus_inputbar,    NORMAL,       { APPEND_URL,         ":open " } },
@@ -101,7 +100,7 @@ Shortcut shortcuts[] = {
   {0,                  GDK_K,             sc_nav_tabs,          NORMAL,       { NEXT,               NULL } },
   {0,                  GDK_J,             sc_nav_tabs,          NORMAL,       { PREVIOUS,           NULL } },
   {GDK_CONTROL_MASK,   GDK_Tab,           sc_nav_tabs,          NORMAL,       { NEXT,               NULL } },
-  {GDK_COSHIFT_MASK,   GDK_ISO_Left_Tab,  sc_nav_tabs,          NORMAL,       { PREVIOUS,           NULL } },
+  {GDK_CONTROL_MASK,   GDK_ISO_Left_Tab,  sc_nav_tabs,          NORMAL,       { PREVIOUS,           NULL } },
   {0,                  GDK_p,             sc_paste,             NORMAL,       { 0,                  NULL } },
   {0,                  GDK_P,             sc_paste,             NORMAL,       { NEW_TAB,            NULL } },
   {0,                  GDK_r,             sc_reload,            NORMAL,       { 0,                  NULL } },
@@ -146,9 +145,8 @@ InputbarShortcut inputbar_shortcuts[] = {
   {0,                  GDK_Down,          isc_command_history,       { NEXT,              NULL } },
   {0,                  GDK_Tab,           isc_completion,            { NEXT,              NULL } },
   {GDK_CONTROL_MASK,   GDK_Tab,           isc_completion,            { NEXT_GROUP,        NULL } },
-  {GDK_SHIFT_MASK,     GDK_ISO_Left_Tab,  isc_completion,            { PREVIOUS,          NULL } },
-  {GDK_SHIFT_MASK | GDK_CONTROL_MASK,
-                       GDK_ISO_Left_Tab,  isc_completion,            { PREVIOUS_GROUP,    NULL } },
+  {0,                  GDK_ISO_Left_Tab,  isc_completion,            { PREVIOUS,          NULL } },
+  {GDK_CONTROL_MASK,   GDK_ISO_Left_Tab,  isc_completion,            { PREVIOUS_GROUP,    NULL } },
   {0,                  GDK_BackSpace,     isc_string_manipulation,   { DELETE_LAST_CHAR,  NULL } },
   {GDK_CONTROL_MASK,   GDK_h,             isc_string_manipulation,   { DELETE_LAST_CHAR,  NULL } },
   {GDK_CONTROL_MASK,   GDK_w,             isc_string_manipulation,   { DELETE_LAST_WORD,  NULL } },
