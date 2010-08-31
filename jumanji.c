@@ -375,6 +375,7 @@ void set_completion_row_color(GtkBox*, int, int);
 void switch_view(GtkWidget*);
 void statusbar_set_text(const char*);
 void update_status();
+void update_uri();
 void update_position();
 GtkEventBox* create_completion_row(GtkBox*, char*, char*, gboolean);
 
@@ -624,9 +625,6 @@ create_tab(char* uri, gboolean background)
   WebKitWebInspector* web_inspector = webkit_web_view_get_inspector(WEBKIT_WEB_VIEW(wv));
   g_signal_connect(G_OBJECT(web_inspector), "inspect-web-view", G_CALLBACK(cb_wv_inspector_view), NULL);
 
-  /* open uri */
-  open_uri(WEBKIT_WEB_VIEW(wv), uri);
-
   gtk_container_add(GTK_CONTAINER(tab), wv);
   gtk_widget_show_all(tab);
   gtk_notebook_insert_page(Jumanji.UI.view, tab, NULL, position);
@@ -665,7 +663,8 @@ create_tab(char* uri, gboolean background)
 
   gtk_widget_grab_focus(GTK_WIDGET(GET_CURRENT_TAB_WIDGET()));
 
-  update_status();
+  /* open uri */
+  open_uri(WEBKIT_WEB_VIEW(wv), uri);
 
   return wv;
 }
@@ -1248,7 +1247,58 @@ update_status()
   if(!Jumanji.UI.view || !gtk_notebook_get_n_pages(Jumanji.UI.view))
     return;
 
-  /* update uri */
+  update_uri();
+
+  /* update title */
+  const gchar* title = webkit_web_view_get_title(GET_CURRENT_TAB());
+  if(title)
+    gtk_window_set_title(GTK_WINDOW(Jumanji.UI.window), title);
+  else
+    gtk_window_set_title(GTK_WINDOW(Jumanji.UI.window), "jumanji");
+
+  /* update tab position */
+  int current_tab     = gtk_notebook_get_current_page(Jumanji.UI.view);
+  int number_of_tabs  = gtk_notebook_get_n_pages(Jumanji.UI.view);
+
+  gchar* tabs = g_strdup_printf("[%d/%d]", current_tab + 1, number_of_tabs);
+  char* s = g_markup_escape_text(tabs, -1);
+  gtk_label_set_markup((GtkLabel*) Jumanji.Statusbar.tabs, s);
+  g_free(tabs);
+
+  /* update tabbar */
+  int tc = 0;
+  for(tc = 0; tc < number_of_tabs; tc++)
+  {
+    GtkWidget* tab       = GTK_WIDGET(GET_NTH_TAB_WIDGET(tc));
+    GtkWidget *tev_box   = GTK_WIDGET(g_object_get_data(G_OBJECT(tab), "tab"));
+    GtkWidget *tab_label = GTK_WIDGET(g_object_get_data(G_OBJECT(tab), "label"));
+
+    if(tc == current_tab)
+    {
+      gtk_widget_modify_bg(GTK_WIDGET(tev_box),   GTK_STATE_NORMAL, &(Jumanji.Style.tabbar_focus_bg));
+      gtk_widget_modify_fg(GTK_WIDGET(tab_label), GTK_STATE_NORMAL, &(Jumanji.Style.tabbar_focus_fg));
+    }
+    else
+    {
+      gtk_widget_modify_bg(GTK_WIDGET(tev_box),   GTK_STATE_NORMAL, &(Jumanji.Style.tabbar_bg));
+      gtk_widget_modify_fg(GTK_WIDGET(tab_label), GTK_STATE_NORMAL, &(Jumanji.Style.tabbar_fg));
+    }
+
+    const gchar* tab_title = webkit_web_view_get_title(GET_WEBVIEW(tab));
+    int progress = webkit_web_view_get_progress(GET_WEBVIEW(tab)) * 100;
+    gchar* markup = g_strdup_printf("%d | %s", tc + 1, tab_title ? tab_title : ((progress == 100) ? "Loading..." : "(Untitled)"));
+    char* s = g_markup_escape_text(markup, -1);
+    gtk_label_set_markup((GtkLabel*) tab_label, s);
+    g_free(s);
+    g_free(markup);
+  }
+
+  update_position();
+}
+
+void
+update_uri()
+{
   gchar* link  = (gchar*) webkit_web_view_get_uri(GET_CURRENT_TAB());
   int progress = webkit_web_view_get_progress(GET_CURRENT_TAB()) * 100;
   gchar* uri   = (progress != 100 && progress != 0) ? g_strdup_printf("Loading... %s (%d%%)", link ? link : "", progress) :
@@ -1301,52 +1351,6 @@ update_status()
 
   statusbar_set_text(uri);
   g_free(uri);
-
-  /* update title */
-  const gchar* title = webkit_web_view_get_title(GET_CURRENT_TAB());
-  if(title)
-    gtk_window_set_title(GTK_WINDOW(Jumanji.UI.window), title);
-  else
-    gtk_window_set_title(GTK_WINDOW(Jumanji.UI.window), "jumanji");
-
-  /* update tab position */
-  int current_tab     = gtk_notebook_get_current_page(Jumanji.UI.view);
-  int number_of_tabs  = gtk_notebook_get_n_pages(Jumanji.UI.view);
-
-  gchar* tabs = g_strdup_printf("[%d/%d]", current_tab + 1, number_of_tabs);
-  char* s = g_markup_escape_text(tabs, -1);
-  gtk_label_set_markup((GtkLabel*) Jumanji.Statusbar.tabs, s);
-  g_free(tabs);
-
-  /* update tabbar */
-  int tc = 0;
-  for(tc = 0; tc < number_of_tabs; tc++)
-  {
-    GtkWidget* tab       = GTK_WIDGET(GET_NTH_TAB_WIDGET(tc));
-    GtkWidget *tev_box   = GTK_WIDGET(g_object_get_data(G_OBJECT(tab), "tab"));
-    GtkWidget *tab_label = GTK_WIDGET(g_object_get_data(G_OBJECT(tab), "label"));
-
-    if(tc == current_tab)
-    {
-      gtk_widget_modify_bg(GTK_WIDGET(tev_box),   GTK_STATE_NORMAL, &(Jumanji.Style.tabbar_focus_bg));
-      gtk_widget_modify_fg(GTK_WIDGET(tab_label), GTK_STATE_NORMAL, &(Jumanji.Style.tabbar_focus_fg));
-    }
-    else
-    {
-      gtk_widget_modify_bg(GTK_WIDGET(tev_box),   GTK_STATE_NORMAL, &(Jumanji.Style.tabbar_bg));
-      gtk_widget_modify_fg(GTK_WIDGET(tab_label), GTK_STATE_NORMAL, &(Jumanji.Style.tabbar_fg));
-    }
-
-    const gchar* tab_title = webkit_web_view_get_title(GET_WEBVIEW(tab));
-    int progress = webkit_web_view_get_progress(GET_WEBVIEW(tab)) * 100;
-    gchar* markup = g_strdup_printf("%d | %s", tc + 1, tab_title ? tab_title : ((progress == 100) ? "Loading..." : "(Untitled)"));
-    char* s = g_markup_escape_text(markup, -1);
-    gtk_label_set_markup((GtkLabel*) tab_label, s);
-    g_free(s);
-    g_free(markup);
-  }
-
-  update_position();
 }
 
 void
@@ -3992,11 +3996,8 @@ cb_wv_nav_policy_decision(WebKitWebView* UNUSED(wv), WebKitWebFrame* UNUSED(fram
 gboolean
 cb_wv_notify_progress(WebKitWebView* wv, GParamSpec* UNUSED(pspec), gpointer UNUSED(data))
 {
-  if(gtk_notebook_get_current_page(Jumanji.UI.view) < 0)
-    return TRUE;
-
-  if(wv == GET_CURRENT_TAB())
-    update_status();
+  if(wv == GET_CURRENT_TAB() && gtk_notebook_get_current_page(Jumanji.UI.view) != -1)
+    update_uri();
 
   return TRUE;
 }
