@@ -21,8 +21,7 @@
 
 /* macros */
 #define LENGTH(x) sizeof(x)/sizeof((x)[0])
-#define CLEAN(m) (m & (GDK_CONTROL_MASK | GDK_SHIFT_MASK | GDK_MOD1_MASK))
-#define CLEAN_U(m) (m & (GDK_CONTROL_MASK | GDK_MOD1_MASK))
+#define ALL_MASK (GDK_CONTROL_MASK | GDK_SHIFT_MASK | GDK_MOD1_MASK)
 #define GET_CURRENT_TAB_WIDGET() GET_NTH_TAB_WIDGET(gtk_notebook_get_current_page(Jumanji.UI.view))
 #define GET_NTH_TAB_WIDGET(n) GTK_SCROLLED_WINDOW(gtk_notebook_get_nth_page(Jumanji.UI.view, n))
 #define GET_CURRENT_TAB() GET_NTH_TAB(gtk_notebook_get_current_page(Jumanji.UI.view))
@@ -326,6 +325,7 @@ struct
     SearchEngineList  *search_engines;
     ScriptList        *scripts;
     WebKitWebSettings *browser_settings;
+    GdkKeymap         *keymap;
     gboolean init_ui;
   } Global;
 
@@ -1049,6 +1049,9 @@ init_jumanji()
 
   /* webkit settings */
   Jumanji.Global.browser_settings = webkit_web_settings_new();
+
+  /* GDK keymap */
+  Jumanji.Global.keymap = gdk_keymap_get_default();
 
   /* libsoup session */
   Jumanji.Soup.session = webkit_get_default_session();
@@ -3595,11 +3598,18 @@ cb_destroy(GtkWidget* UNUSED(widget), gpointer UNUSED(data))
 gboolean
 cb_inputbar_kb_pressed(GtkWidget* UNUSED(widget), GdkEventKey* event, gpointer UNUSED(data))
 {
+  guint keyval;
+  GdkModifierType consumed_modifiers;
+
+  gdk_keymap_translate_keyboard_state(
+      Jumanji.Global.keymap, event->hardware_keycode, event->state, event->group, /* inner */
+      &keyval, NULL, NULL, &consumed_modifiers); /* outer */
+
   /* inputbar shortcuts */
   for(unsigned int i = 0; i < LENGTH(inputbar_shortcuts); i++)
   {
-    if(event->keyval == inputbar_shortcuts[i].key
-       && CLEAN(event->state) == inputbar_shortcuts[i].mask)
+    if (keyval == inputbar_shortcuts[i].key                                               /* test key  */
+        && (event->state & ~consumed_modifiers & ALL_MASK) == inputbar_shortcuts[i].mask) /* test mask */
     {
       inputbar_shortcuts[i].function(&(inputbar_shortcuts[i].argument));
       return TRUE;
@@ -3694,15 +3704,19 @@ cb_inputbar_activate(GtkEntry* entry, gpointer UNUSED(data))
 gboolean
 cb_tab_kb_pressed(GtkWidget* UNUSED(widget), GdkEventKey* event, gpointer UNUSED(data))
 {
+  guint keyval;
+  GdkModifierType consumed_modifiers;
+
+  gdk_keymap_translate_keyboard_state(
+      Jumanji.Global.keymap, event->hardware_keycode, event->state, event->group, /* inner */
+      &keyval, NULL, NULL, &consumed_modifiers); /* outer */
+
   for(ShortcutList* sc = Jumanji.Bindings.sclist; sc; sc = sc->next)
   {
     if(
-       event->keyval == sc->element.key           /* test key */
-       && /* test mask
-           * if the key is upper case we remove the
-	   * hypothetical SHIFT from the state */
-          sc->element.mask == (gdk_keyval_is_lower(event->keyval) ? CLEAN(event->state) : CLEAN_U(event->state))
-       && Jumanji.Global.mode & sc->element.mode  /* test mode */
+       keyval == sc->element.key                                              /* test key  */
+       && (event->state & ~consumed_modifiers & ALL_MASK) == sc->element.mask /* test mask */
+       && Jumanji.Global.mode & sc->element.mode                              /* test mode */
        && sc->element.function /* a function have to be defined */
        /* if the buffer isn't empty we don't launch the function
         * exept if the sc mode is set to ALL or have a non nul mask
@@ -3727,22 +3741,22 @@ cb_tab_kb_pressed(GtkWidget* UNUSED(widget), GdkEventKey* event, gpointer UNUSED
       change_mode(NORMAL);
       return FALSE;
     case ADD_MARKER :
-      add_marker(event->keyval);
+      add_marker(keyval);
       change_mode(NORMAL);
       return TRUE;
     case EVAL_MARKER :
-      eval_marker(event->keyval);
+      eval_marker(keyval);
       change_mode(NORMAL);
       return TRUE;
   }
 
   /* append only numbers and characters to buffer */
-  if(isascii(event->keyval))
+  if(isascii(keyval))
   {
     if(!Jumanji.Global.buffer)
       Jumanji.Global.buffer = g_string_new("");
 
-    Jumanji.Global.buffer = g_string_append_c(Jumanji.Global.buffer, event->keyval);
+    Jumanji.Global.buffer = g_string_append_c(Jumanji.Global.buffer, keyval);
     gtk_label_set_text((GtkLabel*) Jumanji.Statusbar.buffer, Jumanji.Global.buffer->str);
   }
 
@@ -3832,9 +3846,9 @@ cb_wv_button_release_event(GtkWidget* UNUSED(widget), GdkEvent* event, gpointer 
   for(unsigned int i = 0; i < LENGTH(mouse); i++)
   {
     if(
-       event->button.button == mouse[i].button       /* test button */
-       && CLEAN(event->button.state) == mouse[i].mask /* test mask */
-       && Jumanji.Global.mode & mouse[i].mode        /* test mode */
+       event->button.button == mouse[i].button              /* test button */
+       && (event->button.state & ALL_MASK) == mouse[i].mask /* test mask */
+       && Jumanji.Global.mode & mouse[i].mode               /* test mode */
        && mouse[i].function /* a function have to be declared */ 
       )
     {
