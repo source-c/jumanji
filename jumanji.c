@@ -22,6 +22,7 @@
 /* macros */
 #define LENGTH(x) sizeof(x)/sizeof((x)[0])
 #define CLEAN(m) (m & (GDK_CONTROL_MASK | GDK_SHIFT_MASK | GDK_MOD1_MASK))
+#define CLEAN_U(m) (m & (GDK_CONTROL_MASK | GDK_MOD1_MASK))
 #define GET_CURRENT_TAB_WIDGET() GET_NTH_TAB_WIDGET(gtk_notebook_get_current_page(Jumanji.UI.view))
 #define GET_NTH_TAB_WIDGET(n) GTK_SCROLLED_WINDOW(gtk_notebook_get_nth_page(Jumanji.UI.view, n))
 #define GET_CURRENT_TAB() GET_NTH_TAB(gtk_notebook_get_current_page(Jumanji.UI.view))
@@ -3697,13 +3698,10 @@ cb_tab_kb_pressed(GtkWidget* UNUSED(widget), GdkEventKey* event, gpointer UNUSED
   {
     if(
        event->keyval == sc->element.key           /* test key */
-       && ( /* test mask */
-            CLEAN(event->state) == sc->element.mask
-            || ( /* if the key is upper case we try with SHIFT added to the mask */
-                 gdk_keyval_is_upper(event->keyval == sc->element.key)
-                 && CLEAN(event->state) == (sc->element.mask | GDK_SHIFT_MASK)
-               )
-          )
+       && /* test mask
+           * if the key is upper case we remove the
+	   * hypothetical SHIFT from the state */
+          sc->element.mask == (gdk_keyval_is_lower(event->keyval) ? CLEAN(event->state) : CLEAN_U(event->state))
        && Jumanji.Global.mode & sc->element.mode  /* test mode */
        && sc->element.function /* a function have to be defined */
        /* if the buffer isn't empty we don't launch the function
