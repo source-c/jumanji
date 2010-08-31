@@ -1356,6 +1356,9 @@ update_uri()
 void
 update_position()
 {
+  if (gtk_notebook_get_current_page(Jumanji.UI.view) == -1)
+    return;
+
   GtkAdjustment* adjustment = gtk_scrolled_window_get_vadjustment(GET_CURRENT_TAB_WIDGET());
   gdouble view_size         = gtk_adjustment_get_page_size(adjustment);
   gdouble value             = gtk_adjustment_get_value(adjustment);
