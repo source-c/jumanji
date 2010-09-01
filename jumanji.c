@@ -1785,18 +1785,23 @@ sc_close_tab(Argument* UNUSED(argument))
   int current_tab      = gtk_notebook_get_current_page(Jumanji.UI.view);
   GtkWidget* tab       = GTK_WIDGET(GET_NTH_TAB_WIDGET(current_tab));
 
-  /* remove markers for this tab */
-  GList* list;
-  for(list = Jumanji.Global.markers; list; list = g_list_next(list))
+  /* remove markers for this tab 
+   * and update the others */
+  GList* list = Jumanji.Global.markers;
+  while(list)
   {
     Marker* marker = (Marker*) list->data;
+    GList* next_marker = g_list_next(list);
 
     if(marker->tab_id == current_tab)
     {
       Jumanji.Global.markers = g_list_delete_link(Jumanji.Global.markers, list);
       free(marker);
-      break;
     }
+    else if(marker->tab_id > current_tab)
+      marker->tab_id -= 1;
+
+    list = next_marker;
   }
 
   if(gtk_notebook_get_n_pages(Jumanji.UI.view) > 1)
