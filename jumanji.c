@@ -373,7 +373,6 @@ char* reference_to_string(JSContextRef, JSValueRef);
 void run_script(char*, char**, char**);
 void set_completion_row_color(GtkBox*, int, int);
 void switch_view(GtkWidget*);
-void statusbar_set_text(const char*);
 void update_status();
 void update_uri();
 void update_position();
@@ -952,11 +951,6 @@ void init_ui()
   gtk_misc_set_padding(GTK_MISC(Jumanji.Statusbar.tabs),     2.0, 4.0);
   gtk_misc_set_padding(GTK_MISC(Jumanji.Statusbar.position), 2.0, 4.0);
 
-  gtk_label_set_use_markup(Jumanji.Statusbar.text,     TRUE);
-  gtk_label_set_use_markup(Jumanji.Statusbar.buffer,   FALSE);
-  gtk_label_set_use_markup(Jumanji.Statusbar.tabs,     TRUE);
-  gtk_label_set_use_markup(Jumanji.Statusbar.position, TRUE);
-
   gtk_box_pack_start(Jumanji.UI.statusbar_entries, GTK_WIDGET(Jumanji.Statusbar.text),     TRUE,   TRUE, 2);
   gtk_box_pack_start(Jumanji.UI.statusbar_entries, GTK_WIDGET(Jumanji.Statusbar.buffer),   FALSE, FALSE, 2);
   gtk_box_pack_start(Jumanji.UI.statusbar_entries, GTK_WIDGET(Jumanji.Statusbar.tabs),     FALSE, FALSE, 2);
@@ -1261,8 +1255,7 @@ update_status()
   int number_of_tabs  = gtk_notebook_get_n_pages(Jumanji.UI.view);
 
   gchar* tabs = g_strdup_printf("[%d/%d]", current_tab + 1, number_of_tabs);
-  char* s = g_markup_escape_text(tabs, -1);
-  gtk_label_set_markup((GtkLabel*) Jumanji.Statusbar.tabs, s);
+  gtk_label_set_text((GtkLabel*) Jumanji.Statusbar.tabs, tabs);
   g_free(tabs);
 
   /* update tabbar */
@@ -1286,11 +1279,9 @@ update_status()
 
     const gchar* tab_title = webkit_web_view_get_title(GET_WEBVIEW(tab));
     int progress = webkit_web_view_get_progress(GET_WEBVIEW(tab)) * 100;
-    gchar* markup = g_strdup_printf("%d | %s", tc + 1, tab_title ? tab_title : ((progress == 100) ? "Loading..." : "(Untitled)"));
-    char* s = g_markup_escape_text(markup, -1);
-    gtk_label_set_markup((GtkLabel*) tab_label, s);
-    g_free(s);
-    g_free(markup);
+    gchar* n_tab_title = g_strdup_printf("%d | %s", tc + 1, tab_title ? tab_title : ((progress == 100) ? "Loading..." : "(Untitled)"));
+    gtk_label_set_text((GtkLabel*) tab_label, n_tab_title);
+    g_free(n_tab_title);
   }
 
   update_position();
@@ -1349,7 +1340,7 @@ update_uri()
     g_string_free(navigation, TRUE);
   }
 
-  statusbar_set_text(uri);
+  gtk_label_set_text((GtkLabel*) Jumanji.Statusbar.text, uri);
   g_free(uri);
 }
 
@@ -1374,7 +1365,7 @@ update_position()
   else
     position = g_strdup_printf("%2d%%", (int) ceil(((value / max) * 100)));
 
-  gtk_label_set_markup((GtkLabel*) Jumanji.Statusbar.position, position);
+  gtk_label_set_text((GtkLabel*) Jumanji.Statusbar.position, position);
   g_free(position);
 }
 
@@ -1577,16 +1568,6 @@ switch_view(GtkWidget* UNUSED(widget))
   /*}*/
 
   /*gtk_container_add(GTK_CONTAINER(Jumanji.UI.viewport), GTK_WIDGET(widget));*/
-}
-
-void
-statusbar_set_text(const char* text)
-{
-  if(text)
-  {
-    char* s = g_markup_escape_text(text, -1);
-    gtk_label_set_markup((GtkLabel*) Jumanji.Statusbar.text, s);
-  }
 }
 
 GtkEventBox*
@@ -3940,12 +3921,13 @@ gboolean
 cb_wv_hover_link(WebKitWebView* UNUSED(wv), char* UNUSED(title), char* link, gpointer UNUSED(data))
 {
   if(link)
+  {
     link = g_strconcat("Link: ", link, NULL);
-
-  statusbar_set_text(link ? link : webkit_web_view_get_uri(GET_CURRENT_TAB()));
-
-  if(link)
+    gtk_label_set_text((GtkLabel*) Jumanji.Statusbar.text, link);
     g_free(link);
+  }
+  else
+    gtk_label_set_text((GtkLabel*) Jumanji.Statusbar.text, webkit_web_view_get_uri(GET_CURRENT_TAB()));
 
   return TRUE;
 }
