@@ -2100,15 +2100,19 @@ isc_abort(Argument* UNUSED(argument))
 void
 isc_completion(Argument* argument)
 {
-  gchar *input      = gtk_editable_get_chars(GTK_EDITABLE(Jumanji.UI.inputbar), 1, -1);
-  gchar  identifier = gtk_editable_get_chars(GTK_EDITABLE(Jumanji.UI.inputbar), 0,  1)[0];
-  int    length     = strlen(input);
+  gchar *input      = gtk_editable_get_chars(GTK_EDITABLE(Jumanji.UI.inputbar), 0, -1);
+  gchar  identifier = input[0];
+  gchar *input_m    = input + 1; 
+  int    length     = strlen(input_m);
 
   if(!length && !identifier)
+  {
+    g_free(input);
     return;
+  }
 
   /* get current information*/
-  char* first_space = strstr(input, " ");
+  char* first_space = strstr(input_m, " ");
   char* current_command;
   char* current_parameter;
   int   current_command_length;
@@ -2116,24 +2120,27 @@ isc_completion(Argument* argument)
 
   if(!first_space)
   {
-    current_command          = input;
+    current_command          = input_m;
     current_command_length   = length;
     current_parameter        = NULL;
     current_parameter_length = 0;
   }
   else
   {
-    int offset               = abs(input - first_space);
-    current_command          = g_strndup(input, offset);
+    int offset               = abs(input_m - first_space);
+    current_command          = g_strndup(input_m, offset);
     current_command_length   = strlen(current_command);
-    current_parameter        = input + offset + 1;
+    current_parameter        = input_m + offset + 1;
     current_parameter_length = strlen(current_parameter);
   }
 
   /* if the identifier does not match the command sign and
    * the completion should not be hidden, leave this function */
   if((identifier != ':') && (argument->n != HIDE))
+  {
+    g_free(input);
     return;
+  }
 
   /* static elements */
   static GtkBox        *results = NULL;
@@ -2174,7 +2181,10 @@ isc_completion(Argument* argument)
     command_mode = TRUE;
 
     if(argument->n == HIDE)
+    {
+      g_free(input);
       return;
+    }
   }
 
   /* create new list iff
@@ -2192,7 +2202,7 @@ isc_completion(Argument* argument)
      *  the current command does not differ from the previous one
      *  the current command has an completion function
      */
-    if(strchr(input, ' '))
+    if(strchr(input_m, ' '))
     {
       gboolean search_matching_command = FALSE;
 
@@ -2212,17 +2222,26 @@ isc_completion(Argument* argument)
             search_matching_command = TRUE;
           }
           else
+	  {
+            g_free(input);
             return;
+	  }
         }
       }
 
       if(!search_matching_command)
+      {
+        g_free(input);
         return;
+      }
 
       Completion *result = commands[previous_id].completion(current_parameter ? current_parameter : "");
 
       if(!result || !result->groups)
+      {
+        g_free(input);
         return;
+      }
 
       command_mode               = FALSE;
       CompletionGroup* group     = NULL;
@@ -2370,6 +2389,8 @@ isc_completion(Argument* argument)
 
     previous_id        = rows[current_item].command_id;
   }
+
+  g_free(input);
 }
 
 void
