@@ -371,6 +371,7 @@ void read_configuration();
 char* read_file(const char*);
 char* reference_to_string(JSContextRef, JSValueRef);
 void run_script(char*, char**, char**);
+gboolean search_and_highlight(Argument*);
 void set_completion_row_color(GtkBox*, int, int);
 void switch_view(GtkWidget*);
 void update_status();
@@ -1964,25 +1965,7 @@ sc_scroll(Argument* argument)
 void
 sc_search(Argument* argument)
 {
-  static char* search_item = NULL;
-
-  if(argument->data)
-  {
-    if(search_item)
-      g_free(search_item);
-
-    search_item = g_strdup((char*) argument->data);
-  }
-
-  if(!search_item)
-    return;
-
-  gboolean direction = (argument->n == BACKWARD) ? FALSE : TRUE;
-
-  webkit_web_view_unmark_text_matches(GET_CURRENT_TAB());
-  webkit_web_view_search_text(GET_CURRENT_TAB(), search_item, FALSE, direction, TRUE);
-  webkit_web_view_mark_text_matches(GET_CURRENT_TAB(), search_item, FALSE, 0);
-  webkit_web_view_set_highlight_text_matches(GET_CURRENT_TAB(), TRUE);
+  search_and_highlight(argument);
 }
 
 void
@@ -3505,17 +3488,68 @@ bcmd_zoom(char* buffer, Argument* argument)
   }
 }
 
+/* search (special)command global variables */
+char* search_item = NULL;
+gboolean search_item_changed = FALSE;
+
 /* special command implementation */
 gboolean
 scmd_search(char* input, Argument* argument, gboolean activate)
 {
-  if(!strlen(input) || activate)
+  static guint search_and_highlight_id;
+
+  if((input && !strlen(input)) || activate)
     return TRUE;
 
   argument->data = input;
-  sc_search(argument);
+
+  g_free(search_item);
+  search_item = g_strdup(input);
+  search_item_changed = TRUE;
+
+  gboolean source_removed = FALSE;
+  if(search_and_highlight_id)
+  {
+    source_removed = g_source_remove(search_and_highlight_id);
+    search_and_highlight_id = 0;
+  }
+
+  /* if function was launched by cb_inputbar_activate */
+  if(activate)
+  {
+    if(source_removed)
+      search_and_highlight(argument);
+  }
+  else
+    search_and_highlight_id = g_timeout_add(search_delay, (GSourceFunc)sc_search, argument);
 
   return TRUE;
+}
+
+gboolean
+search_and_highlight(Argument* argument)
+{
+  static WebKitWebView* last_wv = NULL;
+
+  if(search_item && !strlen(search_item))
+    return FALSE;
+
+  WebKitWebView* current_wv = GET_CURRENT_TAB();
+
+  if(search_item_changed || last_wv != current_wv)
+  {
+    webkit_web_view_unmark_text_matches(current_wv);
+    webkit_web_view_mark_text_matches(current_wv, search_item, FALSE, 0);
+    webkit_web_view_set_highlight_text_matches(current_wv, TRUE);
+
+    last_wv = current_wv;
+  }
+
+  gboolean direction = (argument->n == BACKWARD) ? FALSE : TRUE;
+  webkit_web_view_search_text(current_wv, search_item, FALSE, direction, TRUE);
+
+  search_item_changed = FALSE;
+  return FALSE;
 }
 
 /* callback implementation */
