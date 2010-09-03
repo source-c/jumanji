@@ -3636,18 +3636,20 @@ cb_inputbar_kb_pressed(GtkWidget* UNUSED(widget), GdkEventKey* event, gpointer U
   }
 
   /* special commands */
-  char identifier = gtk_editable_get_chars(GTK_EDITABLE(Jumanji.UI.inputbar), 0, 1)[0];
+  gchar *input  = gtk_editable_get_chars(GTK_EDITABLE(Jumanji.UI.inputbar), 0, -1);
+  char identifier = input[0];
   for(unsigned int i = 0; i < LENGTH(special_commands); i++)
   {
     if((identifier == special_commands[i].identifier) &&
        (special_commands[i].always == 1))
     {
-      gchar *input  = gtk_editable_get_chars(GTK_EDITABLE(Jumanji.UI.inputbar), 1, -1);
-      special_commands[i].function(input, &(special_commands[i].argument));
+      special_commands[i].function(input + 1, &(special_commands[i].argument));
+      g_free(input);
       return FALSE;
     }
   }
 
+  g_free(input);
   return FALSE;
 }
 
