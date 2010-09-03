@@ -459,6 +459,7 @@ UniqueResponse cb_app_message_received(UniqueApp*, gint, UniqueMessageData*, gui
 gboolean cb_blank();
 gboolean cb_destroy(GtkWidget*, gpointer);
 gboolean cb_inputbar_kb_pressed(GtkWidget*, GdkEventKey*, gpointer);
+void cb_inputbar_changed(GtkEditable*, gpointer);
 gboolean cb_inputbar_activate(GtkEntry*, gpointer);
 gboolean cb_tab_kb_pressed(GtkWidget*, GdkEventKey*, gpointer);
 GtkWidget* cb_wv_block_plugin(WebKitWebView*, gchar*, gchar*, GHashTable*, gpointer);
@@ -964,6 +965,7 @@ void init_ui()
   gtk_editable_set_editable( GTK_EDITABLE(Jumanji.UI.inputbar), TRUE);
 
   g_signal_connect(G_OBJECT(Jumanji.UI.inputbar), "key-press-event", G_CALLBACK(cb_inputbar_kb_pressed), NULL);
+  g_signal_connect(GTK_EDITABLE(Jumanji.UI.inputbar), "changed",     G_CALLBACK(cb_inputbar_changed),    NULL);
   g_signal_connect(G_OBJECT(Jumanji.UI.inputbar), "activate",        G_CALLBACK(cb_inputbar_activate),   NULL);
 
   /* view */
@@ -2222,10 +2224,10 @@ isc_completion(Argument* argument)
             search_matching_command = TRUE;
           }
           else
-	  {
+          {
             g_free(input);
             return;
-	  }
+          }
         }
       }
 
@@ -3635,6 +3637,12 @@ cb_inputbar_kb_pressed(GtkWidget* UNUSED(widget), GdkEventKey* event, gpointer U
     }
   }
 
+  return FALSE;
+}
+
+void
+cb_inputbar_changed(GtkEditable* UNUSED(editable), gpointer UNUSED(data))
+{
   /* special commands */
   gchar *input  = gtk_editable_get_chars(GTK_EDITABLE(Jumanji.UI.inputbar), 0, -1);
   char identifier = input[0];
@@ -3645,12 +3653,12 @@ cb_inputbar_kb_pressed(GtkWidget* UNUSED(widget), GdkEventKey* event, gpointer U
     {
       special_commands[i].function(input + 1, &(special_commands[i].argument));
       g_free(input);
-      return FALSE;
+      return;
     }
   }
 
   g_free(input);
-  return FALSE;
+  return;
 }
 
 gboolean
@@ -3679,7 +3687,7 @@ cb_inputbar_activate(GtkEntry* entry, gpointer UNUSED(data))
       if(special_commands[i].always == 1)
       {
         isc_abort(NULL);
-	g_free(input);
+        g_free(input);
         return TRUE;
       }
 
