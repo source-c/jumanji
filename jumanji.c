@@ -4163,7 +4163,7 @@ int main(int argc, char* argv[])
 
   /* init autosave */
   if(auto_save_interval)
-    g_timeout_add(auto_save_interval * 1000, auto_save, NULL);
+    g_timeout_add_seconds(auto_save_interval, auto_save, NULL);
 
   /* create tab */
   if(argc < 2)
