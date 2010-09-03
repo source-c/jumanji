@@ -3656,26 +3656,20 @@ cb_inputbar_kb_pressed(GtkWidget* UNUSED(widget), GdkEventKey* event, gpointer U
 gboolean
 cb_inputbar_activate(GtkEntry* entry, gpointer UNUSED(data))
 {
-  gchar  *input  = gtk_editable_get_chars(GTK_EDITABLE(entry), 1, -1);
-  gchar **tokens = g_strsplit(input, " ", -1);
-  gchar *command = tokens[0];
-  int     length = g_strv_length(tokens);
+  gchar  *input  = gtk_editable_get_chars(GTK_EDITABLE(entry), 0, -1);
+  char identifier = input[0];
   gboolean  retv = FALSE;
   gboolean  succ = FALSE;
 
   /* no input */
-  if(length < 1)
+  if(strlen(input) <= 1)
   {
     isc_abort(NULL);
+    g_free(input);
     return FALSE;
   }
 
-  /* append input to the command history */
-  if(!private_browsing)
-    Jumanji.Global.command_history = g_list_append(Jumanji.Global.command_history, g_strdup(gtk_entry_get_text(entry)));
-
   /* special commands */
-  char identifier = gtk_editable_get_chars(GTK_EDITABLE(entry), 0, 1)[0];
   for(unsigned int i = 0; i < LENGTH(special_commands); i++)
   {
     if(identifier == special_commands[i].identifier)
@@ -3685,15 +3679,26 @@ cb_inputbar_activate(GtkEntry* entry, gpointer UNUSED(data))
       if(special_commands[i].always == 1)
       {
         isc_abort(NULL);
+	g_free(input);
         return TRUE;
       }
 
-      retv = special_commands[i].function(input, &(special_commands[i].argument));
+      retv = special_commands[i].function(input + 1, &(special_commands[i].argument));
       if(retv) isc_abort(NULL);
       gtk_widget_grab_focus(GTK_WIDGET(GET_CURRENT_TAB_WIDGET()));
+      g_free(input);
       return TRUE;
     }
   }
+
+  gchar **tokens = g_strsplit(input + 1, " ", -1);
+  g_free(input);
+  gchar *command = tokens[0];
+  int     length = g_strv_length(tokens);
+
+  /* append input to the command history */
+  if(!private_browsing)
+    Jumanji.Global.command_history = g_list_append(Jumanji.Global.command_history, g_strdup(gtk_entry_get_text(entry)));
 
   /* search commands */
   for(unsigned int i = 0; i < LENGTH(commands); i++)
