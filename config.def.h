@@ -27,6 +27,7 @@ gboolean plugin_blocker    = TRUE;
 gboolean full_content_zoom = FALSE;
 gboolean save_session      = FALSE;
 int auto_save_interval     = 0;
+int search_delay           = 400; /* in millisecond */
 int history_limit          = 0;
 
 /* download settings */
