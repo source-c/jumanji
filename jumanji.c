@@ -2425,7 +2425,10 @@ isc_string_manipulation(Argument* argument)
     int i = pos - 1;
 
     if(!pos)
+    {
+      g_free(input);
       return;
+    }
 
     /* remove trailing spaces */
     for(; i >= 0 && input[i] == ' '; i--);
@@ -2453,6 +2456,8 @@ isc_string_manipulation(Argument* argument)
     gtk_editable_set_position(GTK_EDITABLE(Jumanji.UI.inputbar), pos+1);
   else if(argument->n == PREVIOUS_CHAR)
     gtk_editable_set_position(GTK_EDITABLE(Jumanji.UI.inputbar), (pos == 0) ? 0 : pos - 1);
+
+  g_free(input);
 }
 
 /* command implementation */
