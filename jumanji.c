@@ -194,7 +194,7 @@ typedef struct BCList BufferCommandList;
 typedef struct
 {
   char identifier;
-  gboolean (*function)(char*, Argument*);
+  gboolean (*function)(char*, Argument*, gboolean);
   int always;
   Argument argument;
 } SpecialCommand;
@@ -452,7 +452,7 @@ void bcmd_toggle_sourcecode(char*, Argument*);
 void bcmd_zoom(char*, Argument*);
 
 /* special command delcarations */
-gboolean scmd_search(char*, Argument*);
+gboolean scmd_search(char*, Argument*, gboolean);
 
 /* callback declarations */
 UniqueResponse cb_app_message_received(UniqueApp*, gint, UniqueMessageData*, guint, gpointer);
@@ -3507,9 +3507,9 @@ bcmd_zoom(char* buffer, Argument* argument)
 
 /* special command implementation */
 gboolean
-scmd_search(char* input, Argument* argument)
+scmd_search(char* input, Argument* argument, gboolean activate)
 {
-  if(!strlen(input))
+  if(!strlen(input) || activate)
     return TRUE;
 
   argument->data = input;
@@ -3651,7 +3651,7 @@ cb_inputbar_changed(GtkEditable* UNUSED(editable), gpointer UNUSED(data))
     if((identifier == special_commands[i].identifier) &&
        (special_commands[i].always == 1))
     {
-      special_commands[i].function(input + 1, &(special_commands[i].argument));
+      special_commands[i].function(input + 1, &(special_commands[i].argument), FALSE);
       g_free(input);
       return;
     }
@@ -3682,16 +3682,7 @@ cb_inputbar_activate(GtkEntry* entry, gpointer UNUSED(data))
   {
     if(identifier == special_commands[i].identifier)
     {
-      /* special commands that are evaluated every key change are not
-       * called here */
-      if(special_commands[i].always == 1)
-      {
-        isc_abort(NULL);
-        g_free(input);
-        return TRUE;
-      }
-
-      retv = special_commands[i].function(input + 1, &(special_commands[i].argument));
+      retv = special_commands[i].function(input + 1, &(special_commands[i].argument), TRUE);
       if(retv) isc_abort(NULL);
       gtk_widget_grab_focus(GTK_WIDGET(GET_CURRENT_TAB_WIDGET()));
       g_free(input);
