@@ -15,7 +15,7 @@ static const char JUMANJI_RC[]        = "jumanjirc";
 static const char JUMANJI_BOOKMARKS[] = "bookmarks";
 static const char JUMANJI_HISTORY[]   = "history";
 static const char JUMANJI_COOKIES[]   = "cookies";
-static const char JUMANJI_SESSION[]   = "session";
+static const char JUMANJI_SESSIONS[]  = "sessions";
 
 /* browser specific settings */
 char* user_agent           = NULL;
@@ -25,7 +25,7 @@ char* proxy                = NULL;
 gboolean private_browsing  = FALSE;
 gboolean plugin_blocker    = TRUE;
 gboolean full_content_zoom = FALSE;
-gboolean save_session      = FALSE;
+char* default_session_name = NULL;
 int auto_save_interval     = 0;
 int search_delay           = 400; /* in millisecond */
 int history_limit          = 0;
@@ -177,6 +177,8 @@ Command commands[] = {
   {"reloadall", 0,              cmd_reload_all,      0,            "Reload all tab pages" },
   {"saveas",    0,              cmd_saveas,          0,            "Save current document to disk" },
   {"script",    0,              cmd_script,          0,            "Load a javascript file" },
+  {"sessionload","sl",          cmd_sessionload,     cc_session,   "Load session to specifed file" },
+  {"sessionsave","ss",          cmd_sessionsave,     cc_session,   "Save session to specifed file" },
   {"set",       "s",            cmd_set,             cc_set,       "Set an option" },
   {"stop",      "st",           cmd_stop,            0,            "Stop loading the current page" },
   {"tabopen",   "t",            cmd_tabopen,         cc_open,      "Open URI in a new tab" },
@@ -236,6 +238,7 @@ Setting settings[] = {
   {"cursive_font",           NULL,                      "cursive-font-family",          's',  0, 1, 0, "Default cursive font family to display text"},
   {"default_bgcolor",        &(default_bgcolor),        NULL,                           's',  1, 0, 0, "Default background color"},
   {"default_fgcolor",        &(default_fgcolor),        NULL,                           's',  1, 0, 0, "Default foreground color"},
+  {"default_session_name",   &(default_session_name),   NULL,                           's',  1, 0, 0, "Set default session name and enable session saving between jumanji runs"},
   {"developer_extras",       NULL,                      "enable-developer-extras",      'b',  0, 1, 0, "Enable webkit developer extensions"},
   {"download_command",       &(download_command),       NULL,                           's',  0, 0, 0, "Command for downloading files"},
   {"download_dir",           &(download_dir),           NULL,                           's',  0, 0, 0, "The default download directory"},
@@ -246,7 +249,6 @@ Setting settings[] = {
   {"font_family",            NULL,                      "default-font-family",          's',  0, 1, 0, "The default font family"},
   {"font_size",              NULL,                      "default-font-size",            'i',  0, 1, 0, "The default font size to display text"},
   {"full_content_zoom",      &(full_content_zoom),      "full-content-zoom",            'b',  0, 0, 1, "Wheter the full content is scaled when zooming"},
-  {"save_session",           &(save_session),           NULL,                           'b',  1, 0, 0, "Save and restore all tabs"},
   {"height",                 &(default_height),         NULL,                           'i',  1, 0, 0, "Default window height"},
   {"homepage",               &(home_page),              NULL,                           's',  0, 0, 0, "Home page"},
   {"images",                 NULL,                      "auto-load-images",             'b',  0, 1, 0, "Load images automatically"},

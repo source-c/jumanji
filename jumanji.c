@@ -267,6 +267,12 @@ typedef struct
   GtkWidget *box;
 } Plugin;
 
+typedef struct
+{
+  gchar     *name;
+  gchar     *uris;
+} Session;
+
 /* jumanji */
 struct
 {
@@ -319,6 +325,7 @@ struct
     char   **arguments;
     GList   *markers;
     GList   *bookmarks;
+    GList   *sessions;
     GList   *history;
     GList   *allowed_plugins;
     GList   *allowed_plugin_uris;
@@ -372,6 +379,8 @@ char* read_file(const char*);
 char* reference_to_string(JSContextRef, JSValueRef);
 void run_script(char*, char**, char**);
 gboolean search_and_highlight(Argument*);
+gboolean sessionload(char*);
+gboolean sessionsave(char*);
 void set_completion_row_color(GtkBox*, int, int);
 void switch_view(GtkWidget*);
 void update_status();
@@ -429,6 +438,8 @@ gboolean cmd_reload_all(int, char**);
 gboolean cmd_saveas(int, char**);
 gboolean cmd_script(int, char**);
 gboolean cmd_search_engine(int, char**);
+gboolean cmd_sessionload(int, char**);
+gboolean cmd_sessionsave(int, char**);
 gboolean cmd_set(int, char**);
 gboolean cmd_stop(int, char**);
 gboolean cmd_tabopen(int, char**);
@@ -437,6 +448,7 @@ gboolean cmd_write(int, char**);
 
 /* completion commands */
 Completion* cc_open(char*);
+Completion* cc_session(char*);
 Completion* cc_set(char*);
 
 /* buffer command declarations */
@@ -725,6 +737,7 @@ init_data()
       }
 
       g_free(content);
+      g_free(lines);
     }
   }
 
@@ -757,10 +770,45 @@ init_data()
       Jumanji.Global.history = g_list_reverse(Jumanji.Global.history);
 
       g_free(content);
+      g_free(lines);
     }
   }
 
   g_free(history_file);
+
+  /* read sessions */
+  gchar* sessions_file = g_build_filename(g_get_home_dir(), JUMANJI_DIR, JUMANJI_SESSIONS, NULL);
+
+  if(!sessions_file)
+    return;
+
+  if(g_file_test(sessions_file, G_FILE_TEST_IS_REGULAR))
+  {
+    char* content = NULL;
+
+    if(g_file_get_contents(sessions_file, &content, NULL, NULL))
+    {
+      gchar **lines = g_strsplit(content, "\n", -1);
+      int     n     = g_strv_length(lines) - 1;
+
+      for(int i = 0; i < n; i+=2)
+      {
+        if(!strlen(lines[i]) || !strlen(lines[i+1]))
+          continue;
+
+	Session* se = malloc(sizeof(Session));
+        se->name = lines[i];
+        se->uris = lines[i+1];
+
+        Jumanji.Global.sessions = g_list_prepend(Jumanji.Global.sessions, se);
+      }
+
+      g_free(content);
+      g_free(lines);
+    }
+  }
+
+  g_free(sessions_file);
 
   /* load cookies */
   char* cookie_file        = g_build_filename(g_get_home_dir(), JUMANJI_DIR, JUMANJI_COOKIES, NULL);
@@ -1474,34 +1522,6 @@ reference_to_string(JSContextRef context, JSValueRef reference)
   return string;
 }
 
-gboolean
-restore_session(void) {
-  gchar* session_file = g_build_filename(g_get_home_dir(), JUMANJI_DIR, JUMANJI_SESSION, NULL);
-
-  if(!session_file || !g_file_test(session_file, G_FILE_TEST_IS_REGULAR))
-    return FALSE;
-
-  char* content = NULL;
-
-  if(!g_file_get_contents(session_file, &content, NULL, NULL))
-    return FALSE;
-
-  gchar **lines = g_strsplit(content, "\n", -1);
-  int     n     = g_strv_length(lines) - 1;
-
-  if(n <= 0)
-    return FALSE;
-
-  for(int i = 0; i < n; i++)
-    create_tab(lines[i], TRUE);
-
-  g_free(content);
-  g_strfreev(lines);
-  g_free(session_file);
-
-  return TRUE;
-}
-
 void
 run_script(char* script, char** value, char** error)
 {
@@ -1966,6 +1986,81 @@ void
 sc_search(Argument* argument)
 {
   search_and_highlight(argument);
+}
+
+gboolean
+sessionsave(char* session_name)
+{
+  GString* session_uris = g_string_new("");
+
+  for (int i = 0; i < gtk_notebook_get_n_pages(Jumanji.UI.view); i++)
+  {
+    gchar* tab_uri_t = (gchar*) webkit_web_view_get_uri(GET_NTH_TAB(i));
+    gchar* tab_uri   = g_strconcat(tab_uri_t, " ", NULL);
+    session_uris     = g_string_append(session_uris, tab_uri);
+
+    g_free(tab_uri);
+  }
+
+  GList* se_list = Jumanji.Global.sessions;
+  while(se_list)
+  {
+    Session* se = se_list->data;
+
+    if(g_strcmp0(se->name, session_name) == 0)
+    {
+      g_free(se->uris);
+      se->uris = session_uris->str;
+
+      break;
+    }
+
+    se_list = g_list_next(se_list);
+  }
+
+  /* if there was no session with name == session_name */
+  if(!se_list)
+  {
+    Session* se = malloc(sizeof(Session));
+    se->name = g_strdup(session_name);
+    se->uris = session_uris->str;
+
+    Jumanji.Global.sessions = g_list_prepend(Jumanji.Global.sessions, se);
+  }
+
+  /* we don't free session_uris->str , just session_uris */
+  g_string_free(session_uris, FALSE);
+
+  return TRUE;
+}
+
+gboolean
+sessionload(char* session_name)
+{
+  GList* se_list = Jumanji.Global.sessions;
+  while(se_list)
+  {
+    Session* se = se_list->data;
+
+    if(g_strcmp0(se->name, session_name) == 0)
+    {
+      gchar** uris = g_strsplit(se->uris, " ", -1);
+      int     n    = g_strv_length(uris) - 1;
+
+      if(n <= 0)
+        return FALSE;
+
+      for(int i = 0; i < n; i++)
+        create_tab(uris[i], TRUE);
+
+      g_strfreev(uris);
+      return TRUE;
+    }
+
+    se_list = g_list_next(se_list);
+  }
+
+  return FALSE;
 }
 
 void
@@ -3196,28 +3291,61 @@ cmd_write(int UNUSED(argc), char** UNUSED(argv))
   g_free(history_file);
   g_string_free(history_list, TRUE);
 
-  if(!save_session)
+  if(!default_session_name)
     return TRUE;
 
   /* save session */
-  GString *session_list = g_string_new("");
+  sessionsave(default_session_name);
 
-  for (int i = 0; i < gtk_notebook_get_n_pages(Jumanji.UI.view); i++)
+  GString* session_list = g_string_new("");
+
+  for(GList* se_list = Jumanji.Global.sessions; se_list; se_list = g_list_next(se_list))
   {
-    gchar* tab_uri_t = (gchar*) webkit_web_view_get_uri(GET_NTH_TAB(i));
-    gchar* tab_uri   = g_strconcat(tab_uri_t, "\n", NULL);
-    session_list     = g_string_append(session_list, tab_uri);
+    Session* se = se_list->data;
 
-    g_free(tab_uri);
+    gchar* session_lines = g_strconcat(se->name, "\n", se->uris, "\n", NULL);
+    session_list = g_string_append(session_list, session_lines);
+
+    g_free(session_lines);
   }
 
-  gchar* session_file = g_build_filename(g_get_home_dir(), JUMANJI_DIR, JUMANJI_SESSION, NULL);
+  gchar* session_file = g_build_filename(g_get_home_dir(), JUMANJI_DIR, JUMANJI_SESSIONS, NULL);
   g_file_set_contents(session_file, session_list->str, -1, NULL);
 
   g_free(session_file);
   g_string_free(session_list, TRUE);
 
   return TRUE;
+}
+
+gboolean
+cmd_sessionsave(int argc, char** argv)
+{
+  if(argc <= 0 || argv[argc] != NULL)
+    return FALSE;
+
+  gchar* session_name   = g_strjoinv(" ", argv);
+
+  gboolean to_return = sessionsave(session_name);
+
+  g_free(session_name);
+
+  return to_return;
+}
+
+gboolean
+cmd_sessionload(int argc, char** argv)
+{
+  if(argc <= 0 || argv[argc] != NULL)
+    return FALSE;
+
+  gchar* session_name = g_strjoinv(" ", argv);
+
+  gboolean to_return = sessionload(session_name);
+
+  g_free(session_name);
+
+  return to_return;
 }
 
 /* completion command implementation */
@@ -3268,6 +3396,25 @@ cc_open(char* input)
       if(strstr(uri, input))
         completion_group_add_element(history, uri, NULL);
     }
+  }
+
+  return completion;
+}
+
+Completion*
+cc_session(char* input)
+{
+  Completion* completion = completion_init();
+  CompletionGroup* group = completion_group_create(NULL);
+
+  completion_add_group(completion, group);
+
+  for(GList* l = Jumanji.Global.sessions; l; l = g_list_next(l))
+  {
+    Session* se = l->data;
+
+    if(strstr(se->name, input))
+      completion_group_add_element(group, se->name, NULL);
   }
 
   return completion;
@@ -4205,8 +4352,8 @@ int main(int argc, char* argv[])
 
     // we restore session only if this feature is activated
     // and the current jumanji instance is the only one
-    if(save_session && application && !unique_app_is_running(application))
-      session_restored = restore_session();
+    if(default_session_name && application && !unique_app_is_running(application))
+      session_restored = sessionload(default_session_name);
 
     if(!session_restored)
       create_tab(home_page, TRUE);
