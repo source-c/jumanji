@@ -382,6 +382,7 @@ void run_script(char*, char**, char**);
 gboolean search_and_highlight(Argument*);
 gboolean sessionload(char*);
 gboolean sessionsave(char*);
+gboolean sessionswitch(char*);
 void set_completion_row_color(GtkBox*, int, int);
 void switch_view(GtkWidget*);
 void update_status();
@@ -441,6 +442,7 @@ gboolean cmd_script(int, char**);
 gboolean cmd_search_engine(int, char**);
 gboolean cmd_sessionload(int, char**);
 gboolean cmd_sessionsave(int, char**);
+gboolean cmd_sessionswitch(int, char**);
 gboolean cmd_set(int, char**);
 gboolean cmd_stop(int, char**);
 gboolean cmd_tabopen(int, char**);
@@ -2036,6 +2038,70 @@ sessionsave(char* session_name)
 }
 
 gboolean
+sessionswitch(char* session_name)
+{
+  // search for session
+  gchar** se_uris = NULL;
+
+  GList* se_list = Jumanji.Global.sessions;
+  while(se_list)
+  {
+    Session* se = se_list->data;
+
+    if(g_strcmp0(se->name, session_name) == 0)
+    {
+      se_uris = g_strsplit(se->uris, " ", -1);
+      break ;
+    }
+
+    se_list = g_list_next(se_list);
+  }
+
+  if(!se_uris)
+    return FALSE;
+
+  int nb_uris = g_strv_length(se_uris) - 1;
+
+  if(nb_uris <= 0)
+    return FALSE;
+
+  /* a session have been found
+   * we can start removing all the current tabs 
+   * and attached informations */
+
+  // remove all markers
+  GList* list = Jumanji.Global.markers;
+  while(list)
+  {
+    GList* next_marker = g_list_next(list);
+
+    Marker* marker = (Marker*) list->data;
+    Jumanji.Global.markers = g_list_delete_link(Jumanji.Global.markers, list);
+    free(marker);
+
+    list = next_marker;
+  }
+
+  /* remove all the tabs
+   * without updating the status bar */
+  for (int i = gtk_notebook_get_n_pages(Jumanji.UI.view) - 1; i != -1; --i)
+  {
+    GtkWidget* tab = GTK_WIDGET(GET_NTH_TAB_WIDGET(i));
+    
+    gtk_container_remove(GTK_CONTAINER(Jumanji.UI.tabbar), GTK_WIDGET(g_object_get_data(G_OBJECT(tab), "tab")));
+    
+    gtk_notebook_remove_page(Jumanji.UI.view, i);
+  }
+
+  // load the session
+  for(int i = 0; i < nb_uris; i++)
+    create_tab(se_uris[i], TRUE);
+
+  g_strfreev(se_uris);
+  return TRUE;
+}
+
+gboolean
 sessionload(char* session_name)
 {
   GList* se_list = Jumanji.Global.sessions;
@@ -3328,6 +3394,21 @@ cmd_sessionsave(int argc, char** argv)
   gchar* session_name   = g_strjoinv(" ", argv);
 
   gboolean to_return = sessionsave(session_name);
+
+  g_free(session_name);
+
+  return to_return;
+}
+
+gboolean
+cmd_sessionswitch(int argc, char** argv)
+{
+  if(argc <= 0 || argv[argc] != NULL)
+    return FALSE;
+
+  gchar* session_name   = g_strjoinv(" ", argv);
+
+  gboolean to_return = sessionswitch(session_name);
 
   g_free(session_name);
 
