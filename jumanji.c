@@ -1152,10 +1152,19 @@ open_uri(WebKitWebView* web_view, char* uri)
   if(uri_first_space)
   {
     unsigned int first_arg_length = uri_first_space - uri;
+
+    SearchEngineList* se = Jumanji.Global.search_engines;
+    while(se)
+    {
+      if(strlen(se->name) == first_arg_length && !strncmp(uri, se->name, first_arg_length))
+        break;
+
+      se = se->next;
+    }
     /* first agrument contain "://"
      * -> it's a bookmark with tag
      */
-    if (strstr(uri, "://"))
+    if(!se && strstr(uri, "://"))
     {
       new_uri = g_strndup(uri, first_arg_length);
     }
@@ -1164,15 +1173,6 @@ open_uri(WebKitWebView* web_view, char* uri)
      */
     else
     {
-      SearchEngineList* se = Jumanji.Global.search_engines;
-      while(se)
-      {
-        if(strlen(se->name) == first_arg_length && !strncmp(uri, se->name, first_arg_length))
-          break;
-
-        se = se->next;
-      }
-
       if(!se)
         se = Jumanji.Global.search_engines;
       else /* we remove the trailing arg since it's the se name */
