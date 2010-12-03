@@ -433,6 +433,7 @@ gboolean cmd_forward(int, char**);
 gboolean cmd_map(int, char**);
 gboolean cmd_open(int, char**);
 gboolean cmd_plugintype(int, char**);
+gboolean cmd_print(int, char**);
 gboolean cmd_quit(int, char**);
 gboolean cmd_quitall(int, char**);
 gboolean cmd_reload(int, char**);
@@ -2953,6 +2954,19 @@ cmd_plugintype(int argc, char** argv)
 
   if(gtk_notebook_get_current_page(Jumanji.UI.view) >= 0)
     sc_reload(NULL);
+
+  return TRUE;
+}
+
+gboolean
+cmd_print(int UNUSED(argc), char** UNUSED(argv))
+{
+  WebKitWebFrame* frame = webkit_web_view_get_main_frame(GET_CURRENT_TAB());
+
+  if(!frame)
+    return FALSE:
+
+  webkit_web_frame_print(frame);
 
   return TRUE;
 }
