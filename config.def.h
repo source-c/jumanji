@@ -171,6 +171,7 @@ Command commands[] = {
   {"map",       "m",            cmd_map,             0,            "Map a key sequence" },
   {"open",      "o",            cmd_open,            cc_open,      "Open URI in the current tab" },
   {"plugin",    0,              cmd_plugintype,      0,            "Allow plugin type" },
+  {"print",     0,              cmd_print,           0,            "Print page" },
   {"quit",      "q",            cmd_quit,            0,            "Quit current tab" },
   {"quitall",   0,              cmd_quitall,         0,            "Quit jumanji" },
   {"reload",    0,              cmd_reload,          0,            "Reload the current web page" },
