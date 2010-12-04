@@ -2964,7 +2964,7 @@ cmd_print(int UNUSED(argc), char** UNUSED(argv))
   WebKitWebFrame* frame = webkit_web_view_get_main_frame(GET_CURRENT_TAB());
 
   if(!frame)
-    return FALSE:
+    return FALSE;
 
   webkit_web_frame_print(frame);
 
