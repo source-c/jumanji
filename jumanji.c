@@ -2812,6 +2812,9 @@ cmd_map(int argc, char** argv)
         case 'W':
           mask = GDK_SUPER_MASK | GDK_MOD4_MASK;
           break;
+        case 'A':
+          mask = GDK_MOD1_MASK;
+          break;
       }
 
       /* no valid modifier */
