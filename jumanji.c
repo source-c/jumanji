@@ -3479,6 +3479,9 @@ cc_open(char* input)
     se = se->next;
   }
 
+  /* we make bookmark and history completion case insensitive */
+  gchar* lowercase_input = g_utf8_strdown(input, -1);
+
   /* bookmarks */
   if(Jumanji.Global.bookmarks)
   {
@@ -3488,9 +3491,13 @@ cc_open(char* input)
     for(GList* l = Jumanji.Global.bookmarks; l; l = g_list_next(l))
     {
       char* bookmark = (char*) l->data;
+      gchar* lowercase_bookmark = g_utf8_strdown(bookmark, -1);
 
-      if(strstr(bookmark, input))
+      /* case insensitive search */
+      if(strstr(lowercase_bookmark, lowercase_input))
         completion_group_add_element(bookmarks, bookmark, NULL);
+
+      g_free(lowercase_bookmark);
     }
   }
 
@@ -3503,11 +3510,17 @@ cc_open(char* input)
     for(GList* h = Jumanji.Global.history; h; h = g_list_next(h))
     {
       char* uri = (char*) h->data;
+      gchar* lowercase_uri = g_utf8_strdown(uri, -1);
 
-      if(strstr(uri, input))
+      /* case insensitive search */
+      if(strstr(lowercase_uri, lowercase_input))
         completion_group_add_element(history, uri, NULL);
+
+      g_free(lowercase_uri);
     }
   }
+
+  g_free(lowercase_input);
 
   return completion;
 }
