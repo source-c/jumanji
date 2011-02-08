@@ -800,7 +800,7 @@ init_data()
         if(!strlen(lines[i]) || !strlen(lines[i+1]))
           continue;
 
-	Session* se = malloc(sizeof(Session));
+        Session* se = malloc(sizeof(Session));
         se->name = lines[i];
         se->uris = lines[i+1];
 
@@ -1812,7 +1812,7 @@ sc_close_tab(Argument* UNUSED(argument))
   int current_tab      = gtk_notebook_get_current_page(Jumanji.UI.view);
   GtkWidget* tab       = GTK_WIDGET(GET_NTH_TAB_WIDGET(current_tab));
 
-  /* remove markers for this tab 
+  /* remove markers for this tab
    * and update the others */
   GList* list = Jumanji.Global.markers;
   while(list)
@@ -1844,9 +1844,6 @@ sc_close_tab(Argument* UNUSED(argument))
 void
 sc_focus_inputbar(Argument* argument)
 {
-  if(!(GTK_WIDGET_VISIBLE(GTK_WIDGET(Jumanji.UI.inputbar))))
-    gtk_widget_show(GTK_WIDGET(Jumanji.UI.inputbar));
-
   if(argument->data)
   {
     char* data = argument->data;
@@ -1859,9 +1856,23 @@ sc_focus_inputbar(Argument* argument)
     notify(DEFAULT, data);
     g_free(data);
 
+    /* we save the X clipboard that will be clear by "grab_focus" */
+    gchar* x_clipboard_text = gtk_clipboard_wait_for_text(gtk_clipboard_get(GDK_SELECTION_PRIMARY));
+
     gtk_widget_grab_focus(GTK_WIDGET(Jumanji.UI.inputbar));
     gtk_editable_set_position(GTK_EDITABLE(Jumanji.UI.inputbar), -1);
+
+    if (x_clipboard_text != NULL)
+    {
+      /* we reset the X clipboard with saved text */
+      gtk_clipboard_set_text(gtk_clipboard_get(GDK_SELECTION_PRIMARY), x_clipboard_text, -1);
+
+      g_free(x_clipboard_text);
+    }
   }
+
+  if(!(GTK_WIDGET_VISIBLE(GTK_WIDGET(Jumanji.UI.inputbar))))
+    gtk_widget_show(GTK_WIDGET(Jumanji.UI.inputbar));
 }
 
 void
@@ -1930,12 +1941,14 @@ sc_nav_tabs(Argument* argument)
 void
 sc_paste(Argument* argument)
 {
-  char* text = gtk_clipboard_wait_for_text(gtk_clipboard_get(GDK_SELECTION_PRIMARY));
+  gchar* text = gtk_clipboard_wait_for_text(gtk_clipboard_get(GDK_SELECTION_PRIMARY));
 
   if(argument->n == NEW_TAB)
     create_tab(text, FALSE);
   else
     open_uri(GET_CURRENT_TAB(), text);
+
+  g_free(text);
 }
 
 void
@@ -2067,7 +2080,7 @@ sessionswitch(char* session_name)
     return FALSE;
 
   /* a session have been found
-   * we can start removing all the current tabs 
+   * we can start removing all the current tabs
    * and attached informations */
 
   // remove all markers
@@ -2088,9 +2101,9 @@ sessionswitch(char* session_name)
   for (int i = gtk_notebook_get_n_pages(Jumanji.UI.view) - 1; i != -1; --i)
   {
     GtkWidget* tab = GTK_WIDGET(GET_NTH_TAB_WIDGET(i));
-    
+
     gtk_container_remove(GTK_CONTAINER(Jumanji.UI.tabbar), GTK_WIDGET(g_object_get_data(G_OBJECT(tab), "tab")));
-    
+
     gtk_notebook_remove_page(Jumanji.UI.view, i);
   }
 
@@ -2250,7 +2263,7 @@ isc_completion(Argument* argument)
 {
   gchar *input      = gtk_editable_get_chars(GTK_EDITABLE(Jumanji.UI.inputbar), 0, -1);
   gchar  identifier = input[0];
-  gchar *input_m    = input + 1; 
+  gchar *input_m    = input + 1;
   int    length     = strlen(input_m);
 
   if(!length && !identifier)
@@ -2556,7 +2569,6 @@ isc_command_history(Argument* argument)
 
     gchar* command = (gchar*) g_list_nth_data(Jumanji.Global.command_history, current);
     notify(DEFAULT, command);
-    gtk_widget_grab_focus(GTK_WIDGET(Jumanji.UI.inputbar));
     gtk_editable_set_position(GTK_EDITABLE(Jumanji.UI.inputbar), -1);
   }
 }
@@ -4154,7 +4166,7 @@ cb_wv_button_release_event(GtkWidget* UNUSED(widget), GdkEvent* event, gpointer 
        event->button.button == mouse[i].button              /* test button */
        && (event->button.state & ALL_MASK) == mouse[i].mask /* test mask */
        && Jumanji.Global.mode & mouse[i].mode               /* test mode */
-       && mouse[i].function /* a function have to be declared */ 
+       && mouse[i].function /* a function have to be declared */
       )
     {
       mouse[i].function(&(mouse[i].argument));
