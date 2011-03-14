@@ -106,6 +106,7 @@ Shortcut shortcuts[] = {
   {0,                  GDK_P,             sc_paste,             NORMAL,       { NEW_TAB,            NULL } },
   {0,                  GDK_r,             sc_reload,            NORMAL,       { 0,                  NULL } },
   {0,                  GDK_R,             sc_reload,            NORMAL,       { BYPASS_CACHE,       NULL } },
+  {0,                  GDK_u,             sc_reopen,            NORMAL,       { 0,                  NULL } },
   {0,                  GDK_h,             sc_scroll,            NORMAL,       { LEFT,               NULL } },
   {0,                  GDK_j,             sc_scroll,            NORMAL,       { DOWN,               NULL } },
   {0,                  GDK_k,             sc_scroll,            NORMAL,       { UP,                 NULL } },
