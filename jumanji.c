@@ -363,6 +363,7 @@ struct
 void add_marker(int);
 gboolean auto_save(gpointer);
 void change_mode(int);
+void close_tab(int);
 GtkWidget* create_tab(char*, gboolean);
 void eval_marker(int);
 void init_data();
@@ -587,6 +588,40 @@ change_mode(int mode)
 
   Jumanji.Global.mode = mode;
   notify(DEFAULT, mode_text);
+}
+
+void
+close_tab(int tab_id)
+{
+  GtkWidget* tab = GTK_WIDGET(GET_NTH_TAB_WIDGET(tab_id));
+
+  /* remove markers for this tab
+   * and update the others */
+  GList* list = Jumanji.Global.markers;
+  while (list) {
+    Marker* marker = (Marker*) list->data;
+    GList* next_marker = g_list_next(list);
+
+    if (marker->tab_id == tab_id) {
+      Jumanji.Global.markers = g_list_delete_link(Jumanji.Global.markers, list);
+      free(marker);
+    } else if (marker->tab_id > tab_id) {
+      marker->tab_id -= 1;
+    }
+
+    list = next_marker;
+  }
+
+  gchar *uri = g_strdup((gchar *) webkit_web_view_get_uri(GET_CURRENT_TAB()));
+  Jumanji.Global.last_closed = g_list_prepend(Jumanji.Global.last_closed, uri);
+
+  if (gtk_notebook_get_n_pages(Jumanji.UI.view) > 1) {
+    gtk_container_remove(GTK_CONTAINER(Jumanji.UI.tabbar), GTK_WIDGET(g_object_get_data(G_OBJECT(tab), "tab")));
+    gtk_notebook_remove_page(Jumanji.UI.view, tab_id);
+    update_status();
+  } else {
+    open_uri(GET_CURRENT_TAB(), home_page);
+  }
 }
 
 GtkWidget*
@@ -1816,39 +1851,8 @@ sc_change_mode(Argument* argument)
 void
 sc_close_tab(Argument* UNUSED(argument))
 {
-  int current_tab      = gtk_notebook_get_current_page(Jumanji.UI.view);
-  GtkWidget* tab       = GTK_WIDGET(GET_NTH_TAB_WIDGET(current_tab));
-
-  /* remove markers for this tab
-   * and update the others */
-  GList* list = Jumanji.Global.markers;
-  while(list)
-  {
-    Marker* marker = (Marker*) list->data;
-    GList* next_marker = g_list_next(list);
-
-    if(marker->tab_id == current_tab)
-    {
-      Jumanji.Global.markers = g_list_delete_link(Jumanji.Global.markers, list);
-      free(marker);
-    }
-    else if(marker->tab_id > current_tab)
-      marker->tab_id -= 1;
-
-    list = next_marker;
-  }
-
-  gchar *uri = g_strdup((gchar *) webkit_web_view_get_uri(GET_CURRENT_TAB()));
-  Jumanji.Global.last_closed = g_list_prepend(Jumanji.Global.last_closed, uri);
-
-  if(gtk_notebook_get_n_pages(Jumanji.UI.view) > 1)
-  {
-    gtk_container_remove(GTK_CONTAINER(Jumanji.UI.tabbar), GTK_WIDGET(g_object_get_data(G_OBJECT(tab), "tab")));
-    gtk_notebook_remove_page(Jumanji.UI.view, current_tab);
-    update_status();
-  }
-  else
-    open_uri(GET_CURRENT_TAB(), home_page);
+  int current_tab = gtk_notebook_get_current_page(Jumanji.UI.view);
+  close_tab(current_tab);
 }
 
 void
@@ -4155,7 +4159,7 @@ cb_tab_kb_pressed(GtkWidget* UNUSED(widget), GdkEventKey* event, gpointer UNUSED
 }
 
 gboolean
-cb_tab_clicked(GtkWidget* UNUSED(widget), GdkEventButton* UNUSED(event), gpointer data)
+cb_tab_clicked(GtkWidget* UNUSED(widget), GdkEventButton* event, gpointer data)
 {
   int position = gtk_notebook_page_num(Jumanji.UI.view, (GtkWidget*) data);
 
@@ -4163,9 +4167,16 @@ cb_tab_clicked(GtkWidget* UNUSED(widget), GdkEventButton* UNUSED(event), gpointe
     return FALSE;
   }
 
-  gtk_notebook_set_current_page(Jumanji.UI.view, position);
-  gtk_widget_grab_focus(GTK_WIDGET(GET_CURRENT_TAB_WIDGET()));
-  update_status();
+  switch (event->button) {
+    case 1:
+      gtk_notebook_set_current_page(Jumanji.UI.view, position);
+      gtk_widget_grab_focus(GTK_WIDGET(GET_CURRENT_TAB_WIDGET()));
+      update_status();
+      break;
+    case 2:
+      close_tab(position);
+      break;
+  }
 
   return TRUE;
 }
