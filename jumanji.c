@@ -481,6 +481,7 @@ gboolean cb_inputbar_kb_pressed(GtkWidget*, GdkEventKey*, gpointer);
 void cb_inputbar_changed(GtkEditable*, gpointer);
 gboolean cb_inputbar_activate(GtkEntry*, gpointer);
 gboolean cb_tab_kb_pressed(GtkWidget*, GdkEventKey*, gpointer);
+gboolean cb_tab_clicked(GtkWidget*, GdkEventButton*, gpointer);
 GtkWidget* cb_wv_block_plugin(WebKitWebView*, gchar*, gchar*, GHashTable*, gpointer);
 gboolean cb_wv_button_release_event(GtkWidget*, GdkEvent*, gpointer);
 gboolean cb_wv_console(WebKitWebView*, char*, int, char*, gpointer);
@@ -670,6 +671,9 @@ create_tab(char* uri, gboolean background)
   gtk_box_pack_start(GTK_BOX(tab_box), tab_label,  TRUE,  TRUE, 0);
   gtk_box_pack_start(GTK_BOX(tab_box), tab_sep,   FALSE, FALSE, 0);
   gtk_container_add(GTK_CONTAINER(tev_box), tab_box);
+
+  /* tab clickable */
+  g_signal_connect(GTK_OBJECT(tev_box), "button_press_event", G_CALLBACK(cb_tab_clicked), tab);
 
   /* add to tabbar */
   gtk_box_pack_start(GTK_BOX(Jumanji.UI.tabbar), tev_box, TRUE, TRUE, 0);
@@ -4148,6 +4152,22 @@ cb_tab_kb_pressed(GtkWidget* UNUSED(widget), GdkEventKey* event, gpointer UNUSED
   }
 
   return FALSE;
+}
+
+gboolean
+cb_tab_clicked(GtkWidget* UNUSED(widget), GdkEventButton* UNUSED(event), gpointer data)
+{
+  int position = gtk_notebook_page_num(Jumanji.UI.view, (GtkWidget*) data);
+
+  if(position == -1) {
+    return FALSE;
+  }
+
+  gtk_notebook_set_current_page(Jumanji.UI.view, position);
+  gtk_widget_grab_focus(GTK_WIDGET(GET_CURRENT_TAB_WIDGET()));
+  update_status();
+
+  return TRUE;
 }
 
 GtkWidget*
