@@ -10,6 +10,9 @@ libsoup (2.30.2)
 libwebkit (1.2.1)
 libunique (1.1.6)
 
+Please note that you need to have a working pkg-config installation
+and that the Makefile is only compatible with GNU make.
+
 Configuration
 -------------
 You can modify some parts of jumanji by editing the config.h file
