@@ -1489,7 +1489,7 @@ read_configuration()
         if(!strlen(lines[i]))
           continue;
 
-        gchar **tokens = g_strsplit(lines[i], " ", -1);
+        gchar **tokens = g_strsplit_set(lines[i], "\t ", -1);
         int     length = g_strv_length(tokens);
 
         if(!strcmp(tokens[0], "set"))
