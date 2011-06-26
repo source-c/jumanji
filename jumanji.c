@@ -1492,7 +1492,7 @@ read_configuration()
         gchar **pre_tokens = g_strsplit_set(lines[i], "\t ", -1);
         int     pre_length = g_strv_length(pre_tokens);
 
-        gchar** tokens = g_malloc0(sizeof(gchar*) * pre_length);
+        gchar** tokens = g_malloc0(sizeof(gchar*) * (pre_length + 1));
         gchar** tokp =   tokens;
         int     length = 0;
         for (int i = 0; i != pre_length; ++i) {
