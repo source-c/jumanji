@@ -23,7 +23,6 @@ char* browser_name         = "jumanji/0.0";
 char* home_page            = "http://pwmt.org";
 char* proxy                = NULL;
 gboolean private_browsing  = FALSE;
-gboolean plugin_blocker    = TRUE;
 gboolean full_content_zoom = FALSE;
 char* default_session_name = NULL;
 int auto_save_interval     = 0;
@@ -171,7 +170,6 @@ Command commands[] = {
   {"forward",   "f",            cmd_forward,         0,            "Go forward in the browser history" },
   {"map",       "m",            cmd_map,             0,            "Map a key sequence" },
   {"open",      "o",            cmd_open,            cc_open,      "Open URI in the current tab" },
-  {"plugin",    0,              cmd_plugintype,      0,            "Allow plugin type" },
   {"print",     0,              cmd_print,           0,            "Print page" },
   {"quit",      "q",            cmd_quit,            0,            "Quit current tab" },
   {"quitall",   0,              cmd_quitall,         0,            "Quit jumanji" },
@@ -268,7 +266,6 @@ Setting settings[] = {
   {"notification_w_bgcolor", &(notification_w_bgcolor), NULL,                           's',  1, 0, 0, "Notification (warning) background color"},
   {"notification_w_fgcolor", &(notification_w_fgcolor), NULL,                           's',  1, 0, 0, "Notification (warning) foreground color"},
   {"page_cache",             NULL,                      "enable-page-cache",            'b',  0, 1, 0, "Enable page cache"},
-  {"plugin_blocker",         &(plugin_blocker),         NULL,                           'b',  0, 1, 0, "Enable plugin-blocker"},
   {"plugins",                NULL,                      "enable-plugins",               'b',  0, 1, 0, "Enable embedded plugin objects"},
   {"private_browsing",       &(private_browsing),       "enable-private-browsing",      'b',  0, 0, 0, "Enable private browsing"},
   {"proxy",                  &(proxy),                  NULL,                           's',  0, 0, 0, "Set proxy"},

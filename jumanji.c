@@ -264,12 +264,6 @@ typedef struct
 
 typedef struct
 {
-  gchar     *uri;
-  GtkWidget *box;
-} Plugin;
-
-typedef struct
-{
   gchar     *name;
   gchar     *uris;
 } Session;
@@ -329,8 +323,6 @@ struct
     GList   *sessions;
     GList   *history;
     GList   *last_closed;
-    GList   *allowed_plugins;
-    GList   *allowed_plugin_uris;
     SearchEngineList  *search_engines;
     ScriptList        *scripts;
     WebKitWebSettings *browser_settings;
@@ -435,7 +427,6 @@ gboolean cmd_bookmark(int, char**);
 gboolean cmd_forward(int, char**);
 gboolean cmd_map(int, char**);
 gboolean cmd_open(int, char**);
-gboolean cmd_plugintype(int, char**);
 gboolean cmd_print(int, char**);
 gboolean cmd_quit(int, char**);
 gboolean cmd_quitall(int, char**);
@@ -483,7 +474,6 @@ void cb_inputbar_changed(GtkEditable*, gpointer);
 gboolean cb_inputbar_activate(GtkEntry*, gpointer);
 gboolean cb_tab_kb_pressed(GtkWidget*, GdkEventKey*, gpointer);
 gboolean cb_tab_clicked(GtkWidget*, GdkEventButton*, gpointer);
-GtkWidget* cb_wv_block_plugin(WebKitWebView*, gchar*, gchar*, GHashTable*, gpointer);
 gboolean cb_wv_button_release_event(GtkWidget*, GdkEvent*, gpointer);
 gboolean cb_wv_console(WebKitWebView*, char*, int, char*, gpointer);
 GtkWidget* cb_wv_create_web_view(WebKitWebView*, WebKitWebFrame*, gpointer);
@@ -495,7 +485,6 @@ gboolean cb_wv_notify_progress(WebKitWebView*, GParamSpec*, gpointer);
 gboolean cb_wv_notify_title(WebKitWebView*, GParamSpec*, gpointer);
 gboolean cb_wv_nav_policy_decision(WebKitWebView*, WebKitWebFrame*, WebKitNetworkRequest*, WebKitWebNavigationAction*, WebKitWebPolicyDecision*, gpointer);
 gboolean cb_wv_scrolled(GtkAdjustment*, gpointer);
-gboolean cb_wv_unblock_plugin(GtkWidget*, GdkEventButton*, gpointer);
 gboolean cb_wv_window_policy_decision(WebKitWebView*, WebKitWebFrame*, WebKitNetworkRequest*, WebKitWebNavigationAction*, WebKitWebPolicyDecision*, gpointer);
 gboolean cb_wv_window_object_cleared(WebKitWebView*, WebKitWebFrame*, gpointer, gpointer, gpointer);
 
@@ -653,7 +642,6 @@ create_tab(char* uri, gboolean background)
 
   /* connect webview callbacks */
   g_signal_connect(G_OBJECT(wv),  "console-message",                      G_CALLBACK(cb_wv_console),                  NULL);
-  g_signal_connect(G_OBJECT(wv),  "create-plugin-widget",                 G_CALLBACK(cb_wv_block_plugin),             NULL);
   g_signal_connect(G_OBJECT(wv),  "create-web-view",                      G_CALLBACK(cb_wv_create_web_view),          NULL);
   g_signal_connect(G_OBJECT(wv),  "download-requested",                   G_CALLBACK(cb_wv_download_request),         NULL);
   g_signal_connect(G_OBJECT(wv),  "button-release-event",                 G_CALLBACK(cb_wv_button_release_event),     NULL);
@@ -1131,8 +1119,6 @@ init_jumanji()
   Jumanji.Global.bookmarks           = NULL;
   Jumanji.Global.history             = NULL;
   Jumanji.Global.last_closed         = NULL;
-  Jumanji.Global.allowed_plugins     = NULL;
-  Jumanji.Global.allowed_plugin_uris = NULL;
   Jumanji.Global.init_ui             = FALSE;
   Jumanji.Bindings.sclist            = NULL;
   Jumanji.Bindings.bcmdlist          = NULL;
@@ -1512,8 +1498,6 @@ read_configuration()
           cmd_search_engine(length - 1, tokens + 1);
         else if(!strcmp(tokens[0], "script"))
           cmd_script(length - 1, tokens + 1);
-        else if(!strcmp(tokens[0], "plugin"))
-          cmd_plugintype(length - 1, tokens + 1);
 
         g_free(tokens);
       }
@@ -2998,20 +2982,6 @@ cmd_open(int argc, char** argv)
 }
 
 gboolean
-cmd_plugintype(int argc, char** argv)
-{
-  if(argc < 1)
-    return TRUE;
-
-  Jumanji.Global.allowed_plugins = g_list_append(Jumanji.Global.allowed_plugins, strdup(argv[0]));
-
-  if(gtk_notebook_get_current_page(Jumanji.UI.view) >= 0)
-    sc_reload(NULL);
-
-  return TRUE;
-}
-
-gboolean
 cmd_print(int UNUSED(argc), char** UNUSED(argv))
 {
   WebKitWebFrame* frame = webkit_web_view_get_main_frame(GET_CURRENT_TAB());
@@ -3943,18 +3913,6 @@ cb_destroy(GtkWidget* UNUSED(widget), gpointer UNUSED(data))
 
   g_list_free(Jumanji.Global.command_history);
 
-  /* clean allowed plugins */
-  for(list = Jumanji.Global.allowed_plugins; list; list = g_list_next(list))
-    free(list->data);
-
-  g_list_free(Jumanji.Global.allowed_plugins);
-
-  /* clean allowed plugin uris */
-  for(list = Jumanji.Global.allowed_plugin_uris; list; list = g_list_next(list))
-    free(list->data);
-
-  g_list_free(Jumanji.Global.allowed_plugin_uris);
-
   gtk_main_quit();
 
   return TRUE;
@@ -4190,48 +4148,6 @@ cb_tab_clicked(GtkWidget* UNUSED(widget), GdkEventButton* event, gpointer data)
   return TRUE;
 }
 
-GtkWidget*
-cb_wv_block_plugin(WebKitWebView* UNUSED(wv), gchar* mime_type, gchar* uri,
-    GHashTable* UNUSED(param), gpointer UNUSED(data))
-{
-  if(!plugin_blocker)
-    return NULL;
-
-  /* check if plugin type is allowed */
-  GList* l;
-  for(l = Jumanji.Global.allowed_plugins; l; l = g_list_next(l))
-  {
-    if(!strcmp((char*) l->data, mime_type))
-      return NULL;
-  }
-
-  /* check if this plugin is allowed */
-  for(l = Jumanji.Global.allowed_plugin_uris; l; l = g_list_next(l))
-  {
-    if(!strcmp((char*) l->data, uri))
-      return NULL;
-  }
-
-  /*if(block_flash && !strcmp(mime_type, "application/x-shockwave-flash"))*/
-  Plugin *plugin = malloc(sizeof(Plugin));
-  plugin->uri    = strdup(uri);
-  plugin->box    = gtk_event_box_new();
-
-  char* label_text = g_strconcat("Click to enable \"", mime_type, "\" plugin", NULL);
-  GtkWidget* label  = gtk_label_new(label_text);
-
-  gtk_misc_set_alignment(GTK_MISC(label), 0.5, 0.5);
-  gtk_container_add(GTK_CONTAINER(plugin->box), label);
-  g_free(label_text);
-
-  /* click to allow flash */
-  g_signal_connect(G_OBJECT(plugin->box), "button-press-event", G_CALLBACK(cb_wv_unblock_plugin), plugin);
-
-  gtk_widget_show_all(plugin->box);
-
-  return plugin->box;
-}
-
 gboolean
 cb_wv_button_release_event(GtkWidget* UNUSED(widget), GdkEvent* event, gpointer UNUSED(data))
 {
@@ -4409,25 +4325,6 @@ cb_wv_scrolled(GtkAdjustment* UNUSED(adjustment), gpointer UNUSED(data))
 {
   update_position();
   return TRUE;
-}
-
-gboolean
-cb_wv_unblock_plugin(GtkWidget* UNUSED(widget), GdkEventButton* UNUSED(event), gpointer data)
-{
-  Plugin* plugin = (Plugin*) data;
-
-  GtkWidget* parent = gtk_widget_get_parent(plugin->box);
-  gtk_container_remove(GTK_CONTAINER(parent), plugin->box);
-
-  /* move uri to allowed plugin list */
-  Jumanji.Global.allowed_plugin_uris = g_list_append(Jumanji.Global.allowed_plugin_uris, strdup(plugin->uri));
-
-  /* reload */
-  webkit_web_view_reload(WEBKIT_WEB_VIEW(parent));
-
-  free(plugin);
-
-  return FALSE;
 }
 
 gboolean
