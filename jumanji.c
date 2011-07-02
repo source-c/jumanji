@@ -2318,14 +2318,12 @@ isc_completion(Argument* argument)
   char* current_command;
   char* current_parameter;
   int   current_command_length;
-  int   current_parameter_length;
 
   if(!first_space)
   {
     current_command          = input_m;
     current_command_length   = length;
     current_parameter        = NULL;
-    current_parameter_length = 0;
   }
   else
   {
@@ -2333,7 +2331,6 @@ isc_completion(Argument* argument)
     current_command          = g_strndup(input_m, offset);
     current_command_length   = strlen(current_command);
     current_parameter        = input_m + offset + 1;
-    current_parameter_length = strlen(current_parameter);
   }
 
   /* if the identifier does not match the command sign and
