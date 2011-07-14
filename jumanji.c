@@ -609,7 +609,7 @@ close_tab(int tab_id)
     gtk_notebook_remove_page(Jumanji.UI.view, tab_id);
     update_status();
   } else {
-    open_uri(GET_CURRENT_TAB(), home_page);
+    cb_destroy(NULL, NULL);
   }
 }
 
