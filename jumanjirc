@@ -1,0 +1,20 @@
+# jumanji configuration
+set homepage http://about:blank
+set browser_name BigBrother/0.0
+set default_session_name default
+set history_limit 50
+set auto_save 60
+set private_browsing false
+set single_instance true
+
+set editor xterm -e sh -c "curl %s|joe -";
+
+# downloads
+set download_dir ~/downloads/
+set download_command st -e sh -c "wget -c --load-cookies ~/.config/jumanji/cookies '%s' -O '%s'";
+
+# keybindings
+map <C-,> nav_tabs previous
+map <C-.> nav_tabs next
+map <A-<Left>> nav_history previous
+map <A-<Right>> nav_history next
