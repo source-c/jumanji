@@ -53,7 +53,9 @@ clean:
 	-name \*.changes -o \
 	-name \*.deb \) \
 	-delete
-	
+
+clean-all: clean
+	$(RM) config.h	
 
 distclean: clean
 	@rm -rf config.h
