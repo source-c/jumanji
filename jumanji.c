@@ -1,6 +1,6 @@
 /* See LICENSE file for license and copyright information */
 
-#define _BSD_SOURCE
+#define _DEFAULT_SOURCE
 #define _XOPEN_SOURCE 500
 
 #include <regex.h>
@@ -4365,8 +4365,9 @@ cb_wv_window_object_cleared(WebKitWebView* UNUSED(wv), WebKitWebFrame* UNUSED(fr
 /* main function */
 int main(int argc, char* argv[])
 {
+#ifndef G_THREADS_ENABLED
   g_thread_init(NULL);
-
+#endif
   gtk_init(&argc, &argv);
 
   /* parse arguments & embed */
