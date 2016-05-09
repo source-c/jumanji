@@ -1,6 +1,6 @@
 # jumanji configuration
 set homepage http://about:blank
-set browser_name BigBrother/0.0
+set browser_name JmJ/0.0
 set default_session_name default
 set history_limit 50
 set auto_save 60

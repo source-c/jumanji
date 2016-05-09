@@ -21,7 +21,11 @@ LIBS = -lc ${GTK_LIB} ${SOUP_LIB} -lpthread -lm
 CFLAGS += -std=c99 -pedantic -Wall -Wextra $(INCS)
 
 # debug
-DFLAGS = -O0 -g
+ifdef DEBUG
+DFLAGS = -O0 -g -ggdb
+else
+DFLAGS = -O2 -s
+endif
 
 # compiler
 CC ?= gcc

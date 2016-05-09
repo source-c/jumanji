@@ -1,9 +1,9 @@
 /* settings */
-int   default_width      = 800;
-int   default_height     = 600;
+int   default_width      = 1280;
+int   default_height     = 720;
 float zoom_step          = 10;
-float scroll_step        = 40;
-int   n_completion_items = 15;
+float scroll_step        = 30;
+int   n_completion_items = 20;
 
 /* completion */
 static const char FORMAT_COMMAND[]     = "<b>%s</b>";
@@ -19,20 +19,20 @@ static const char JUMANJI_SESSIONS[]  = "sessions";
 
 /* browser specific settings */
 char* user_agent           = NULL;
-char* browser_name         = "jumanji/0.0";
-char* home_page            = "http://pwmt.org";
+char* browser_name         = "JmJ/0.0";
+char* home_page            = "about:blank";
 char* proxy                = NULL;
-gboolean private_browsing  = FALSE;
+gboolean private_browsing  = TRUE; /* blocks history saving */
 gboolean full_content_zoom = FALSE;
-char* default_session_name = NULL;
+char* default_session_name = "default"; /* activates using sessions */
 int auto_save_interval     = 0;
 int search_delay           = 400; /* in millisecond */
 int history_limit          = 0;
 
 /* download settings */
-char* download_dir     = "~/dl/";
-char* download_command = "xterm -e sh -c \"wget --load-cookies ~/.config/jumanji/cookies '%s' -O '%s'\"";
-char* spawn_editor = "xterm -e -sh -c \"vim %s\"";
+char* download_dir     = "~/downloads/";
+char* download_command = "st -e sh -c \"wget --load-cookies ~/.config/jumanji/cookies '%s' -O '%s'\"";
+char* spawn_editor = "st -e -sh -c \"joe %s\"";
 
 /* look */
 char* font                   = "monospace normal 9";

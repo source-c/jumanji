@@ -43,6 +43,19 @@ ${PROJECT}: ${OBJECTS}
 clean:
 	@rm -rf ${PROJECT} ${OBJECTS} ${PROJECT}-${VERSION}.tar.gz \
 		${DOBJECTS} ${PROJECT}-debug
+	@find . -type f \( \
+	-name \*~ -o \
+	-name \*.o -o \
+	-name \*.so -o \
+	-name \*.tmp -o \
+	-name DEADJOE -o \
+	-name \*.build -o \
+	-name \*.changes -o \
+	-name \*.deb \) \
+	-delete
+
+clean-all: clean
+	$(RM) config.h	
 
 distclean: clean
 	@rm -rf config.h
